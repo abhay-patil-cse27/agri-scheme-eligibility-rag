@@ -49,8 +49,20 @@ const eligibilityCheckSchema = new mongoose.Schema(
       default: '',
     },
     benefitAmount: {
-      type: Number,
-      default: null,
+      type: String,
+      default: '',
+    },
+    paymentFrequency: {
+      type: String,
+      default: '',
+    },
+    actionSteps: {
+      type: [String],
+      default: [],
+    },
+    rejectionExplanation: {
+      criteria: { type: String, default: '' },
+      yourProfile: { type: String, default: '' }
     },
     requiredDocuments: {
       type: [String],

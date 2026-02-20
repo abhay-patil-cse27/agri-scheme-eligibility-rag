@@ -418,32 +418,28 @@ function ProofCard({ result }) {
         </motion.button>
       </div>
 
-      {/* 2. AI Analysis Box */}
-      <div className="glass-card" style={{ padding: '28px', marginBottom: '20px', borderTop: '4px solid', borderTopColor: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)', background: 'var(--bg-card)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Sparkles size={18} style={{ color: 'var(--accent-indigo)' }} />
-            <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.02em', textTransform: 'uppercase' }}>AI Analysis & Reasoning</h4>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleSpeech}
-            data-html2canvas-ignore="true"
-            style={{ 
-              background: isSpeaking ? 'var(--accent-indigo)' : 'var(--bg-glass)',
-              color: isSpeaking ? 'white' : 'var(--accent-indigo)',
-              border: '1px solid var(--border-color)', padding: '6px 12px', borderRadius: '20px',
-              fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s'
-            }}
-          >
-            {isSpeaking ? <VolumeX size={14} /> : <Volume2 size={14} />}
-            {isSpeaking ? 'Stop Audio' : 'Listen'}
-          </motion.button>
+      {/* 2. AI Decision Summary */}
+      <div className="glass-card" style={{ padding: '20px 28px', marginBottom: '20px', borderTop: '4px solid', borderTopColor: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: '1.2rem', color: 'var(--text-primary)', fontWeight: 600, margin: 0, lineHeight: 1.4 }}>
+            {result.reason}
+          </p>
         </div>
-        <p style={{ fontSize: '1.05rem', color: 'var(--text-primary)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-          {result.reason}
-        </p>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={toggleSpeech}
+          data-html2canvas-ignore="true"
+          style={{ 
+            background: isSpeaking ? 'var(--accent-indigo)' : 'var(--bg-glass)',
+            color: isSpeaking ? 'white' : 'var(--accent-indigo)',
+            border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '20px',
+            fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
+          }}
+        >
+          {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
+          {isSpeaking ? 'Stop Audio' : 'Listen'}
+        </motion.button>
       </div>
 
       {/* 3. Details Grid (Amount & Documents) */}
@@ -461,9 +457,14 @@ function ProofCard({ result }) {
               <Wallet size={120} color="white" />
             </div>
             <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '8px', fontWeight: 600, letterSpacing: '0.05em' }}>BENEFIT AMOUNT</p>
-            <p style={{ fontSize: '2.2rem', fontWeight: 800, color: 'white', letterSpacing: '-0.02em' }}>
-              ₹{Number(result.benefitAmount).toLocaleString()}
+            <p style={{ fontSize: '2.5rem', fontWeight: 800, color: 'white', letterSpacing: '-0.02em', marginBottom: '4px' }}>
+              {result.benefitAmount.startsWith('₹') ? result.benefitAmount : `₹${result.benefitAmount}`}
             </p>
+            {result.paymentFrequency && (
+              <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
+                {result.paymentFrequency}
+              </p>
+            )}
           </div>
         )}
 
@@ -485,6 +486,45 @@ function ProofCard({ result }) {
               ))}
             </div>
           </div>
+        )}
+
+        {/* Action Steps (Kya Karna Hoga) */}
+        {isEligible && result.actionSteps && result.actionSteps.length > 0 && (
+          <div className="glass-card" style={{ padding: '24px', gridColumn: '1 / -1', background: 'var(--bg-card)' }}>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <Sparkles size={18} style={{ color: 'var(--accent-indigo)' }} />
+              <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Next Steps (How to Apply)</h4>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {result.actionSteps.map((step, i) => (
+                <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent-indigo)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, flexShrink: 0, marginTop: '2px' }}>
+                    {i + 1}
+                  </div>
+                  <p style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)', lineHeight: 1.5 }}>{step}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Rejection Explanation (Kyu Nahi Mil Raha?) */}
+        {!isEligible && result.rejectionExplanation && result.rejectionExplanation.criteria && (
+           <div className="glass-card" style={{ padding: '24px', gridColumn: '1 / -1', borderLeft: '4px solid var(--accent-rose)', background: 'var(--bg-glass)' }}>
+             <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--accent-rose)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+               <XCircle size={18} /> Why was this profile rejected?
+             </h4>
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ padding: '16px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase' }}>Scheme Requirement</p>
+                  <p style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: 0 }}>{result.rejectionExplanation.criteria}</p>
+                </div>
+                <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(244, 63, 94, 0.05)', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--accent-rose)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase' }}>Your Profile</p>
+                  <p style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: 0, fontWeight: 500 }}>{result.rejectionExplanation.yourProfile}</p>
+                </div>
+             </div>
+           </div>
         )}
       </div>
 

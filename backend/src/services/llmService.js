@@ -53,27 +53,35 @@ STRICT RULES:
 Your task:
 - Compare the farmer's profile against the scheme's eligibility criteria found in the document excerpts.
 - Determine if the farmer is ELIGIBLE or NOT ELIGIBLE.
-- Provide a highly detailed, explanatory paragraph in the 'reason' field. Address the farmer directly ("You..."). Structure your response with visually distinct bullet points or spacing (using \n) to make it scannable and easy to read. Avoid dense walls of text. Be conversational and highlight EXACTLY which profile parameters matched or failed.
-- Provide the exact quote from the document that supports your decision in the 'citation' field.
-- List all required documents for application.
-- State the individual benefit amount or loan limit (if mentioned). Do NOT extract the total scheme budget or corpus (e.g., 1 lakh crore total fund) as the benefit amount. If an individual amount is not specified, return null.
+- If ELIGIBLE:
+    - Provide the exact Benefit Amount (e.g., "₹6,000").
+    - Provide the Payment Frequency if available (e.g., "Yearly in 3 installments").
+    - Provide clear, simple Action Steps to apply (e.g., "1. Visit pmkisan.gov.in", "2. Submit Aadhar").
+    - Set rejectionExplanation to null.
+- If NOT ELIGIBLE:
+    - Set benefitAmount, paymentFrequency, and actionSteps to null.
+    - Provide a scannable rejectionExplanation object detailing EXACTLY what criteria they failed.
+        - criteria: The strict rule from the document.
+        - yourProfile: The farmer's actual value that caused the failure.
 
 RESPOND ONLY WITH THIS EXACT JSON STRUCTURE:
 {
   "eligible": true or false,
   "confidence": "high" or "medium" or "low",
-  "reason": "Structured, scannable response with \n\n breaks and bullet points (e.g., •) explaining precisely why THEY (using 'You') are eligible or not.",
+  "reason": "Very brief 1 sentence summary (e.g., 'You are eligible for ₹6,000 yearly' or 'You do not meet the land limits').",
+  "benefitAmount": "Exact amount as string or null (e.g., '₹6,000')",
+  "paymentFrequency": "Frequency as string or null (e.g., 'Yearly in 3 installments')",
+  "actionSteps": ["Upload Aadhar on portal", "Wait for verification"] or [],
+  "rejectionExplanation": {
+    "criteria": "Rule they failed (e.g., 'Maximum land holding allowed is 2 hectares')",
+    "yourProfile": "Their profile value (e.g., 'You have 3 hectares of land')"
+  } or null,
   "citation": "Exact text quoted from the document excerpts that supports your decision",
   "citationSource": {
-    "page": page_number_or_null,
-    "section": "section name if identifiable else null",
-    "subsection": "subsection name if identifiable else null",
-    "paragraph": paragraph_number_or_null
+    "page": 12,
+    "section": "Eligibility Criteria"
   },
-  "officialWebsite": "URL to the official government portal for this scheme if inferable or present in text, else null",
-  "benefitAmount": number_or_null,
-  "requiredDocuments": ["Document 1", "Document 2"],
-  "additionalNotes": "Any other relevant information from the document"
+  "officialWebsite": "URL or null"
 }`;
 
 /**
