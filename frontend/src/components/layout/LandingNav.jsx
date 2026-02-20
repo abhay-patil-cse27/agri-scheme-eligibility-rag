@@ -88,12 +88,12 @@ export default function LandingNav() {
             >Sign In</button>
           </Link>
 
-          <Link to="/register" style={{ textDecoration: 'none' }}>
+          <Link to="/check" style={{ textDecoration: 'none' }}>
             <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} style={{
               background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '9px',
               padding: '8px 18px', fontSize: '0.87rem', fontWeight: 700, cursor: 'pointer',
               boxShadow: '0 4px 14px rgba(22,163,74,0.4)',
-            }}>Register</motion.button>
+            }}>Free Check</motion.button>
           </Link>
 
           {/* Hamburger (mobile) */}

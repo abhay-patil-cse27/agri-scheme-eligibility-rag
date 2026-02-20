@@ -164,11 +164,22 @@ export default function Landing() {
               {isDark ? <Sun size={16} color="#fbbf24" /> : <Moon size={16} color="#166534" />}
             </motion.button>
             <Link to="/login" style={{ textDecoration: 'none' }}>
+              <button style={{
+                background: 'none', color: isDark ? '#4ade80' : '#166534',
+                border: `1px solid ${c.border}`, borderRadius: '10px',
+                padding: '9px 18px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+                onMouseOver={e => { e.currentTarget.style.background = c.bgGlass; }}
+                onMouseOut={e => { e.currentTarget.style.background = 'none'; }}
+              >Sign In</button>
+            </Link>
+            <Link to="/check" style={{ textDecoration: 'none' }}>
               <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} style={{
                 background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '10px',
                 padding: '9px 22px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
                 boxShadow: '0 4px 16px rgba(22,163,74,0.4)',
-              }}>Sign In</motion.button>
+              }}>Free Check</motion.button>
             </Link>
             <button onClick={() => setOpen(!open)} style={{ background: 'none', border: `1px solid ${c.border}`, borderRadius: '8px', padding: '8px', cursor: 'pointer', color: c.textSec, display: 'none' }} className="ns-hamburger">
               {open ? <X size={18} /> : <Menu size={18} />}
@@ -209,14 +220,14 @@ export default function Landing() {
           </p>
 
           <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/register" style={{ textDecoration: 'none' }}>
+            <Link to="/check" style={{ textDecoration: 'none' }}>
               <motion.button whileHover={{ scale: 1.05, boxShadow: '0 16px 48px rgba(22,163,74,0.45)' }} whileTap={{ scale: 0.97 }} style={{
                 background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '14px',
                 padding: '14px 32px', fontSize: '1.05rem', fontWeight: 700, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: '10px',
                 boxShadow: '0 6px 24px rgba(22,163,74,0.4)', transition: 'box-shadow 0.3s',
               }}>
-                Check Your Eligibility <ArrowRight size={18} />
+                Check Your Eligibility (Free) <ArrowRight size={18} />
               </motion.button>
             </Link>
             <button onClick={() => go('#features')} style={{
@@ -352,14 +363,14 @@ export default function Landing() {
           </p>
 
           <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '44px' }}>
-            <Link to="/register" style={{ textDecoration: 'none' }}>
+            <Link to="/check" style={{ textDecoration: 'none' }}>
               <motion.button whileHover={{ scale: 1.05, boxShadow: '0 14px 40px rgba(22,163,74,0.45)' }} whileTap={{ scale: 0.97 }} style={{
                 background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '12px',
                 padding: '13px 30px', fontSize: '1rem', fontWeight: 700, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: '8px',
                 boxShadow: '0 4px 18px rgba(22,163,74,0.4)',
               }}>
-                Check My Eligibility <ArrowRight size={17} />
+                Start Free Check <ArrowRight size={17} />
               </motion.button>
             </Link>
             <a href="https://github.com" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
@@ -411,7 +422,7 @@ export default function Landing() {
             </div>
             <div>
               <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>Portal</p>
-              {[['Sign In', '/login'], ['Register', '/register']].map(([l, to]) => (
+              {[['Free Check', '/check'], ['Sign In', '/login'], ['Register', '/register']].map(([l, to]) => (
                 <Link key={l} to={to} style={{ display: 'block', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textDecoration: 'none', transition: 'color 0.2s' }}
                   onMouseOver={e => e.currentTarget.style.color = c.text}
                   onMouseOut={e => e.currentTarget.style.color = c.textMute}
