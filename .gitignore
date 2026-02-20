@@ -1,0 +1,2 @@
+# Ignore OAuth client secrets
+docs/client_secret_*.json

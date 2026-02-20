@@ -2,10 +2,12 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorHandler');
 const config = require('../config/env');
 const { protect } = require('../middleware/auth');
+const { OAuth2Client } = require('google-auth-library');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Helper to get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
@@ -198,6 +200,44 @@ router.put(
     user.resetPasswordExpire = undefined;
     await user.save();
 
+    sendTokenResponse(user, 200, res);
+  })
+);
+
+/**
+ * POST /api/auth/google
+ * Authenticate with Google OAuth ID Token
+ */
+router.post(
+  '/google',
+  asyncHandler(async (req, res) => {
+    const { token } = req.body;
+    
+    // Verify the Google ID Token
+    const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID,  
+    });
+    
+    const payload = ticket.getPayload();
+    const { email, name, sub: googleId } = payload;
+    
+    // Check if user already exists
+    let user = await User.findOne({ email });
+    
+    if (!user) {
+      // If user doesn't exist, create a new Farmer account seamlessly
+      // We generate a secure random password since they use Google
+      const randomPassword = crypto.randomBytes(16).toString('hex') + 'A1!'; // ensure it passes the regex
+      user = await User.create({
+        name: name,
+        email: email,
+        password: randomPassword,
+        role: 'farmer'
+      });
+    }
+    
+    // Send standard JWT
     sendTokenResponse(user, 200, res);
   })
 );

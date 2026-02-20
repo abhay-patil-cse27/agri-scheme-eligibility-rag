@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Zap, Loader2, Eye, EyeOff } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -10,7 +11,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, user, loading } = useAuth();
+  const { login, googleAuth, user, loading } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -33,6 +34,22 @@ export default function Login() {
       }
     } catch (err) {
       addToast('System Error', 'An unexpected error occurred during login.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setIsSubmitting(true);
+    try {
+      const res = await googleAuth(credentialResponse.credential);
+      if (res.success) {
+        addToast('Login Successful', 'Authenticated via Google', 'success');
+      } else {
+        addToast('Authentication Failed', res.error, 'error');
+      }
+    } catch (err) {
+      addToast('System Error', 'An unexpected error occurred during Google login.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -108,6 +125,24 @@ export default function Login() {
             {isSubmitting ? <><Loader2 size={20} className="spin" /> Authenticating...</> : 'Sign In'}
           </motion.button>
         </form>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0' }}>
+          <div style={{ height: '1px', flex: 1, background: 'var(--border-color)' }}></div>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>OR</span>
+          <div style={{ height: '1px', flex: 1, background: 'var(--border-color)' }}></div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              addToast('Google Login Failed', 'Popup closed or authentication failed', 'error');
+            }}
+            theme="filled_black"
+            shape="rectangular"
+            size="large"
+          />
+        </div>
 
         <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <Link to="/forgotpassword" style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s', }}>Forgot your password?</Link>

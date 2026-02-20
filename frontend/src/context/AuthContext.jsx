@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getMe, login as apiLogin, register as apiRegister } from '../services/api';
+import { getMe, login as apiLogin, register as apiRegister, googleLogin as apiGoogleLogin } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -63,6 +63,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const googleAuth = async (googleToken) => {
+    try {
+      const res = await apiGoogleLogin(googleToken);
+      if (res.success) {
+        localStorage.setItem('token', res.token);
+        setUser(res.user);
+        return { success: true };
+      }
+      return { success: false, error: res.error };
+    } catch (err) {
+      console.error('Google Login error', err);
+      return { success: false, error: err.response?.data?.error || err.message || 'Google Authentication failed' };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
@@ -70,7 +85,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, googleAuth, logout }}>
       {children}
     </AuthContext.Provider>
   );

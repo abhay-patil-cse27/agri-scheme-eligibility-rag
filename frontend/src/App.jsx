@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import Sidebar from './components/layout/Sidebar';
 import Dashboard from './pages/Dashboard';
 import EligibilityCheck from './pages/EligibilityCheck';
@@ -18,7 +19,8 @@ import './index.css';
 
 export default function App() {
   return (
-    <AuthProvider>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <AuthProvider>
       <ToastProvider>
         <BrowserRouter>
           <Routes>
@@ -57,5 +59,6 @@ export default function App() {
         <ToastContainer />
       </ToastProvider>
     </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, Zap, Loader2, Eye, EyeOff } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -11,7 +12,7 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { register, user, loading } = useAuth();
+  const { register, googleAuth, user, loading } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -40,6 +41,22 @@ export default function Register() {
       }
     } catch (err) {
       addToast('System Error', 'An unexpected error occurred during registration.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setIsSubmitting(true);
+    try {
+      const res = await googleAuth(credentialResponse.credential);
+      if (res.success) {
+        addToast('Registration Successful', 'Authenticated via Google', 'success');
+      } else {
+        addToast('Authentication Failed', res.error, 'error');
+      }
+    } catch (err) {
+      addToast('System Error', 'An unexpected error occurred during Google login.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -127,7 +144,26 @@ export default function Register() {
           </motion.button>
         </form>
 
-        <p style={{ marginTop: '32px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0' }}>
+          <div style={{ height: '1px', flex: 1, background: 'var(--border-color)' }}></div>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>OR</span>
+          <div style={{ height: '1px', flex: 1, background: 'var(--border-color)' }}></div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              addToast('Google Registration Failed', 'Popup closed or authentication failed', 'error');
+            }}
+            theme="filled_black"
+            text="signup_with"
+            shape="rectangular"
+            size="large"
+          />
+        </div>
+
+        <p style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
           Already have an account? <Link to="/login" style={{ color: 'var(--accent-indigo)', fontWeight: 600, textDecoration: 'none' }}>Sign In here</Link>
         </p>
       </motion.div>

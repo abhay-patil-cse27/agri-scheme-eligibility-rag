@@ -18,6 +18,7 @@ api.interceptors.request.use((config) => {
 // ── Auth ──────────────────────────────────
 export const login = (email, password) => api.post('/auth/login', { email, password }).then(r => r.data);
 export const register = (name, email, password) => api.post('/auth/register', { name, email, password }).then(r => r.data);
+export const googleLogin = (token) => api.post('/auth/google', { token }).then(r => r.data);
 export const getMe = () => api.get('/auth/me').then(r => r.data);
 export const updateDetails = (data) => api.put('/auth/updatedetails', data).then(r => r.data);
 export const updatePassword = (data) => api.put('/auth/updatepassword', data).then(r => r.data);
