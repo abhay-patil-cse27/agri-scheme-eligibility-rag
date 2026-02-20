@@ -43,4 +43,20 @@ const uploadLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-module.exports = { generalLimiter, eligibilityLimiter, uploadLimiter };
+/**
+ * Public checking rate limiter: Extremely strict limit for unauthenticated users.
+ * 3 checks per hour per IP.
+ */
+const publicEligibilityLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3,
+  message: {
+    success: false,
+    error: 'You have reached the maximum number of free checks (3). To prevent spam, please log in or register to continue checking schemes.',
+    requiresLogin: true
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+module.exports = { generalLimiter, eligibilityLimiter, uploadLimiter, publicEligibilityLimiter };

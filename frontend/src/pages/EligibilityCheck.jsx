@@ -7,7 +7,8 @@ import {
   Loader2, Sparkles, Quote, ClipboardList, Clock, Globe, Download, Volume2, VolumeX
 } from 'lucide-react';
 import { useVoice } from '../hooks/useVoice';
-import { getSchemes, getProfiles, createProfile, checkEligibility, processVoice } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { getSchemes, createProfile, checkEligibility, checkEligibilityPublic } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -608,54 +609,110 @@ function ProofCard({ result }) {
 /* ── Main Page ──────────────────────────── */
 export default function EligibilityCheck() {
   const location = useLocation();
+  const { user } = useAuth();
   const [schemes, setSchemes] = useState([]);
   const [selectedScheme, setSelectedScheme] = useState('');
   const [voiceProfile, setVoiceProfile] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [publicChecksUsed, setPublicChecksUsed] = useState(0);
   const { addToast } = useToast();
 
   useEffect(() => {
     getSchemes().then((s) => setSchemes(s.data || [])).catch(console.error);
-  }, []);
+    
+    // Load public check counter from local storage
+    if (!user) {
+      const used = parseInt(localStorage.getItem('niti_setu_public_checks') || '0', 10);
+      setPublicChecksUsed(used);
+    }
+  }, [user]);
 
   const handleCheck = async (profileData) => {
     if (!selectedScheme) {
       addToast('Missing Scheme', 'Please select a scheme from the dropdown first', 'warning');
       return;
     }
+
+    // Limit check for unauthenticated users
+    if (!user && publicChecksUsed >= 3) {
+      addToast(
+        'Limit Reached', 
+        'You have used your 3 free public checks. Please log in or register to securely save your profile and continue checking.', 
+        'warning'
+      );
+      // Optional: Redirection logic could go here, for now it just blocks
+      return;
+    }
+
     setLoading(true);
     setResult(null);
     try {
-      addToast('Profile Generation', 'Building farmer profile...', 'info');
-      const profile = await createProfile(profileData);
-      if (!profile.success) throw new Error(profile.error || 'Failed to create profile');
+      if (user) {
+        // Authenticated flow: Save profile to DB, then Check
+        addToast('Profile Update', 'Syncing farmer profile securely...', 'info');
+        const profile = await createProfile(profileData);
+        if (!profile.success) throw new Error(profile.error || 'Failed to create profile');
 
-      addToast('AI Scanning', 'Analyzing documents via RAG...', 'info');
-      const eligibility = await checkEligibility(profile.data._id, selectedScheme);
-      if (eligibility.success) {
-        setResult(eligibility.data);
-        addToast('Check Complete', 'AI analysis finished successfully', 'success');
+        addToast('AI Scanning', 'Analyzing documents via RAG...', 'info');
+        const eligibility = await checkEligibility(profile.data._id, selectedScheme);
+        if (eligibility.success) {
+          setResult(eligibility.data);
+          addToast('Check Complete', 'AI analysis finished successfully', 'success');
+        } else {
+          addToast('Analysis Failed', eligibility.error || 'Eligibility check failed', 'error');
+        }
       } else {
-        addToast('Analysis Failed', eligibility.error || 'Eligibility check failed', 'error');
+        // Unauthenticated Freemium flow: Direct Check without DB saving
+        addToast('Fast AI Scan', 'Analyzing criteria...', 'info');
+        const eligibility = await checkEligibilityPublic(profileData, selectedScheme);
+        if (eligibility.success) {
+          setResult(eligibility.data);
+          const newCount = publicChecksUsed + 1;
+          setPublicChecksUsed(newCount);
+          localStorage.setItem('niti_setu_public_checks', newCount.toString());
+          addToast('Check Complete', `Free checks remaining: ${3 - newCount}`, 'success');
+        } else {
+          
+          if (eligibility.message?.requiresLogin) {
+            addToast('Limit Reached', eligibility.error, 'error');
+            setPublicChecksUsed(3);
+            localStorage.setItem('niti_setu_public_checks', '3');
+          } else {
+             addToast('Analysis Failed', eligibility.error || 'Eligibility check failed', 'error');
+          }
+        }
       }
     } catch (e) {
-      addToast('System Error', e.response?.data?.error || e.message || 'Something went wrong', 'error');
+      if (e.response?.data?.error?.includes('maximum number of free checks')) {
+         addToast('Limit Reached', e.response.data.error, 'warning');
+         setPublicChecksUsed(3);
+         localStorage.setItem('niti_setu_public_checks', '3');
+      } else {
+         addToast('System Error', e.response?.data?.error || e.message || 'Something went wrong', 'error');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '800px' }}>
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '28px' }}>
-        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
-          <Search size={24} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-indigo)' }} />
+    <div style={{ maxWidth: '800px', margin: user ? '0' : '0 auto', paddingTop: user ? '0' : '100px', paddingBottom: '60px' }}>
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '28px', textAlign: user ? 'left' : 'center' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
+          <Search size={28} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-indigo)', verticalAlign: 'text-bottom' }} />
           Eligibility <span className="gradient-text">Check</span>
         </h1>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+        <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
           Voice or form input → AI-powered eligibility analysis with PDF citations
         </p>
+        
+        {!user && (
+           <div style={{ marginTop: '16px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(99, 102, 241, 0.1)', padding: '6px 16px', borderRadius: '20px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+             <Shield size={14} style={{ color: 'var(--accent-indigo)' }} />
+             <span style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', fontWeight: 600 }}>Guest Mode: {3 - publicChecksUsed} free checks remaining</span>
+           </div>
+        )}
       </motion.div>
 
       {/* Scheme Selector */}

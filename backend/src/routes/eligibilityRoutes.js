@@ -9,7 +9,7 @@ const vectorSearchService = require('../services/vectorSearchService');
 const llmService = require('../services/llmService');
 const suggestionEngine = require('../services/suggestionEngine');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { eligibilityLimiter } = require('../middleware/rateLimiter');
+const { eligibilityLimiter, publicEligibilityLimiter } = require('../middleware/rateLimiter');
 const { validateEligibilityCheck, validateObjectId } = require('../middleware/validators');
 const { protect } = require('../middleware/auth');
 const logger = require('../config/logger');
@@ -139,6 +139,83 @@ router.post(
       success: true,
       data: responseData,
     });
+  })
+);
+
+/**
+ * POST /api/eligibility/public-check
+ * UNAUTHENTICATED RAG endpoint for the Freemium public access model.
+ * 
+ * Flow:
+ *   1. Accept raw profile data from body (not a database ID)
+ *   2. Find scheme
+ *   3. Generate query embedding & vector search
+ *   4. Send to LLM
+ *   5. Return result WITHOUT saving to database
+ */
+router.post(
+  '/public-check',
+  publicEligibilityLimiter,
+  asyncHandler(async (req, res) => {
+    const startTime = Date.now();
+    const { profileData, schemeName } = req.body;
+
+    if (!profileData || !profileData.name || !profileData.state) {
+      return res.status(400).json({ success: false, error: 'Basic profile data (Name, State) is required.' });
+    }
+
+    // Determine which schemes to check
+    let schemesToCheck = [];
+    if (schemeName && schemeName !== 'all') {
+      const scheme = await Scheme.findOne({ name: schemeName, isActive: true }).lean();
+      if (!scheme) {
+        return res.status(404).json({ success: false, error: `Scheme "${schemeName}" not found.` });
+      }
+      schemesToCheck.push(scheme);
+    } else {
+      schemesToCheck = await Scheme.find({ isActive: true }).lean();
+      if (schemesToCheck.length === 0) {
+        return res.status(404).json({ success: false, error: 'No active schemes found in database.' });
+      }
+    }
+
+    logger.info(`Public Eligibility check: ${profileData.name} → ${schemeName === 'all' || !schemeName ? 'ALL SCHEMES' : schemeName}`);
+
+    // Process all schemes in parallel
+    const results = await Promise.all(schemesToCheck.map(async (scheme) => {
+      try {
+        const searchQuery = `eligibility criteria, beneficiary conditions, who is eligible, age limit, land holding limit, income limit, exclusions, who is not eligible for ${scheme.name}`;
+        const queryEmbedding = await embeddingService.generateEmbedding(searchQuery);
+        const relevantChunks = await vectorSearchService.searchSimilarChunks(queryEmbedding, scheme._id.toString(), 8);
+
+        if (relevantChunks.length === 0) {
+          return { scheme: scheme.name, error: 'No relevant document sections found.' };
+        }
+
+        const llmResult = await llmService.checkEligibility(profileData, relevantChunks, scheme.name);
+        const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+        
+        const officialWebsiteUrl = scheme.officialWebsite || llmResult.officialWebsite;
+        const documentUrl = `${req.protocol}://${req.get('host')}/api/schemes/docs/${scheme.sourceFile}`;
+
+        return {
+          checkId: 'public-' + Date.now(),
+          scheme: scheme.name,
+          ...llmResult,
+          officialWebsite: officialWebsiteUrl,
+          documentUrl: documentUrl,
+          responseTime: totalResponseTime,
+          chunksAnalyzed: relevantChunks.length,
+          isPublicCheck: true
+        };
+      } catch (err) {
+        logger.error(`Error processing public scheme check ${scheme.name}:`, err.message);
+        return { scheme: scheme.name, error: err.message };
+      }
+    }));
+
+    const responseData = (schemesToCheck.length === 1 && schemeName !== 'all') ? results[0] : results;
+    res.json({ success: true, data: responseData });
   })
 );
 

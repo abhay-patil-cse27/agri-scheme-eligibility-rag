@@ -78,6 +78,8 @@ export default function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/forgotpassword" element={<ForgotPassword />} />
               <Route path="/resetpassword/:token" element={<ResetPassword />} />
+              {/* Public Eligibility Check Tool */}
+              <Route path="/check" element={<EligibilityCheck />} />
             </Route>
 
             {/* Redirect old shorthand paths → /dashboard/* */}
@@ -90,7 +92,8 @@ export default function App() {
             {/* Protected app — proper nested Outlet routing */}
             <Route path="/dashboard" element={<AppShell />}>
               <Route index element={<Dashboard />} />
-              <Route path="check" element={<EligibilityCheck />} />
+              {/* The authenticated wrapper for Check just redirects to the public check, but with user session active */}
+              <Route path="check" element={<Navigate to="/check" replace />} />
               <Route path="schemes" element={<Schemes />} />
               <Route path="farmers" element={<Farmers />} />
               <Route path="history" element={<HistoryPage />} />

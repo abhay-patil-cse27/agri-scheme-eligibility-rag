@@ -55,6 +55,9 @@ export const deleteProfile = (id) => api.delete(`/profiles/${id}`).then((r) => r
 export const checkEligibility = (profileId, schemeName) =>
   api.post('/eligibility/check', { profileId, schemeName }).then((r) => r.data);
 
+export const checkEligibilityPublic = (profileData, schemeName) =>
+  api.post('/eligibility/public-check', { profileData, schemeName }).then((r) => r.data);
+
 export const getEligibilityHistory = (profileId) =>
   api.get(`/eligibility/history/${profileId}`).then((r) => r.data);
 
