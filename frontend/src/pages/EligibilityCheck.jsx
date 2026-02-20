@@ -635,10 +635,10 @@ export default function EligibilityCheck() {
     }
 
     // Limit check for unauthenticated users
-    if (!user && publicChecksUsed >= 3) {
+    if (!user && publicChecksUsed >= 1) {
       addToast(
         'Limit Reached', 
-        'You have used your 3 free public checks. Please log in or register to securely save your profile and continue checking.', 
+        'You have used your 1 free public check. Please log in or register to securely save your profile and continue checking.', 
         'warning'
       );
       // Optional: Redirection logic could go here, for now it just blocks
@@ -671,13 +671,13 @@ export default function EligibilityCheck() {
           const newCount = publicChecksUsed + 1;
           setPublicChecksUsed(newCount);
           localStorage.setItem('niti_setu_public_checks', newCount.toString());
-          addToast('Check Complete', `Free checks remaining: ${3 - newCount}`, 'success');
+          addToast('Check Complete', `Free check used. Please login next time.`, 'success');
         } else {
           
           if (eligibility.message?.requiresLogin) {
             addToast('Limit Reached', eligibility.error, 'error');
-            setPublicChecksUsed(3);
-            localStorage.setItem('niti_setu_public_checks', '3');
+            setPublicChecksUsed(1);
+            localStorage.setItem('niti_setu_public_checks', '1');
           } else {
              addToast('Analysis Failed', eligibility.error || 'Eligibility check failed', 'error');
           }
@@ -686,8 +686,8 @@ export default function EligibilityCheck() {
     } catch (e) {
       if (e.response?.data?.error?.includes('maximum number of free checks')) {
          addToast('Limit Reached', e.response.data.error, 'warning');
-         setPublicChecksUsed(3);
-         localStorage.setItem('niti_setu_public_checks', '3');
+         setPublicChecksUsed(1);
+         localStorage.setItem('niti_setu_public_checks', '1');
       } else {
          addToast('System Error', e.response?.data?.error || e.message || 'Something went wrong', 'error');
       }
@@ -710,7 +710,7 @@ export default function EligibilityCheck() {
         {!user && (
            <div style={{ marginTop: '16px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(99, 102, 241, 0.1)', padding: '6px 16px', borderRadius: '20px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
              <Shield size={14} style={{ color: 'var(--accent-indigo)' }} />
-             <span style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', fontWeight: 600 }}>Guest Mode: {3 - publicChecksUsed} free checks remaining</span>
+             <span style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', fontWeight: 600 }}>Guest Mode: {1 - publicChecksUsed} free check{(1 - publicChecksUsed) !== 1 ? 's' : ''} remaining</span>
            </div>
         )}
       </motion.div>

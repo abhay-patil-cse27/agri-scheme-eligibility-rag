@@ -45,14 +45,14 @@ const uploadLimiter = rateLimit({
 
 /**
  * Public checking rate limiter: Extremely strict limit for unauthenticated users.
- * 3 checks per hour per IP.
+ * 1 check per hour per IP.
  */
 const publicEligibilityLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3,
+  max: 1,
   message: {
     success: false,
-    error: 'You have reached the maximum number of free checks (3). To prevent spam, please log in or register to continue checking schemes.',
+    error: 'You have reached the maximum number of free checks (1). To prevent spam, please log in or register to continue checking schemes.',
     requiresLogin: true
   },
   standardHeaders: true,
