@@ -61,7 +61,10 @@ router.post(
 
     const schemeName = req.body.schemeName || path.basename(req.file.originalname, '.pdf');
     const description = req.body.description || '';
-    const category = req.body.category || 'other';
+    // Normalize category to lowercase so enum validation never silently fails
+    const rawCategory = (req.body.category || 'other').toLowerCase().trim().replace(/ /g, '_');
+    const validCategories = ['income_support', 'infrastructure', 'energy', 'insurance', 'credit', 'other'];
+    const category = validCategories.includes(rawCategory) ? rawCategory : 'other';
 
     // Check if scheme already exists to overwrite it
     const existingScheme = await Scheme.findOne({ name: schemeName });
@@ -111,6 +114,9 @@ router.post(
     await SchemeChunk.insertMany(chunkDocs);
 
     logger.info(`PDF ingestion complete: ${schemeName} → ${totalChunks} chunks stored`);
+
+    // Clear the cached scheme list so the new scheme appears immediately
+    apicache.clear('/api/schemes');
 
     res.status(201).json({
       success: true,
@@ -200,6 +206,9 @@ router.delete(
     }
 
     logger.info(`Scheme deleted: ${scheme.name} (${deletedChunks.deletedCount} chunks removed)`);
+
+    // Clear the cached scheme list
+    apicache.clear('/api/schemes');
 
     res.json({
       success: true,
