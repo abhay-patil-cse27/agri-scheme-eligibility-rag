@@ -419,7 +419,7 @@ function ProofCard({ result }) {
       </div>
 
       {/* 2. AI Analysis Box */}
-      <div className="glass-card" style={{ padding: '28px', marginBottom: '20px', borderTop: '4px solid', borderTopColor: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)', background: 'rgba(17, 17, 24, 0.95)' }}>
+      <div className="glass-card" style={{ padding: '28px', marginBottom: '20px', borderTop: '4px solid', borderTopColor: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)', background: 'var(--bg-card)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Sparkles size={18} style={{ color: 'var(--accent-indigo)' }} />
@@ -431,9 +431,9 @@ function ProofCard({ result }) {
             onClick={toggleSpeech}
             data-html2canvas-ignore="true"
             style={{ 
-              background: isSpeaking ? 'var(--accent-indigo)' : 'rgba(99, 102, 241, 0.15)',
+              background: isSpeaking ? 'var(--accent-indigo)' : 'var(--bg-glass)',
               color: isSpeaking ? 'white' : 'var(--accent-indigo)',
-              border: 'none', padding: '6px 12px', borderRadius: '20px',
+              border: '1px solid var(--border-color)', padding: '6px 12px', borderRadius: '20px',
               fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s'
             }}
           >
@@ -476,8 +476,8 @@ function ProofCard({ result }) {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {result.requiredDocuments.map((doc, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ width: '20px', height: '20px', borderRadius: '6px', background: 'rgba(99, 102, 241, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', background: 'var(--bg-glass)', borderRadius: '10px', border: '1px solid var(--border-glass)' }}>
+                  <div style={{ width: '20px', height: '20px', borderRadius: '6px', background: 'var(--bg-glass)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-glow)' }}>
                     <CheckCircle2 size={12} style={{ color: 'var(--accent-indigo)' }} />
                   </div>
                   <span style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 500 }}>{doc}</span>
@@ -524,9 +524,9 @@ function ProofCard({ result }) {
               )}
               {result.officialWebsite && (
                 <a href={result.officialWebsite.startsWith('http') ? result.officialWebsite : `https://${result.officialWebsite}`} target="_blank" rel="noreferrer" 
-                   style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(99, 102, 241, 0.1)', padding: '6px 12px', borderRadius: '8px', transition: 'all 0.2s' }}
-                   onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                   onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'; e.currentTarget.style.transform = 'translateY(0)' }}>
+                   style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-glass)', padding: '6px 12px', borderRadius: '8px', transition: 'all 0.2s', border: '1px solid var(--border-color)' }}
+                   onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--border-glow)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+                   onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.transform = 'translateY(0)' }}>
                   <Globe size={14} /> Visit Official Portal
                 </a>
               )}
@@ -538,7 +538,7 @@ function ProofCard({ result }) {
       {/* 5. Alternative Suggestions Prompt for Ineligible Farmers */}
       {!isEligible && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} style={{ marginTop: '24px' }}>
-          <div className="glass-card" style={{ padding: '24px', borderLeft: '4px solid var(--accent-violet)', background: 'rgba(139, 92, 246, 0.05)', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+          <div className="glass-card" style={{ padding: '24px', borderLeft: '4px solid var(--accent-violet)', background: 'var(--bg-glass)', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
             <div style={{ 
               width: '48px', height: '48px', borderRadius: '12px', background: 'var(--gradient-primary)', 
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
