@@ -2,7 +2,10 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const apicache = require('apicache');
 const router = express.Router();
+
+const cache = apicache.middleware;
 
 const Scheme = require('../models/Scheme');
 const SchemeChunk = require('../models/SchemeChunk');
@@ -129,6 +132,7 @@ router.post(
 router.get(
   '/',
   protect,
+  cache('5 minutes'),
   asyncHandler(async (req, res) => {
     const schemes = await Scheme.find({ isActive: true })
       .select('-__v')

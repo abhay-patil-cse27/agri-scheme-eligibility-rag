@@ -4,6 +4,29 @@ const logger = require('../config/logger');
 
 const groq = new Groq({ apiKey: config.groqApiKey });
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Execute a function with exponential backoff retries (useful for 429 Too Many Requests)
+ */
+async function withRetry(fn, maxRetries = 3, baseDelay = 2000) {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      return await fn();
+    } catch (error) {
+      if ((error.status === 429 || error.status >= 500) && attempt < maxRetries - 1) {
+        attempt++;
+        const delay = baseDelay * Math.pow(2, attempt - 1);
+        logger.warn(`API Rate Limit hit (429/50x). Retrying attempt ${attempt}/${maxRetries} in ${delay}ms...`);
+        await sleep(delay);
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
 /**
  * System prompt enforcing citation-backed, structured JSON output.
  * This is the core of the RAG eligibility engine.
@@ -88,10 +111,10 @@ FARMER PROFILE:
 OFFICIAL DOCUMENT EXCERPTS:
 ${documentContext}
 
-Based ONLY on the above document excerpts, determine if this farmer is eligible for ${schemeName}. Return your answer as the specified JSON structure.`;
+Base Based ONLY on the above document excerpts, determine if this farmer is eligible for ${schemeName}. Return your answer as the specified JSON structure.`;
 
   try {
-    const completion = await groq.chat.completions.create({
+    const completion = await withRetry(() => groq.chat.completions.create({
       model: config.groqModel,
       messages: [
         { role: 'system', content: ELIGIBILITY_SYSTEM_PROMPT },
@@ -100,7 +123,7 @@ Based ONLY on the above document excerpts, determine if this farmer is eligible 
       temperature: 0.1,
       max_tokens: 1024,
       response_format: { type: 'json_object' },
-    });
+    }));
 
     const rawResponse = completion.choices[0]?.message?.content;
     if (!rawResponse) {
@@ -177,10 +200,10 @@ RESPOND ONLY WITH THIS JSON STRUCTURE:
   "hasIrrigationAccess": true_or_false_or_null
 }
 
-Extract whatever information is available. Set null for missing fields.`;
+  Extract whatever information is available. Set null for missing fields.`;
 
   try {
-    const completion = await groq.chat.completions.create({
+    const completion = await withRetry(() => groq.chat.completions.create({
       model: config.groqModel,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -189,7 +212,7 @@ Extract whatever information is available. Set null for missing fields.`;
       temperature: 0.1,
       max_tokens: 512,
       response_format: { type: 'json_object' },
-    });
+    }));
 
     const result = JSON.parse(completion.choices[0]?.message?.content || '{}');
     logger.info('Profile extracted from transcript successfully');
@@ -208,11 +231,11 @@ Extract whatever information is available. Set null for missing fields.`;
 async function transcribeAudio(filePath) {
   const fs = require('fs');
   try {
-    const transcription = await groq.audio.transcriptions.create({
+    const transcription = await withRetry(() => groq.audio.transcriptions.create({
       file: fs.createReadStream(filePath),
       model: "whisper-large-v3-turbo",
       response_format: "json",
-    });
+    }));
     
     logger.info('Audio transcribed successfully');
     return transcription.text;

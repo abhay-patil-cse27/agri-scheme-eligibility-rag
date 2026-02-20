@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const compression = require('compression');
 
 // Load config first (validates env vars)
 const config = require('./config/env');
@@ -28,6 +29,7 @@ app.use('/api/schemes/docs', express.static(path.join(__dirname, '..', 'data', '
 
 // ── Security & Parsing Middleware ─────────────────────────
 app.use(helmet());
+app.use(compression());
 app.use(cors({
   origin: config.nodeEnv === 'production'
     ? ['https://your-frontend.vercel.app']
