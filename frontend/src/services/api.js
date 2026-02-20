@@ -19,6 +19,10 @@ api.interceptors.request.use((config) => {
 export const login = (email, password) => api.post('/auth/login', { email, password }).then(r => r.data);
 export const register = (name, email, password) => api.post('/auth/register', { name, email, password }).then(r => r.data);
 export const getMe = () => api.get('/auth/me').then(r => r.data);
+export const updateDetails = (data) => api.put('/auth/updatedetails', data).then(r => r.data);
+export const updatePassword = (data) => api.put('/auth/updatepassword', data).then(r => r.data);
+export const forgotPassword = (email) => api.post('/auth/forgotpassword', { email }).then(r => r.data);
+export const resetPassword = (token, password) => api.put(`/auth/resetpassword/${token}`, { password }).then(r => r.data);
 
 // ── Schemes ───────────────────────────────
 export const getSchemes = () => api.get('/schemes').then((r) => r.data);

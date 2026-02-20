@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Users,
   LogOut,
-  Bell
+  Bell,
+  Settings
 } from 'lucide-react';
 
 const navItems = [
@@ -21,6 +22,7 @@ const navItems = [
   { to: '/schemes', icon: FileText, label: 'Schemes' },
   { to: '/farmers', icon: Users, label: 'Farmers' },
   { to: '/history', icon: History, label: 'History' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function Sidebar() {
