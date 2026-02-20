@@ -3,7 +3,9 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import NotificationCenter from '../NotificationCenter';
+import LanguageSwitcher from '../common/LanguageSwitcher';
 import {
   LayoutDashboard,
   Search,
@@ -32,6 +34,7 @@ export default function Sidebar() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   
   // Filter navigation items based on role
@@ -77,11 +80,11 @@ export default function Sidebar() {
         </div>
         <div>
           <h1 style={{ fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            <span className="gradient-text">Niti</span>
-            <span style={{ color: 'var(--text-primary)' }}>Setu</span>
+            <span className="gradient-text">{t('app_name', 'Niti')}</span>
+            <span style={{ color: 'var(--text-primary)' }}>{t('app_name_suffix', '-Setu')}</span>
           </h1>
           <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '2px' }}>
-            Scheme Eligibility Engine
+            {t('tagline')}
           </p>
         </div>
       </div>
@@ -129,7 +132,7 @@ export default function Sidebar() {
                     flex: 1,
                   }}
                 >
-                  {item.label}
+                  {t(`sb_${item.label.toLowerCase().replace(' ', '_')}`, item.label)}
                 </span>
                 {isActive && (
                   <ChevronRight size={16} style={{ color: 'var(--accent-indigo)' }} />
@@ -157,7 +160,7 @@ export default function Sidebar() {
             </div>
             <div style={{ overflow: 'hidden' }}>
               <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{user?.name || 'User'}</p>
-              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{user?.role === 'admin' ? 'Administrator' : 'Farmer Portal'}</p>
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{user?.role === 'admin' ? t('sb_admin', 'Administrator') : t('sb_farmer', 'Farmer Portal')}</p>
             </div>
           </div>
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -166,7 +169,7 @@ export default function Sidebar() {
                 className="btn-secondary"
                 style={{ flex: 1, padding: '8px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer', background: 'rgba(244,63,94,0.1)', color: 'var(--accent-rose)', border: 'none', borderRadius: '8px' }}
               >
-                <LogOut size={14} /> Logout
+                <LogOut size={14} /> {t('sb_logout', 'Logout')}
               </button>
               <button
                 onClick={() => setIsNotifOpen(true)}
@@ -178,6 +181,11 @@ export default function Sidebar() {
                 <Bell size={16} />
               </button>
             </div>
+        </div>
+
+        {/* Language Switcher */}
+        <div style={{ paddingBottom: '4px' }}>
+          <LanguageSwitcher placement="up" />
         </div>
 
         {/* Theme Toggle */}
@@ -203,7 +211,7 @@ export default function Sidebar() {
               }
             </motion.div>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-              {theme === 'light' ? 'Light Mode' : 'Dark Mode'}
+              {theme === 'light' ? t('sb_light_mode', 'Light Mode') : t('sb_dark_mode', 'Dark Mode')}
             </span>
           </div>
           {/* Pill toggle switch */}
@@ -252,7 +260,7 @@ export default function Sidebar() {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <div className="pulse-dot" />
-            <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>System Online</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>{t('sb_system_online', 'System Online')}</span>
           </div>
           <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
             RAG Engine • Groq LLM

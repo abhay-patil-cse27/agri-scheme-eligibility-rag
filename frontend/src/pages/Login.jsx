@@ -5,6 +5,7 @@ import { Mail, Lock, Zap, Loader2, Eye, EyeOff } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -13,6 +14,7 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, googleAuth, user, loading } = useAuth();
   const { addToast } = useToast();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -67,31 +69,31 @@ export default function Login() {
           <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)', marginBottom: '16px' }}>
             <Zap size={24} color="white" />
           </div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: '4px' }}>Welcome Back</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Sign in to Niti-Setu Engine</p>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: '4px' }}>{t('login_title', 'Welcome Back')}</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{t('login_subtitle', 'Sign in to Niti-Setu Engine')}</p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div>
             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '8px' }}>
-              <Mail size={14} /> Email Address
+              <Mail size={14} /> {t('login_email', 'Email Address')}
             </label>
             <input
               type="email" required
               value={email} onChange={(e) => setEmail(e.target.value)}
-              className="input-dark" placeholder="Enter your email"
+              className="input-dark" placeholder={t('login_email_ph', 'Enter your email')}
             />
           </div>
           
           <div>
             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '8px' }}>
-              <Lock size={14} /> Password
+              <Lock size={14} /> {t('login_password', 'Password')}
             </label>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? 'text' : 'password'} required
                 value={password} onChange={(e) => setPassword(e.target.value)}
-                className="input-dark" placeholder="Enter your password"
+                className="input-dark" placeholder={t('login_password_ph', 'Enter your password')}
                 style={{ paddingRight: '40px' }}
               />
               <button
@@ -122,7 +124,7 @@ export default function Login() {
             type="submit" disabled={isSubmitting} className="btn-glow"
             style={{ marginTop: '12px', padding: '14px', width: '100%', display: 'flex', justifyContent: 'center', gap: '8px', fontSize: '1rem' }}
           >
-            {isSubmitting ? <><Loader2 size={20} className="spin" /> Authenticating...</> : 'Sign In'}
+            {isSubmitting ? <><Loader2 size={20} className="spin" /> {t('login_authenticating', 'Authenticating...')}</> : t('btn_signin', 'Sign In')}
           </motion.button>
         </form>
 
@@ -145,9 +147,9 @@ export default function Login() {
         </div>
 
         <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-          <Link to="/forgotpassword" style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s', }}>Forgot your password?</Link>
+          <Link to="/forgotpassword" style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s', }}>{t('login_forgot', 'Forgot your password?')}</Link>
           <p style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Don't have an account? <Link to="/register" style={{ color: 'var(--accent-indigo)', fontWeight: 600, textDecoration: 'none' }}>Register as Farmer</Link>
+            {t('login_no_account', 'Don\'t have an account?')} <Link to="/register" style={{ color: 'var(--accent-indigo)', fontWeight: 600, textDecoration: 'none' }}>{t('btn_register', 'Register')}</Link>
           </p>
         </div>
       </motion.div>

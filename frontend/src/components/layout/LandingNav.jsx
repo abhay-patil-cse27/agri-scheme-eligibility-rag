@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Sprout, Sun, Moon, Menu, X, Globe } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../common/LanguageSwitcher';
 
 const GREEN_GRAD = 'linear-gradient(135deg, #166534 0%, #16a34a 50%, #4ade80 100%)';
 
@@ -72,25 +73,7 @@ export default function LandingNav() {
         {/* Right actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           
-          <div style={{ display: 'flex', alignItems: 'center', background: glass, border: `1px solid ${border}`, borderRadius: '8px', padding: '4px 10px', gap: '6px' }}>
-            <Globe size={14} color={textSec} />
-            <select 
-              value={i18n.language} 
-              onChange={(e) => i18n.changeLanguage(e.target.value)}
-              style={{ background: 'transparent', border: 'none', color: textSec, fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', outline: 'none' }}
-            >
-              <option value="en" style={{color: '#000'}}>EN</option>
-              <option value="hi" style={{color: '#000'}}>हिंदी</option>
-              <option value="mr" style={{color: '#000'}}>मराठी</option>
-              <option value="bn" style={{color: '#000'}}>বাংলা</option>
-              <option value="te" style={{color: '#000'}}>తెలుగు</option>
-              <option value="ta" style={{color: '#000'}}>தமிழ்</option>
-              <option value="gu" style={{color: '#000'}}>ગુજરાતી</option>
-              <option value="kn" style={{color: '#000'}}>ಕನ್ನಡ</option>
-              <option value="ml" style={{color: '#000'}}>മലയാളം</option>
-              <option value="pa" style={{color: '#000'}}>ਪੰਜਾਬੀ</option>
-            </select>
-          </div>
+          <LanguageSwitcher />
 
           <motion.button whileTap={{ scale: 0.9 }} onClick={toggleTheme} title="Toggle theme" style={{
             background: glass, border: `1px solid ${border}`, borderRadius: '8px',

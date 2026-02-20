@@ -26,7 +26,20 @@ const resources = {
       "farmer_profile": "Farmer Profile",
       "check_eligibility": "Check Eligibility",
       "guest_mode": "Guest Mode:",
-      "free_checks_remaining": "free checks remaining"
+      "free_checks_remaining": "free checks remaining",
+      "app_name_suffix": "-Setu",
+      "sb_dashboard": "Dashboard",
+      "sb_eligibility_check": "Eligibility Check",
+      "sb_schemes": "Schemes",
+      "sb_farmers": "Farmers",
+      "sb_history": "History",
+      "sb_settings": "Settings",
+      "sb_admin": "Administrator",
+      "sb_farmer": "Farmer Portal",
+      "sb_logout": "Logout",
+      "sb_light_mode": "Light Mode",
+      "sb_dark_mode": "Dark Mode",
+      "sb_system_online": "System Online"
     }
   },
   hi: {
@@ -51,7 +64,20 @@ const resources = {
       "farmer_profile": "किसान प्रोफ़ाइल",
       "check_eligibility": "पात्रता जांचें",
       "guest_mode": "अतिथि मोड:",
-      "free_checks_remaining": "मुफ्त जांच बाकी"
+      "free_checks_remaining": "मुफ्त जांच बाकी",
+      "app_name_suffix": "-सेतु",
+      "sb_dashboard": "डैशबोर्ड",
+      "sb_eligibility_check": "पात्रता जांच",
+      "sb_schemes": "योजनाएं",
+      "sb_farmers": "किसान",
+      "sb_history": "इतिहास",
+      "sb_settings": "सेटिंग्स",
+      "sb_admin": "प्रशासक",
+      "sb_farmer": "किसान पोर्टल",
+      "sb_logout": "लॉग आउट",
+      "sb_light_mode": "लाइट मोड",
+      "sb_dark_mode": "डार्क मोड",
+      "sb_system_online": "सिस्टम ऑनलाइन"
     }
   },
   mr: {
@@ -76,7 +102,20 @@ const resources = {
       "farmer_profile": "शेतकरी प्रोफाइल",
       "check_eligibility": "पात्रता तपासा",
       "guest_mode": "अतिथी मोड:",
-      "free_checks_remaining": "मोफत तपासणी बाकी"
+      "free_checks_remaining": "मोफत तपासणी बाकी",
+      "app_name_suffix": "-सेतू",
+      "sb_dashboard": "डॅशबोर्ड",
+      "sb_eligibility_check": "पात्रता तपासणी",
+      "sb_schemes": "योजना",
+      "sb_farmers": "शेतकरी",
+      "sb_history": "इतिहास",
+      "sb_settings": "सेटिंग्ज",
+      "sb_admin": "प्रशासक",
+      "sb_farmer": "शेतकरी पोर्टल",
+      "sb_logout": "लॉग आउट",
+      "sb_light_mode": "लाईट मोड",
+      "sb_dark_mode": "डार्क मोड",
+      "sb_system_online": "सिस्टम ऑनलाईन"
     }
   },
   bn: {
@@ -101,7 +140,20 @@ const resources = {
       "farmer_profile": "কৃষকের প্রোফাইল",
       "check_eligibility": "যোগ্যতা যাচাই করুন",
       "guest_mode": "গেস্ট মোড:",
-      "free_checks_remaining": "বিনামূল্যে চেক বাকি"
+      "free_checks_remaining": "বিনামূল্যে চেক বাকি",
+      "app_name_suffix": "-সেতু",
+      "sb_dashboard": "ড্যাশবোর্ড",
+      "sb_eligibility_check": "যোগ্যতা যাচাই",
+      "sb_schemes": "স্কিম",
+      "sb_farmers": "কৃষক",
+      "sb_history": "ইতিহাস",
+      "sb_settings": "সেটিংস",
+      "sb_admin": "প্রশাসক",
+      "sb_farmer": "কৃষক পোর্টাল",
+      "sb_logout": "লগ আউট",
+      "sb_light_mode": "হালকা মোড",
+      "sb_dark_mode": "অন্ধকার মোড",
+      "sb_system_online": "সিস্টেম অনলাইন"
     }
   },
   te: {
@@ -126,7 +178,20 @@ const resources = {
       "farmer_profile": "రైతు ప్రొఫైల్",
       "check_eligibility": "అర్హతను తనిఖీ చేయండి",
       "guest_mode": "గెస్ట్ మోడ్:",
-      "free_checks_remaining": "ఉచిత తనిఖీలు మిగిలి ఉన్నాయి"
+      "free_checks_remaining": "ఉచిత తనిఖీలు మిగిలి ఉన్నాయి",
+      "app_name_suffix": "-సేతు",
+      "sb_dashboard": "డ్యాష్‌బోర్డ్",
+      "sb_eligibility_check": "అర్హత తనిఖీ",
+      "sb_schemes": "పథకాలు",
+      "sb_farmers": "రైతులు",
+      "sb_history": "చరిత్ర",
+      "sb_settings": "సెట్టింగ్‌లు",
+      "sb_admin": "అడ్మినిస్ట్రేటర్",
+      "sb_farmer": "రైతు పోర్టల్",
+      "sb_logout": "లాగ్ అవుట్",
+      "sb_light_mode": "లైట్ మోడ్",
+      "sb_dark_mode": "డార్క్ మోಡ್",
+      "sb_system_online": "సిస్టమ్ ఆన్‌లైన్"
     }
   },
   ta: {
@@ -151,7 +216,20 @@ const resources = {
       "farmer_profile": "விவசாயி விவரக்குறிப்பு",
       "check_eligibility": "தகுதியை சரிபார்க்கவும்",
       "guest_mode": "விருந்தினர் முறை:",
-      "free_checks_remaining": "இலவச சரிபார்ப்புகள் மீதமுள்ளன"
+      "free_checks_remaining": "இலவச சரிபார்ப்புகள் மீதமுள்ளன",
+      "app_name_suffix": "-சேது",
+      "sb_dashboard": "டாஷ்போர்டு",
+      "sb_eligibility_check": "தகுதி சரிபார்ப்பு",
+      "sb_schemes": "திட்டங்கள்",
+      "sb_farmers": "விவசாயிகள்",
+      "sb_history": "வரலாறு",
+      "sb_settings": "அமைப்புகள்",
+      "sb_admin": "நிர்வாகி",
+      "sb_farmer": "விவசாயி போர்டல்",
+      "sb_logout": "வெளியேறு",
+      "sb_light_mode": "லைட் மோட்",
+      "sb_dark_mode": "டார்க் மோட்",
+      "sb_system_online": "சிஸ்டம் ஆன்லைன்"
     }
   },
   gu: {
