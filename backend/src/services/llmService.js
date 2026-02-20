@@ -86,6 +86,19 @@ RESPOND ONLY WITH THIS EXACT JSON STRUCTURE:
   "officialWebsite": "URL or null"
 }`;
 
+const languageMap = {
+  en: 'English',
+  hi: 'Hindi (हिंदी)',
+  mr: 'Marathi (मराठी)',
+  bn: 'Bengali (বাংলা)',
+  te: 'Telugu (తెలుగు)',
+  ta: 'Tamil (தமிழ்)',
+  gu: 'Gujarati (ગુજરાતી)',
+  kn: 'Kannada (ಕನ್ನಡ)',
+  ml: 'Malayalam (മലയാളം)',
+  pa: 'Punjabi (ਪੰਜਾਬੀ)'
+};
+
 /**
  * Check eligibility by sending farmer profile + retrieved document chunks to Groq LLM.
  *
@@ -97,6 +110,7 @@ RESPOND ONLY WITH THIS EXACT JSON STRUCTURE:
  */
 async function checkEligibility(profile, relevantChunks, schemeName, language = 'en') {
   const startTime = Date.now();
+  const targetLangString = languageMap[language] || 'English';
 
   // Build the user prompt with profile and document context
   const documentContext = relevantChunks
@@ -125,7 +139,7 @@ ${documentContext}
 Based ONLY on the above document excerpts, determine if this farmer is eligible for ${schemeName}. Return your answer as the specified JSON structure.
 
 IMPORTANT MULTILINGUAL RULE: 
-You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'benefitAmount', 'paymentFrequency', and the string values inside the 'rejectionExplanation' object into the following target language: **${language === 'hi' ? 'Hindi (हिंदी)' : language === 'mr' ? 'Marathi (मराठी)' : 'English'}**. Keep the JSON keys in English, but output the human-readable text strictly in the target language. Use simple, conversational language suitable for a farmer.`;
+You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'benefitAmount', 'paymentFrequency', and the string values inside the 'rejectionExplanation' object into the following target language: **${targetLangString}**. Keep the JSON keys in English, but output the human-readable text strictly in the target language. Use simple, conversational language suitable for a farmer.`;
 
   try {
     const completion = await withRetry(() => groq.chat.completions.create({
@@ -246,7 +260,7 @@ RESPOND ONLY WITH THIS JSON STRUCTURE:
 async function transcribeAudio(filePath, language = 'en') {
   const fs = require('fs');
   try {
-    const whisperLanguage = language === 'hi' ? 'hi' : language === 'mr' ? 'mr' : 'en';
+    const whisperLanguage = language || 'en';
     const transcription = await withRetry(() => groq.audio.transcriptions.create({
       file: fs.createReadStream(filePath),
       model: "whisper-large-v3-turbo",

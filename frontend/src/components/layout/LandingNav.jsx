@@ -82,6 +82,13 @@ export default function LandingNav() {
               <option value="en" style={{color: '#000'}}>EN</option>
               <option value="hi" style={{color: '#000'}}>हिंदी</option>
               <option value="mr" style={{color: '#000'}}>मराठी</option>
+              <option value="bn" style={{color: '#000'}}>বাংলা</option>
+              <option value="te" style={{color: '#000'}}>తెలుగు</option>
+              <option value="ta" style={{color: '#000'}}>தமிழ்</option>
+              <option value="gu" style={{color: '#000'}}>ગુજરાતી</option>
+              <option value="kn" style={{color: '#000'}}>ಕನ್ನಡ</option>
+              <option value="ml" style={{color: '#000'}}>മലയാളം</option>
+              <option value="pa" style={{color: '#000'}}>ਪੰਜਾਬੀ</option>
             </select>
           </div>
 
