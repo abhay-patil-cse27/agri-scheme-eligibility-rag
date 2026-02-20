@@ -1,29 +1,29 @@
 ﻿@import "tailwindcss";
 
-/* ── Design Tokens (Dark Mode — Default) ── */
+/* ── Design Tokens (Dark Mode — Agricultural Forest) ── */
 :root {
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #111118;
-  --bg-card: rgba(17, 17, 24, 0.8);
-  --bg-glass: rgba(255, 255, 255, 0.03);
-  --border-glass: rgba(255, 255, 255, 0.08);
-  --border-color: rgba(255, 255, 255, 0.1);
-  --border-glow: rgba(99, 102, 241, 0.3);
-  --text-primary: #f0f0f5;
-  --text-secondary: #8b8b9e;
-  --text-muted: #5a5a6e;
-  --accent-indigo: #6366f1;
-  --accent-violet: #8b5cf6;
-  --accent-emerald: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-rose: #f43f5e;
-  --accent-cyan: #06b6d4;
-  --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
-  --gradient-success: linear-gradient(135deg, #10b981, #06b6d4);
-  --gradient-danger: linear-gradient(135deg, #f43f5e, #e11d48);
-  --gradient-bg: radial-gradient(ellipse at top, #1a1a2e 0%, #0a0a0f 50%);
-  --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.15);
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --bg-primary:    #060d06;
+  --bg-secondary:  #0c170c;
+  --bg-card:       rgba(12, 24, 12, 0.85);
+  --bg-glass:      rgba(34, 197, 94, 0.04);
+  --border-glass:  rgba(34, 197, 94, 0.08);
+  --border-color:  rgba(34, 197, 94, 0.1);
+  --border-glow:   rgba(34, 197, 94, 0.28);
+  --text-primary:  #e8f5e0;
+  --text-secondary:#6b9a60;
+  --text-muted:    #3d5e38;
+  --accent-indigo: #4ade80;
+  --accent-violet: #fbbf24;
+  --accent-emerald:#16a34a;
+  --accent-amber:  #f59e0b;
+  --accent-rose:   #f43f5e;
+  --accent-cyan:   #34d399;
+  --gradient-primary: linear-gradient(135deg, #166534, #16a34a, #4ade80);
+  --gradient-success: linear-gradient(135deg, #16a34a, #4ade80);
+  --gradient-danger:  linear-gradient(135deg, #f43f5e, #e11d48);
+  --gradient-bg:   radial-gradient(ellipse at top, #0c170c 0%, #060d06 60%);
+  --shadow-glow:   0 0 30px rgba(34, 197, 94, 0.15);
+  --shadow-card:   0 4px 24px rgba(0, 0, 0, 0.5);
 }
 
 /* ── Light Mode Overrides (Agricultural — Warm Wheat/Earthy) ── */
