@@ -577,7 +577,44 @@ function ProofCard({ result }) {
       )}
 
       {/* 5. Alternative Suggestions Prompt for Ineligible Farmers */}
-      {!isEligible && (
+      {!isEligible && result.suggestions && result.suggestions.length > 0 ? (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} style={{ marginTop: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <Sparkles size={20} style={{ color: 'var(--accent-violet)' }} />
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Alternative Schemes You Might Qualify For</h4>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {result.suggestions.map((suggestion, idx) => (
+              <div key={idx} className="glass-card" style={{ 
+                padding: '24px', 
+                borderLeft: suggestion.eligible ? '4px solid var(--accent-emerald)' : '4px solid var(--accent-amber)', 
+                background: 'var(--bg-glass)' 
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div>
+                    <h5 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>{suggestion.schemeName}</h5>
+                    <span className={`badge ${suggestion.eligible ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.7rem' }}>
+                      {suggestion.eligible ? 'High Match' : 'Potential Match'}
+                    </span>
+                  </div>
+                  {suggestion.benefitAmount && (
+                    <div style={{ textAlign: 'right' }}>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 2px 0', fontWeight: 600, textTransform: 'uppercase' }}>Potential Benefit</p>
+                      <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--accent-emerald)', margin: 0 }}>
+                        {suggestion.benefitAmount.startsWith('₹') ? suggestion.benefitAmount : `₹${suggestion.benefitAmount}`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+                  {suggestion.reason}
+                </p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      ) : !isEligible && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} style={{ marginTop: '24px' }}>
           <div className="glass-card" style={{ padding: '24px', borderLeft: '4px solid var(--accent-violet)', background: 'var(--bg-glass)', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
             <div style={{ 

@@ -193,6 +193,12 @@ router.post(
         }
 
         const llmResult = await llmService.checkEligibility(profileData, relevantChunks, scheme.name);
+        
+        let suggestions = [];
+        if (!llmResult.eligible && schemesToCheck.length === 1) {
+          suggestions = await suggestionEngine.findAlternatives(profileData, scheme._id);
+        }
+        
         const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
         
         const officialWebsiteUrl = scheme.officialWebsite || llmResult.officialWebsite;
@@ -204,6 +210,7 @@ router.post(
           ...llmResult,
           officialWebsite: officialWebsiteUrl,
           documentUrl: documentUrl,
+          suggestions: suggestions,
           responseTime: totalResponseTime,
           chunksAnalyzed: relevantChunks.length,
           isPublicCheck: true
