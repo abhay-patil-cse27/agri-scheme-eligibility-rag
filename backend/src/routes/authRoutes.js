@@ -6,6 +6,7 @@ const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorHandler');
 const config = require('../config/env');
 const { protect } = require('../middleware/auth');
+const sendEmail = require('../utils/sendEmail');
 const { OAuth2Client } = require('google-auth-library');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -45,6 +46,21 @@ router.post(
       password,
       role: 'farmer',
     });
+
+    // Send Welcome Email
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Welcome to Niti-Setu',
+        html: `
+          <h2 style="color: #1f2937; margin-top: 0;">Welcome, ${user.name}!</h2>
+          <p style="font-size: 16px; line-height: 1.5;">Your account has been successfully created. You can now log in to the Niti-Setu engine to check your agricultural scheme eligibility, save your history, and manage your profile.</p>
+          <p style="font-size: 16px; line-height: 1.5;">Thank you for joining.</p>
+        `
+      });
+    } catch (err) {
+      console.error('Welcome email could not be sent', err);
+    }
 
     sendTokenResponse(user, 201, res);
   })
@@ -116,6 +132,20 @@ router.put(
       runValidators: true,
     });
 
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Security Alert: Profile Updated',
+        html: `
+          <h2 style="color: #1f2937; margin-top: 0;">Hello, ${user.name}</h2>
+          <p style="font-size: 16px; line-height: 1.5;">Your Niti-Setu profile details (Name/Email) have been successfully updated.</p>
+          <p style="font-size: 16px; line-height: 1.5;">If you did not make this change, please contact an administrator immediately.</p>
+        `
+      });
+    } catch (err) {
+      console.error('Profile update email could not be sent', err);
+    }
+
     res.status(200).json({
       success: true,
       data: user,
@@ -141,6 +171,20 @@ router.put(
     user.password = req.body.newPassword;
     await user.save();
 
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Security Alert: Password Changed',
+        html: `
+          <h2 style="color: #1f2937; margin-top: 0;">Hello, ${user.name}</h2>
+          <p style="font-size: 16px; line-height: 1.5;">Your Niti-Setu account password was just changed successfully.</p>
+          <p style="font-size: 16px; line-height: 1.5; color: #dc2626; font-weight: bold;">If you did not make this change, please contact an administrator immediately as your account may be compromised.</p>
+        `
+      });
+    } catch (err) {
+      console.error('Password update email could not be sent', err);
+    }
+
     sendTokenResponse(user, 200, res);
   })
 );
@@ -161,15 +205,33 @@ router.post(
     // Get reset token
     const resetToken = user.getResetPasswordToken();
 
-    await user.save({ validateBeforeSave: false });
+    // Generate Reset URL
+    const resetUrl = `http://localhost:5173/resetpassword/${resetToken}`;
 
-    // For the MVP, we just return the token directly in the response so the frontend can redirect or the user can copy it.
-    // In production, we would send an actual email containing the link.
-    res.status(200).json({
-      success: true,
-      data: 'Password reset token generated',
-      resetToken: resetToken
-    });
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Password Reset Request',
+        html: `
+          <h2 style="color: #1f2937; margin-top: 0;">Password Reset</h2>
+          <p style="font-size: 16px; line-height: 1.5;">You requested a password reset for your Niti-Setu account. Please click the secure button below to choose a new password.</p>
+          <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; margin: 16px 0; font-size: 16px; color: #ffffff; background-color: #4f46e5; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset Password</a>
+          <p style="font-size: 14px; color: #6b7280; margin-top: 16px;">This link will expire in 10 minutes. If you did not request this, please ignore this email.</p>
+        `
+      });
+
+      res.status(200).json({
+        success: true,
+        data: 'Email sent'
+      });
+    } catch (err) {
+      console.error(err);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+
+      return res.status(500).json({ success: false, error: 'Email could not be sent' });
+    }
   })
 );
 
