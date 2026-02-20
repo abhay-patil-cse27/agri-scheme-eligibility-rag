@@ -4,11 +4,13 @@ import { useLocation } from 'react-router-dom';
 import {
   Mic, MicOff, Search, User, MapPin, Ruler, Sprout, Shield, Wallet,
   Droplets, CheckCircle2, XCircle, AlertCircle, FileText, ChevronDown,
-  Loader2, Sparkles, Quote, ClipboardList, Clock, Globe
+  Loader2, Sparkles, Quote, ClipboardList, Clock, Globe, Download, Volume2, VolumeX
 } from 'lucide-react';
 import { useVoice } from '../hooks/useVoice';
 import { getSchemes, getProfiles, createProfile, checkEligibility, processVoice } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const indianStates = {
   // ── 28 States ────────────────────────────
@@ -289,6 +291,62 @@ const labelStyle = {
 
 /* ── Proof Card (Result) ────────────────── */
 function ProofCard({ result }) {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const { addToast } = useToast();
+
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    addToast('Generating PDF', 'Preparing your Eligibility Proof Card...', 'info');
+    try {
+      const element = document.getElementById(`proof-card-${result.scheme.replace(/\s+/g, '-')}`);
+      if (!element) return;
+      
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#0f172a' });
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${result.scheme.replace(/\s+/g, '_')}_Eligibility.pdf`);
+      addToast('Download Complete', 'Your PDF has been saved successfully', 'success');
+    } catch (error) {
+      console.error('PDF Generation Failed:', error);
+      addToast('Export Failed', 'Could not generate PDF card', 'error');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const toggleSpeech = () => {
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      addToast('Playback Stopped', 'Voice analysis paused', 'info');
+    } else {
+      const textToSpeak = `AI Analysis results for ${result.scheme}. ${result.reason}`;
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      // Optional customization
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      window.speechSynthesis.speak(utterance);
+      setIsSpeaking(true);
+      addToast('Playing Audio', 'Reading AI analysis reasoning...', 'info');
+    }
+  };
+
   if (result.error) {
     return (
       <motion.div
@@ -310,45 +368,78 @@ function ProofCard({ result }) {
 
   return (
     <motion.div
+      id={`proof-card-${result.scheme.replace(/\s+/g, '-')}`}
       initial={{ opacity: 0, scale: 0.95, y: 30 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 100, damping: 20 }}
       style={{ marginBottom: '24px' }}
     >
       {/* 1. Header Banner */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', delay: 0.2 }}
-          style={{
-            width: '64px', height: '64px', borderRadius: '18px',
-            background: isEligible ? 'var(--gradient-success)' : 'var(--gradient-danger)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: isEligible ? '0 8px 24px rgba(16,185,129,0.3)' : '0 8px 24px rgba(244,63,94,0.3)',
-          }}
-        >
-          {isEligible ? <CheckCircle2 size={32} color="white" /> : <XCircle size={32} color="white" />}
-        </motion.div>
-        <div>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '2px', letterSpacing: '-0.02em', color: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
-            {isEligible ? 'Eligible' : 'Not Eligible'}
-          </h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 600 }}>{result.scheme}</span>
-            <span style={{ color: 'var(--text-muted)' }}>•</span>
-            <span className={`badge ${isEligible ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.7rem' }}>
-              Confidence: {result.confidence}
-            </span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', delay: 0.2 }}
+            style={{
+              width: '64px', height: '64px', borderRadius: '18px',
+              background: isEligible ? 'var(--gradient-success)' : 'var(--gradient-danger)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: isEligible ? '0 8px 24px rgba(16,185,129,0.3)' : '0 8px 24px rgba(244,63,94,0.3)',
+            }}
+          >
+            {isEligible ? <CheckCircle2 size={32} color="white" /> : <XCircle size={32} color="white" />}
+          </motion.div>
+          <div>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '2px', letterSpacing: '-0.02em', color: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
+              {isEligible ? 'Eligible' : 'Not Eligible'}
+            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 600 }}>{result.scheme}</span>
+              <span style={{ color: 'var(--text-muted)' }}>•</span>
+              <span className={`badge ${isEligible ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.7rem' }}>
+                Confidence: {result.confidence}
+              </span>
+            </div>
           </div>
         </div>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleDownload}
+          disabled={isDownloading}
+          className="btn-glass"
+          data-html2canvas-ignore="true"
+          style={{ padding: '10px 16px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          {isDownloading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}
+          {isDownloading ? 'Exporting...' : 'Download PDF'}
+        </motion.button>
       </div>
 
       {/* 2. AI Analysis Box */}
       <div className="glass-card" style={{ padding: '28px', marginBottom: '20px', borderTop: '4px solid', borderTopColor: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)', background: 'rgba(17, 17, 24, 0.95)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <Sparkles size={18} style={{ color: 'var(--accent-indigo)' }} />
-          <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.02em', textTransform: 'uppercase' }}>AI Analysis & Reasoning</h4>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Sparkles size={18} style={{ color: 'var(--accent-indigo)' }} />
+            <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.02em', textTransform: 'uppercase' }}>AI Analysis & Reasoning</h4>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={toggleSpeech}
+            data-html2canvas-ignore="true"
+            style={{ 
+              background: isSpeaking ? 'var(--accent-indigo)' : 'rgba(99, 102, 241, 0.15)',
+              color: isSpeaking ? 'white' : 'var(--accent-indigo)',
+              border: 'none', padding: '6px 12px', borderRadius: '20px',
+              fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.2s'
+            }}
+          >
+            {isSpeaking ? <VolumeX size={14} /> : <Volume2 size={14} />}
+            {isSpeaking ? 'Stop Audio' : 'Listen'}
+          </motion.button>
         </div>
         <p style={{ fontSize: '1.05rem', color: 'var(--text-primary)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
           {result.reason}
