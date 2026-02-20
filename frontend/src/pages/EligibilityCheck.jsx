@@ -273,7 +273,7 @@ function ProfileForm({ initialData, onSubmit, loading }) {
         whileTap={{ scale: 0.98 }}
         type="submit"
         className="btn-glow"
-        disabled={loading || !form.name || !form.state}
+        disabled={loading}
         style={{ marginTop: '24px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
       >
         {loading ? <Loader2 size={18} className="spin" /> : <Search size={18} />}
