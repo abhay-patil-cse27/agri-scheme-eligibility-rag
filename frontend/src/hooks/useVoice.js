@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { transcribeAudio } from '../services/api';
 
-export function useVoice() {
+export function useVoice(language = 'en') {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState(null);
@@ -41,7 +41,7 @@ export function useVoice() {
           mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
 
           try {
-            const result = await transcribeAudio(audioBlob);
+            const result = await transcribeAudio(audioBlob, language);
             if (result.success) {
               setTranscript(result.data.transcript);
               resolve(result.data.extractedProfile);
@@ -58,7 +58,7 @@ export function useVoice() {
         resolve(null);
       }
     });
-  }, [isListening]);
+  }, [isListening, language]);
 
   const resetTranscript = useCallback(() => {
     setTranscript('');

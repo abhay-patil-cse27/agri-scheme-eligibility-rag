@@ -58,7 +58,8 @@ const indianStates = {
 
 /* ── Voice Input Section ────────────────── */
 function VoiceInput({ onProfileExtracted }) {
-  const { isListening, transcript, error: voiceError, startListening, stopListening, resetTranscript } = useVoice();
+  const { t, i18n } = useTranslation();
+  const { isListening, transcript, error: voiceError, startListening, stopListening, resetTranscript } = useVoice(i18n.language);
   const [processing, setProcessing] = useState(false);
   const { addToast } = useToast();
 

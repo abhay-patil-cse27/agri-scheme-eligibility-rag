@@ -79,7 +79,8 @@ router.post(
     logger.info(`Audio file received: ${req.file.originalname} (${req.file.size} bytes) → ${newPath}`);
 
     try {
-      const transcript     = await llmService.transcribeAudio(newPath);
+      const { language = 'en' } = req.body;
+      const transcript     = await llmService.transcribeAudio(newPath, language);
       const extractedProfile = await llmService.extractProfileFromTranscript(transcript);
 
       const extractedFields = Object.entries(extractedProfile)

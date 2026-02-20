@@ -238,15 +238,18 @@ RESPOND ONLY WITH THIS JSON STRUCTURE:
 /**
  * Transcribe audio using Groq's Whisper API
  * @param {string} filePath - Path to the audio file
+ * @param {string} [language='en'] - Regional language code (e.g. 'hi', 'mr')
  * @returns {string} Trancribed text
  */
-async function transcribeAudio(filePath) {
+async function transcribeAudio(filePath, language = 'en') {
   const fs = require('fs');
   try {
+    const whisperLanguage = language === 'hi' ? 'hi' : language === 'mr' ? 'mr' : 'en';
     const transcription = await withRetry(() => groq.audio.transcriptions.create({
       file: fs.createReadStream(filePath),
       model: "whisper-large-v3-turbo",
       response_format: "json",
+      language: whisperLanguage
     }));
     
     logger.info('Audio transcribed successfully');

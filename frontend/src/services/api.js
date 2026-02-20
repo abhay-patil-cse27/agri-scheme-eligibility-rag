@@ -68,9 +68,10 @@ export const deleteEligibilityCheck = (id) =>
 export const processVoice = (transcript) =>
   api.post('/voice/process', { transcript }).then((r) => r.data);
 
-export const transcribeAudio = (audioBlob) => {
+export const transcribeAudio = (audioBlob, language = 'en') => {
   const formData = new FormData();
   formData.append('audio', audioBlob, 'recording.webm');
+  formData.append('language', language);
   return api.post('/voice/transcribe', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout: 60000,
@@ -79,5 +80,8 @@ export const transcribeAudio = (audioBlob) => {
 
 // ── Health ────────────────────────────────
 export const getHealth = () => api.get('/health').then((r) => r.data);
+
+// ── Analytics ─────────────────────────────
+export const getAnalytics = () => api.get('/analytics').then((r) => r.data);
 
 export default api;
