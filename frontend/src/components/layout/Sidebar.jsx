@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import NotificationCenter from '../NotificationCenter';
 import {
   LayoutDashboard,
@@ -13,7 +14,9 @@ import {
   Users,
   LogOut,
   Bell,
-  Settings
+  Settings,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const navItems = [
@@ -28,6 +31,7 @@ const navItems = [
 export default function Sidebar() {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   
   // Filter navigation items based on role
@@ -170,6 +174,67 @@ export default function Sidebar() {
                 <Bell size={16} />
               </button>
             </div>
+        </div>
+
+        {/* Theme Toggle */}
+        <div
+          style={{
+            padding: '12px 16px',
+            borderRadius: '12px',
+            background: 'var(--bg-glass)',
+            border: '1px solid var(--border-glass)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <motion.div
+              animate={{ rotate: theme === 'light' ? 0 : 180 }}
+              transition={{ duration: 0.4 }}
+            >
+              {theme === 'light'
+                ? <Sun size={16} style={{ color: 'var(--accent-amber)' }} />
+                : <Moon size={16} style={{ color: 'var(--accent-indigo)' }} />
+              }
+            </motion.div>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+              {theme === 'light' ? 'Light Mode' : 'Dark Mode'}
+            </span>
+          </div>
+          {/* Pill toggle switch */}
+          <button
+            onClick={toggleTheme}
+            style={{
+              position: 'relative',
+              width: '44px',
+              height: '24px',
+              borderRadius: '100px',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              background: theme === 'light'
+                ? 'rgba(99, 102, 241, 0.7)'
+                : 'rgba(99, 102, 241, 0.3)',
+              transition: 'background 0.3s ease',
+              flexShrink: 0,
+            }}
+            title="Toggle Theme"
+          >
+            <motion.div
+              animate={{ x: theme === 'light' ? 22 : 2 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              style={{
+                position: 'absolute',
+                top: '3px',
+                width: '18px',
+                height: '18px',
+                borderRadius: '50%',
+                background: 'white',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+              }}
+            />
+          </button>
         </div>
 
         {/* System Status */}

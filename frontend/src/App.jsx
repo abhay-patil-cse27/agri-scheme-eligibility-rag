@@ -14,11 +14,13 @@ import ResetPassword from './pages/ResetPassword';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ToastContainer } from './components/Toast';
 import './index.css';
 
 export default function App() {
   return (
+    <ThemeProvider>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <AuthProvider>
       <ToastProvider>
@@ -60,5 +62,6 @@ export default function App() {
       </ToastProvider>
     </AuthProvider>
     </GoogleOAuthProvider>
+    </ThemeProvider>
   );
 }
