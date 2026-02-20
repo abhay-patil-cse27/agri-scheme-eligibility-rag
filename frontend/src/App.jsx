@@ -16,7 +16,7 @@ import ResetPassword from './pages/ResetPassword';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { ToastContainer } from './components/Toast';
 import './index.css';
 
@@ -40,10 +40,21 @@ function AppShell() {
   );
 }
 
-/* ── Public auth pages (with shared landing nav) ── */
+/* ── Public auth pages (with shared landing nav + agricultural background) ── */
 function AuthShell() {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const bg = isDark
+    ? 'radial-gradient(ellipse at top, #0c170c 0%, #060d06 70%)'
+    : 'linear-gradient(160deg, #faf7ee 0%, #f2ead8 45%, #f7f2e4 100%)';
+  const dotColor = isDark ? 'rgba(34,197,94,0.05)' : 'rgba(101,67,33,0.07)';
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: bg,
+      backgroundImage: `radial-gradient(circle, ${dotColor} 1px, transparent 1px), ${bg}`,
+      backgroundSize: '28px 28px, 100% 100%',
+    }}>
       <LandingNav />
       <Outlet />
     </div>

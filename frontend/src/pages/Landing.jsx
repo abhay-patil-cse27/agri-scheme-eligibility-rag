@@ -12,23 +12,24 @@ import {
 
 /* ─── Agricultural color system ─────────────────────────── */
 const C = (isDark) => ({
-  bg:         isDark ? '#060d06'                   : '#f6faf2',
-  bg2:        isDark ? '#0c170c'                   : '#eef7e8',
-  bgCard:     isDark ? 'rgba(12,24,12,0.92)'       : 'rgba(255,255,252,0.97)',
-  bgGlass:    isDark ? 'rgba(34,197,94,0.05)'      : 'rgba(22,101,52,0.05)',
-  border:     isDark ? 'rgba(34,197,94,0.12)'      : 'rgba(22,101,52,0.12)',
-  borderGlow: isDark ? 'rgba(34,197,94,0.3)'       : 'rgba(22,101,52,0.25)',
-  text:       isDark ? '#e8f5e0'                   : '#0f2010',
-  textSec:    isDark ? '#6b9a60'                   : '#3a5e30',
-  textMute:   isDark ? '#3d5e38'                   : '#7a9a70',
-  navBg:      isDark ? 'rgba(6,13,6,0.94)'         : 'rgba(246,250,242,0.96)',
+  bg:         isDark ? '#060d06'                      : '#faf7ee',
+  bg2:        isDark ? '#0c170c'                      : '#f2ead8',
+  bgCard:     isDark ? 'rgba(12,24,12,0.92)'          : 'rgba(255,253,244,0.97)',
+  bgGlass:    isDark ? 'rgba(34,197,94,0.05)'         : 'rgba(101,67,33,0.07)',
+  border:     isDark ? 'rgba(34,197,94,0.12)'         : 'rgba(101,67,33,0.18)',
+  borderGlow: isDark ? 'rgba(34,197,94,0.3)'          : 'rgba(22,101,52,0.32)',
+  text:       isDark ? '#e8f5e0'                      : '#1a2a0e',
+  textSec:    isDark ? '#6b9a60'                      : '#3d5c28',
+  textMute:   isDark ? '#3d5e38'                      : '#8a7750',
+  navBg:      isDark ? 'rgba(6,13,6,0.94)'            : 'rgba(250,247,238,0.97)',
+  sectionAlt: isDark ? 'rgba(255,255,255,0.025)'      : 'rgba(101,67,33,0.055)',
 });
 
 const GREEN_GRAD  = 'linear-gradient(135deg, #166534 0%, #16a34a 50%, #4ade80 100%)';
 const GOLD_GRAD   = 'linear-gradient(135deg, #92400e 0%, #ca8a04 60%, #fbbf24 100%)';
-const HERO_GRAD   = (isDark) => isDark
+const HERO_GRAD = (isDark) => isDark
   ? 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(22,163,74,0.22) 0%, rgba(6,13,6,0) 70%)'
-  : 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(22,163,74,0.12) 0%, rgba(246,250,242,0) 70%)';
+  : 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(180,120,40,0.13) 0%, rgba(250,247,238,0) 70%)';
 
 const FU = { hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } } };
 const S  = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
@@ -383,7 +384,7 @@ export default function Landing() {
       </InView>
 
       {/* ══ Footer ══ */}
-      <footer style={{ borderTop: `1px solid ${c.border}`, background: isDark ? '#060d06' : '#edf5e8', padding: '36px max(28px, calc((100vw - 1180px)/2)) 28px' }}>
+      <footer style={{ borderTop: `1px solid ${c.border}`, background: isDark ? '#060d06' : '#ede6d0', padding: '36px max(28px, calc((100vw - 1180px)/2)) 28px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px', marginBottom: '28px' }}>
           <div style={{ maxWidth: '280px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
