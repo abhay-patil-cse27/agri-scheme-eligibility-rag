@@ -375,7 +375,7 @@ export default function Landing() {
                 Start Free Check <ArrowRight size={17} />
               </motion.button>
             </Link>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+            <a href="https://github.com/abhay-patil-cse27/agri-scheme-eligibility-rag" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
               <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} style={{
                 background: c.bgCard, color: c.text, border: `1px solid ${c.border}`,
                 borderRadius: '12px', padding: '13px 30px', fontSize: '1rem', fontWeight: 600,
