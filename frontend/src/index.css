@@ -157,14 +157,14 @@ body {
   font-size: 0.95rem;
   letter-spacing: 0.01em;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 15px rgba(22, 163, 74, 0.35);
   position: relative;
   overflow: hidden;
 }
 
 .btn-glow:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 8px 30px rgba(22, 163, 74, 0.55);
 }
 
 .btn-glow:active {
@@ -220,9 +220,9 @@ body {
 .shimmer {
   background: linear-gradient(
     90deg,
-    var(--bg-glass) 25%,
-    rgba(255, 255, 255, 0.06) 50%,
-    var(--bg-glass) 75%
+    var(--bg-secondary) 25%,
+    var(--bg-glass) 50%,
+    var(--bg-secondary) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
@@ -264,7 +264,7 @@ body {
 
 .input-dark:focus {
   border-color: var(--accent-indigo);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 3px var(--border-glow);
 }
 
 .input-dark::placeholder {
@@ -294,7 +294,7 @@ body {
 
 .select-dark:focus {
   border-color: var(--accent-indigo);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 3px var(--border-glow);
 }
 
 /* ── Badge ─────────────────────────────── */
@@ -322,9 +322,9 @@ body {
 }
 
 .badge-info {
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(22, 163, 74, 0.12);
   color: var(--accent-indigo);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(22, 163, 74, 0.22);
 }
 
 .badge-warning {
