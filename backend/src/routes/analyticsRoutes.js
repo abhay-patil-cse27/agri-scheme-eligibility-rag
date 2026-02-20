@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const EligibilityCheck = require('../models/EligibilityCheck');
 const FarmerProfile = require('../models/FarmerProfile');
 const Scheme = require('../models/Scheme');
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 
 /**
@@ -15,7 +15,7 @@ const { asyncHandler } = require('../middleware/errorHandler');
 router.get(
   '/',
   protect,
-  adminOnly,
+  authorize('admin'),
   asyncHandler(async (req, res) => {
     // 1. Overall Stats
     const totalSchemes = await Scheme.countDocuments();
