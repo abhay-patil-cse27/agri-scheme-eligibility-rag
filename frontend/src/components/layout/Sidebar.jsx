@@ -88,7 +88,10 @@ export default function Sidebar() {
       {/* Navigation */}
       <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
         {filteredNavItems.map((item) => {
-          const isActive = location.pathname === item.to;
+          // For dashboard root, match exactly; for sub-routes match exact path
+          const isActive = item.to === '/dashboard/'
+            ? location.pathname === '/dashboard' || location.pathname === '/dashboard/'
+            : location.pathname === item.to || location.pathname.startsWith(item.to + '/');
           return (
             <NavLink
               key={item.to}
