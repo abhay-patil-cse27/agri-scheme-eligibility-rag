@@ -34,6 +34,10 @@ const schemeSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    officialWebsite: {
+      type: String,
+      default: '',
+    },
     version: {
       type: String,
       default: '1.0',

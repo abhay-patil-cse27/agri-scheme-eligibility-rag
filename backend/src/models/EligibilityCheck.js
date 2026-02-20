@@ -37,7 +37,16 @@ const eligibilityCheckSchema = new mongoose.Schema(
     citationSource: {
       page: { type: Number, default: null },
       section: { type: String, default: '' },
+      subsection: { type: String, default: '' },
       paragraph: { type: Number, default: null },
+    },
+    officialWebsite: {
+      type: String,
+      default: '',
+    },
+    documentUrl: {
+      type: String,
+      default: '',
     },
     benefitAmount: {
       type: Number,

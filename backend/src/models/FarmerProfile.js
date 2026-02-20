@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 
 const farmerProfileSchema = new mongoose.Schema(
   {
+    age: {
+      type: Number,
+      required: [true, 'Age is required'],
+      min: [18, 'Age must be at least 18'],
+      max: [120, 'Age must be valid'],
+    },
     name: {
       type: String,
       required: [true, 'Farmer name is required'],
@@ -34,8 +40,8 @@ const farmerProfileSchema = new mongoose.Schema(
     category: {
       type: String,
       enum: {
-        values: ['General', 'SC', 'ST', 'OBC'],
-        message: 'Category must be General, SC, ST, or OBC',
+        values: ['General', 'SC', 'ST', 'OBC', 'EWS', 'Minority'],
+        message: 'Category must be General, SC, ST, OBC, EWS, or Minority',
       },
       required: [true, 'Social category is required'],
     },
@@ -51,6 +57,12 @@ const farmerProfileSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    }
   },
   {
     timestamps: true,

@@ -18,8 +18,13 @@ const schemeRoutes = require('./routes/schemeRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const eligibilityRoutes = require('./routes/eligibilityRoutes');
 const voiceRoutes = require('./routes/voiceRoutes');
+const path = require('path');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
+
+// Serve scheme documents statically
+app.use('/api/schemes/docs', express.static(path.join(__dirname, '..', 'data', 'schemes')));
 
 // ── Security & Parsing Middleware ─────────────────────────
 app.use(helmet());
@@ -58,6 +63,7 @@ app.use('/api/schemes', schemeRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/eligibility', eligibilityRoutes);
 app.use('/api/voice', voiceRoutes);
+app.use('/api/auth', authRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────
 app.use((req, res) => {

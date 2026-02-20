@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 
 const FarmerProfile = require('../models/FarmerProfile');
+const EligibilityCheck = require('../models/EligibilityCheck');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { validateProfile, validateObjectId } = require('../middleware/validators');
+const { protect, authorize } = require('../middleware/auth');
 
 /**
  * POST /api/profiles
@@ -11,10 +13,12 @@ const { validateProfile, validateObjectId } = require('../middleware/validators'
  */
 router.post(
   '/',
+  protect,
   validateProfile,
   asyncHandler(async (req, res) => {
     const profileData = {
       name: req.body.name,
+      age: req.body.age,
       state: req.body.state,
       district: req.body.district,
       landHolding: req.body.landHolding,
@@ -22,6 +26,7 @@ router.post(
       category: req.body.category,
       annualIncome: req.body.annualIncome || null,
       hasIrrigationAccess: req.body.hasIrrigationAccess || false,
+      userId: req.user.id,
     };
 
     const profile = await FarmerProfile.create(profileData);
@@ -39,19 +44,25 @@ router.post(
  */
 router.get(
   '/',
+  protect,
   asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 20;
     const skip = (page - 1) * limit;
 
+    const query = { isActive: true };
+    if (req.user.role === 'farmer') {
+      query.userId = req.user.id;
+    }
+
     const [profiles, total] = await Promise.all([
-      FarmerProfile.find({ isActive: true })
+      FarmerProfile.find(query)
         .select('-__v')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      FarmerProfile.countDocuments({ isActive: true }),
+      FarmerProfile.countDocuments(query),
     ]);
 
     res.json({
@@ -71,9 +82,14 @@ router.get(
  */
 router.get(
   '/:id',
+  protect,
   validateObjectId,
   asyncHandler(async (req, res) => {
-    const profile = await FarmerProfile.findById(req.params.id).select('-__v').lean();
+    const query = { _id: req.params.id };
+    if (req.user.role === 'farmer') {
+      query.userId = req.user.id;
+    }
+    const profile = await FarmerProfile.findOne(query).select('-__v').lean();
 
     if (!profile) {
       return res.status(404).json({ success: false, error: 'Profile not found' });
@@ -89,10 +105,11 @@ router.get(
  */
 router.put(
   '/:id',
+  protect,
   validateObjectId,
   asyncHandler(async (req, res) => {
     const allowedFields = [
-      'name', 'state', 'district', 'landHolding',
+      'name', 'age', 'state', 'district', 'landHolding',
       'cropType', 'category', 'annualIncome', 'hasIrrigationAccess',
     ];
 
@@ -103,8 +120,13 @@ router.put(
       }
     }
 
+    const query = { _id: req.params.id };
+    if (req.user.role === 'farmer') {
+      query.userId = req.user.id;
+    }
+
     const profile = await FarmerProfile.findOneAndUpdate(
-      { _id: req.params.id },
+      query,
       updateData,
       { new: true, runValidators: true }
     ).select('-__v');
@@ -114,6 +136,35 @@ router.put(
     }
 
     res.json({ success: true, data: profile });
+  })
+);
+
+/**
+ * DELETE /api/profiles/:id
+ * Delete a farmer profile and all associated eligibility checks.
+ */
+router.delete(
+  '/:id',
+  protect,
+  validateObjectId,
+  asyncHandler(async (req, res) => {
+    const profile = await FarmerProfile.findById(req.params.id);
+
+    if (!profile) {
+      return res.status(404).json({ success: false, error: 'Profile not found' });
+    }
+
+    if (req.user.role === 'farmer' && profile.userId.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Not authorized to delete this profile' });
+    }
+
+    // Delete associated eligibility checks first
+    await EligibilityCheck.deleteMany({ farmerId: req.params.id });
+    
+    // Delete the profile
+    await FarmerProfile.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true, data: { message: 'Profile and history deleted successfully' } });
   })
 );
 

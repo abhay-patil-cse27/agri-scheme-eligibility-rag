@@ -15,25 +15,39 @@ STRICT RULES:
 2. You MUST NOT hallucinate or invent information not present in the excerpts.
 3. You MUST provide an exact text citation from the document excerpts to support your decision.
 4. You MUST respond ONLY with valid JSON — no markdown, no explanation outside JSON.
+5. You MUST speak directly to the farmer in a conversational, empathy-driven first-person tone (e.g., "You are eligible for this scheme because your 2 acres of land..."). DO NOT refer to them in the third person ("The farmer is eligible...").
+6. STRICT REQUIRED DOCUMENTS RULES BASED ON SOCIAL CATEGORY:
+    - If Category is 'SC' or 'ST', append exactly "SC/ST Caste Certificate". Do NOT append anything else.
+    - If Category is 'OBC', append exactly "OBC Certificate" AND "Non-Creamy Layer (NCL) Certificate". Do NOT ask for SC/ST certificates.
+    - If Category is 'EWS', append exactly "EWS Income and Asset Certificate".
+    - If Category is 'Minority', append exactly "Minority Community Certificate".
+    - If Category is 'General', do NOT append any category-related certificates.
+7. REALISTIC ASSESSMENT & EXCLUSIONS:
+    - Actively look for exclusion criteria (e.g., income tax payee, pensioner, institutional landholder). If the profile exceeds standard realistic limits (e.g., 40 acres might be too large for small/marginal schemes or indicate high wealth), scrutinize the excerpts heavily.
+    - Be highly conservative. If a scheme (or component) is meant for institutions, primary cooperatives, FPOs, or large-scale industrial infrastructure (e.g., Agri-Infrastructure-Fund, 2MW solar plants), assume an individual standard farmer is NOT ELIGIBLE unless the excerpts explicitly state individual farmers can apply for that *exact* component.
+    - If crucial eligibility parameters clearly required by the scheme are missing from the excerpts, default to NOT ELIGIBLE or reduce confidence, explicitly stating the lack of data.
 
 Your task:
 - Compare the farmer's profile against the scheme's eligibility criteria found in the document excerpts.
 - Determine if the farmer is ELIGIBLE or NOT ELIGIBLE.
-- Provide the exact quote from the document that supports your decision.
+- Provide a highly detailed, explanatory paragraph in the 'reason' field. Address the farmer directly ("You..."). Structure your response with visually distinct bullet points or spacing (using \n) to make it scannable and easy to read. Avoid dense walls of text. Be conversational and highlight EXACTLY which profile parameters matched or failed.
+- Provide the exact quote from the document that supports your decision in the 'citation' field.
 - List all required documents for application.
-- State the benefit amount if mentioned in the excerpts.
+- State the individual benefit amount or loan limit (if mentioned). Do NOT extract the total scheme budget or corpus (e.g., 1 lakh crore total fund) as the benefit amount. If an individual amount is not specified, return null.
 
 RESPOND ONLY WITH THIS EXACT JSON STRUCTURE:
 {
   "eligible": true or false,
   "confidence": "high" or "medium" or "low",
-  "reason": "Clear explanation of why eligible or not, referencing specific criteria",
+  "reason": "Structured, scannable response with \n\n breaks and bullet points (e.g., •) explaining precisely why THEY (using 'You') are eligible or not.",
   "citation": "Exact text quoted from the document excerpts that supports your decision",
   "citationSource": {
     "page": page_number_or_null,
-    "section": "section name if identifiable",
+    "section": "section name if identifiable else null",
+    "subsection": "subsection name if identifiable else null",
     "paragraph": paragraph_number_or_null
   },
+  "officialWebsite": "URL to the official government portal for this scheme if inferable or present in text, else null",
   "benefitAmount": number_or_null,
   "requiredDocuments": ["Document 1", "Document 2"],
   "additionalNotes": "Any other relevant information from the document"
@@ -62,6 +76,7 @@ async function checkEligibility(profile, relevantChunks, schemeName) {
 
 FARMER PROFILE:
 - Name: ${profile.name || 'N/A'}
+- Age: ${profile.age || 'Not specified'}
 - State: ${profile.state}
 - District: ${profile.district}
 - Land Holding: ${profile.landHolding} acres (${profile.landHoldingHectares} hectares)
@@ -128,8 +143,10 @@ function parseResponse(rawResponse) {
       citationSource: {
         page: parsed.citationSource?.page || null,
         section: parsed.citationSource?.section || '',
+        subsection: parsed.citationSource?.subsection || '',
         paragraph: parsed.citationSource?.paragraph || null,
       },
+      officialWebsite: parsed.officialWebsite || '',
       benefitAmount: parsed.benefitAmount || null,
       requiredDocuments: Array.isArray(parsed.requiredDocuments) ? parsed.requiredDocuments : [],
       additionalNotes: parsed.additionalNotes || '',
@@ -150,6 +167,7 @@ async function extractProfileFromTranscript(transcript) {
 RESPOND ONLY WITH THIS JSON STRUCTURE:
 {
   "name": "farmer name or null",
+  "age": number_or_null,
   "state": "state name or null",
   "district": "district name or null",
   "landHolding": number_in_acres_or_null,
@@ -182,7 +200,30 @@ Extract whatever information is available. Set null for missing fields.`;
   }
 }
 
+/**
+ * Transcribe audio using Groq's Whisper API
+ * @param {string} filePath - Path to the audio file
+ * @returns {string} Trancribed text
+ */
+async function transcribeAudio(filePath) {
+  const fs = require('fs');
+  try {
+    const transcription = await groq.audio.transcriptions.create({
+      file: fs.createReadStream(filePath),
+      model: "whisper-large-v3-turbo",
+      response_format: "json",
+    });
+    
+    logger.info('Audio transcribed successfully');
+    return transcription.text;
+  } catch (error) {
+    logger.error('Audio transcription failed:', error.message);
+    throw new Error(`Voice transcription failed: ${error.message}`);
+  }
+}
+
 module.exports = {
   checkEligibility,
   extractProfileFromTranscript,
+  transcribeAudio
 };

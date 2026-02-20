@@ -11,6 +11,7 @@ const embeddingService = require('../services/embeddingService');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { uploadLimiter } = require('../middleware/rateLimiter');
 const { validateObjectId } = require('../middleware/validators');
+const { protect, authorize } = require('../middleware/auth');
 const logger = require('../config/logger');
 
 // Multer config for PDF uploads
@@ -46,6 +47,8 @@ const upload = multer({
  */
 router.post(
   '/upload',
+  protect,
+  authorize('admin'),
   uploadLimiter,
   upload.single('pdf'),
   asyncHandler(async (req, res) => {
@@ -56,6 +59,20 @@ router.post(
     const schemeName = req.body.schemeName || path.basename(req.file.originalname, '.pdf');
     const description = req.body.description || '';
     const category = req.body.category || 'other';
+
+    // Check if scheme already exists to overwrite it
+    const existingScheme = await Scheme.findOne({ name: schemeName });
+    if (existingScheme) {
+      logger.info(`Overwriting existing scheme: ${schemeName}`);
+      await SchemeChunk.deleteMany({ schemeId: existingScheme._id });
+      try {
+        const oldPath = path.join(uploadsDir, existingScheme.sourceFile);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      } catch (e) {
+        logger.error(`Failed to delete old PDF for ${schemeName}: ${e.message}`);
+      }
+      await Scheme.findByIdAndDelete(existingScheme._id);
+    }
 
     logger.info(`Starting PDF ingestion: ${schemeName}`);
 
@@ -111,6 +128,7 @@ router.post(
  */
 router.get(
   '/',
+  protect,
   asyncHandler(async (req, res) => {
     const schemes = await Scheme.find({ isActive: true })
       .select('-__v')
@@ -131,6 +149,7 @@ router.get(
  */
 router.get(
   '/:id',
+  protect,
   validateObjectId,
   asyncHandler(async (req, res) => {
     const scheme = await Scheme.findById(req.params.id).select('-__v').lean();
@@ -154,6 +173,8 @@ router.get(
  */
 router.delete(
   '/:id',
+  protect,
+  authorize('admin'),
   validateObjectId,
   asyncHandler(async (req, res) => {
     const scheme = await Scheme.findById(req.params.id);

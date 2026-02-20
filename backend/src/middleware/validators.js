@@ -19,6 +19,9 @@ function handleValidationErrors(req, res, next) {
  * Validation chain for creating a farmer profile.
  */
 const validateProfile = [
+  body('age')
+    .isInt({ min: 18, max: 120 })
+    .withMessage('Age must be an integer between 18 and 120'),
   body('name')
     .trim()
     .notEmpty()
@@ -32,8 +35,8 @@ const validateProfile = [
     .withMessage('Land holding must be a positive number (in acres)'),
   body('cropType').trim().notEmpty().withMessage('Crop type is required'),
   body('category')
-    .isIn(['General', 'SC', 'ST', 'OBC'])
-    .withMessage('Category must be General, SC, ST, or OBC'),
+    .isIn(['General', 'SC', 'ST', 'OBC', 'EWS', 'Minority'])
+    .withMessage('Category must be General, SC, ST, OBC, EWS, or Minority'),
   body('annualIncome')
     .optional()
     .isFloat({ min: 0 })
@@ -56,9 +59,8 @@ const validateEligibilityCheck = [
     .isMongoId()
     .withMessage('profileId must be a valid MongoDB ObjectId'),
   body('schemeName')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('schemeName is required')
     .isLength({ max: 200 })
     .withMessage('schemeName must be under 200 characters'),
   handleValidationErrors,
