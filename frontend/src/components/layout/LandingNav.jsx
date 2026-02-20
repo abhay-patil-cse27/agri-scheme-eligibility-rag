@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sprout, Sun, Moon, Menu, X } from 'lucide-react';
+import { Sprout, Sun, Moon, Menu, X, Globe } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 const GREEN_GRAD = 'linear-gradient(135deg, #166534 0%, #16a34a 50%, #4ade80 100%)';
 
 export default function LandingNav() {
   const { theme, toggleTheme } = useTheme();
+  const { t, i18n } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const isDark = theme === 'dark';
@@ -25,9 +27,9 @@ export default function LandingNav() {
   }, []);
 
   const LINKS = [
-    { label: 'Features',     href: '/#features' },
-    { label: 'Who We Serve', href: '/#audience' },
-    { label: 'Technology',   href: '/#technology' },
+    { label: t('nav_features'),     href: '/#features' },
+    { label: t('nav_audience'), href: '/#audience' },
+    { label: t('nav_tech'),   href: '/#technology' },
   ];
 
   return (
@@ -69,6 +71,20 @@ export default function LandingNav() {
 
         {/* Right actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          
+          <div style={{ display: 'flex', alignItems: 'center', background: glass, border: `1px solid ${border}`, borderRadius: '8px', padding: '4px 10px', gap: '6px' }}>
+            <Globe size={14} color={textSec} />
+            <select 
+              value={i18n.language} 
+              onChange={(e) => i18n.changeLanguage(e.target.value)}
+              style={{ background: 'transparent', border: 'none', color: textSec, fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', outline: 'none' }}
+            >
+              <option value="en" style={{color: '#000'}}>EN</option>
+              <option value="hi" style={{color: '#000'}}>हिंदी</option>
+              <option value="mr" style={{color: '#000'}}>मराठी</option>
+            </select>
+          </div>
+
           <motion.button whileTap={{ scale: 0.9 }} onClick={toggleTheme} title="Toggle theme" style={{
             background: glass, border: `1px solid ${border}`, borderRadius: '8px',
             padding: '7px', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s',
@@ -85,7 +101,7 @@ export default function LandingNav() {
             }}
               onMouseOver={e => { e.currentTarget.style.background = 'rgba(22,163,74,0.12)'; }}
               onMouseOut={e => { e.currentTarget.style.background = glass; }}
-            >Sign In</button>
+            >{t('btn_signin')}</button>
           </Link>
 
           <Link to="/check" style={{ textDecoration: 'none' }}>
@@ -93,7 +109,7 @@ export default function LandingNav() {
               background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '9px',
               padding: '8px 18px', fontSize: '0.87rem', fontWeight: 700, cursor: 'pointer',
               boxShadow: '0 4px 14px rgba(22,163,74,0.4)',
-            }}>Free Check</motion.button>
+            }}>{t('btn_free_check')}</motion.button>
           </Link>
 
           {/* Hamburger (mobile) */}

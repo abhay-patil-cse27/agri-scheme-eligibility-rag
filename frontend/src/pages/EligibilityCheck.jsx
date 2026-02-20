@@ -10,6 +10,7 @@ import { useVoice } from '../hooks/useVoice';
 import { useAuth } from '../context/AuthContext';
 import { getSchemes, createProfile, checkEligibility, checkEligibilityPublic } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { useTranslation } from 'react-i18next';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -645,6 +646,7 @@ function ProofCard({ result }) {
 
 /* ── Main Page ──────────────────────────── */
 export default function EligibilityCheck() {
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const { user } = useAuth();
   const [schemes, setSchemes] = useState([]);
@@ -692,7 +694,7 @@ export default function EligibilityCheck() {
         if (!profile.success) throw new Error(profile.error || 'Failed to create profile');
 
         addToast('AI Scanning', 'Analyzing documents via RAG...', 'info');
-        const eligibility = await checkEligibility(profile.data._id, selectedScheme);
+        const eligibility = await checkEligibility(profile.data._id, selectedScheme, i18n.language);
         if (eligibility.success) {
           setResult(eligibility.data);
           addToast('Check Complete', 'AI analysis finished successfully', 'success');
@@ -702,7 +704,7 @@ export default function EligibilityCheck() {
       } else {
         // Unauthenticated Freemium flow: Direct Check without DB saving
         addToast('Fast AI Scan', 'Analyzing criteria...', 'info');
-        const eligibility = await checkEligibilityPublic(profileData, selectedScheme);
+        const eligibility = await checkEligibilityPublic(profileData, selectedScheme, i18n.language);
         if (eligibility.success) {
           setResult(eligibility.data);
           const newCount = publicChecksUsed + 1;
@@ -738,7 +740,7 @@ export default function EligibilityCheck() {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '28px', textAlign: user ? 'left' : 'center' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
           <Search size={28} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-indigo)', verticalAlign: 'text-bottom' }} />
-          Eligibility <span className="gradient-text">Check</span>
+          {t('eligibility_check')}
         </h1>
         <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
           Voice or form input → AI-powered eligibility analysis with PDF citations
@@ -747,7 +749,7 @@ export default function EligibilityCheck() {
         {!user && (
            <div style={{ marginTop: '16px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(99, 102, 241, 0.1)', padding: '6px 16px', borderRadius: '20px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
              <Shield size={14} style={{ color: 'var(--accent-indigo)' }} />
-             <span style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', fontWeight: 600 }}>Guest Mode: {1 - publicChecksUsed} free check{(1 - publicChecksUsed) !== 1 ? 's' : ''} remaining</span>
+             <span style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', fontWeight: 600 }}>{t('guest_mode')} {1 - publicChecksUsed} {t('free_checks_remaining')}</span>
            </div>
         )}
       </motion.div>
@@ -760,7 +762,7 @@ export default function EligibilityCheck() {
         style={{ padding: '20px', marginBottom: '24px' }}
       >
         <label style={{ ...labelStyle, marginBottom: '10px' }}>
-          <FileText size={14} /> Select Government Scheme
+          <FileText size={14} /> {t('select_scheme')}
         </label>
         <select
           value={selectedScheme}

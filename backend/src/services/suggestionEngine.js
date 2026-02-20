@@ -10,9 +10,10 @@ const logger = require('../config/logger');
  *
  * @param {Object} profile - Farmer profile data
  * @param {string} excludeSchemeId - Scheme ID to exclude (the one they were ineligible for)
+ * @param {string} [language='en'] - The regional language code to translate AI output into.
  * @returns {Array} Top 2-3 alternative scheme suggestions with reasoning
  */
-async function findAlternatives(profile, excludeSchemeId) {
+async function findAlternatives(profile, excludeSchemeId, language = 'en') {
   const startTime = Date.now();
 
   try {
@@ -50,7 +51,7 @@ async function findAlternatives(profile, excludeSchemeId) {
         if (chunks.length === 0) continue;
 
         // Quick eligibility check
-        const result = await llmService.checkEligibility(profile, chunks, scheme.name);
+        const result = await llmService.checkEligibility(profile, chunks, scheme.name, language);
 
         suggestions.push({
           schemeName: scheme.name,

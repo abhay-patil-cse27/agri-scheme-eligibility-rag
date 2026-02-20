@@ -35,7 +35,7 @@ router.post(
   validateEligibilityCheck,
   asyncHandler(async (req, res) => {
     const startTime = Date.now();
-    const { profileId, schemeName } = req.body;
+    const { profileId, schemeName, language = 'en' } = req.body;
 
     // Step 1: Load farmer profile
     const profile = await FarmerProfile.findById(profileId).lean();
@@ -81,11 +81,11 @@ router.post(
           return { scheme: scheme.name, error: 'No relevant document sections found.' };
         }
 
-        const llmResult = await llmService.checkEligibility(profile, relevantChunks, scheme.name);
+        const llmResult = await llmService.checkEligibility(profile, relevantChunks, scheme.name, language);
 
         let suggestions = [];
         if (!llmResult.eligible && schemesToCheck.length === 1) {
-          suggestions = await suggestionEngine.findAlternatives(profile, scheme._id);
+          suggestions = await suggestionEngine.findAlternatives(profile, scheme._id, language);
         }
 
         const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
@@ -158,7 +158,7 @@ router.post(
   publicEligibilityLimiter,
   asyncHandler(async (req, res) => {
     const startTime = Date.now();
-    const { profileData, schemeName } = req.body;
+    const { profileData, schemeName, language = 'en' } = req.body;
 
     if (!profileData || !profileData.name || !profileData.state) {
       return res.status(400).json({ success: false, error: 'Basic profile data (Name, State) is required.' });
@@ -192,11 +192,11 @@ router.post(
           return { scheme: scheme.name, error: 'No relevant document sections found.' };
         }
 
-        const llmResult = await llmService.checkEligibility(profileData, relevantChunks, scheme.name);
+        const llmResult = await llmService.checkEligibility(profileData, relevantChunks, scheme.name, language);
         
         let suggestions = [];
         if (!llmResult.eligible && schemesToCheck.length === 1) {
-          suggestions = await suggestionEngine.findAlternatives(profileData, scheme._id);
+          suggestions = await suggestionEngine.findAlternatives(profileData, scheme._id, language);
         }
         
         const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));

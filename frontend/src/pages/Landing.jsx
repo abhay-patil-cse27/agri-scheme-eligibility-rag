@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, useInView, useScroll, useTransform } from 'framer-motion';
+import { motion, useInView, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import {
   Zap, Shield, Brain, FileText, Users, BarChart3, Mic, Globe,
   Star, ArrowRight, CheckCircle, Sun, Moon, Menu, X,
   Cpu, Lock, Languages, HeartHandshake, Wheat, MapPin,
-  Github, Sprout, TrendingUp, Clock
+  Github, Sprout, TrendingUp, Clock, CheckCircle2, Search, Info, Check, Quote
 } from 'lucide-react';
 
 /* ─── Agricultural color system ─────────────────────────── */
@@ -83,6 +84,7 @@ const AUDIENCE = [
 export default function Landing() {
   const { user }             = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
   const navigate             = useNavigate();
   const [open, setOpen]      = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -211,12 +213,12 @@ export default function Landing() {
           </motion.div>
 
           <h1 style={{ fontSize: 'clamp(2.4rem, 5.5vw, 4.2rem)', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.08, marginBottom: '24px', color: c.text }}>
-            India's Farmers Deserve<br />
-            <span style={{ background: GREEN_GRAD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', display: 'inline-block' }}>Every Benefit They've Earned</span>
+            {t('hero_title_1')}<br />
+            <span style={{ background: GREEN_GRAD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', display: 'inline-block' }}>{t('hero_title_2')}</span>
           </h1>
 
           <p style={{ fontSize: '1.1rem', color: c.textSec, maxWidth: '560px', margin: '0 auto 40px', lineHeight: 1.78 }}>
-            Tell us about your land, income, and family in seconds — by typing or speaking. Niti-Setu reads the actual scheme documents and tells you exactly which benefits you qualify for, and why.
+             {t('hero_subtitle')}
           </p>
 
           <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -238,7 +240,7 @@ export default function Landing() {
               onMouseOver={e => { e.currentTarget.style.borderColor = c.borderGlow; e.currentTarget.style.boxShadow = `0 0 0 3px ${isDark ? 'rgba(34,197,94,0.08)' : 'rgba(22,101,52,0.06)'}` }}
               onMouseOut={e => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.boxShadow = 'none'; }}
             >
-              Learn How It Works
+              {t('hero_btn_learn')}
             </button>
           </div>
 

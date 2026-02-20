@@ -90,9 +90,10 @@ RESPOND ONLY WITH THIS EXACT JSON STRUCTURE:
  * @param {Object} profile - Farmer profile data
  * @param {Array} relevantChunks - Document chunks from vector search
  * @param {string} schemeName - Name of the scheme being checked
+ * @param {string} [language='en'] - The target language to translate output strings to (e.g. 'en', 'hi', 'mr')
  * @returns {Object} Structured eligibility result
  */
-async function checkEligibility(profile, relevantChunks, schemeName) {
+async function checkEligibility(profile, relevantChunks, schemeName, language = 'en') {
   const startTime = Date.now();
 
   // Build the user prompt with profile and document context
@@ -119,7 +120,10 @@ FARMER PROFILE:
 OFFICIAL DOCUMENT EXCERPTS:
 ${documentContext}
 
-Base Based ONLY on the above document excerpts, determine if this farmer is eligible for ${schemeName}. Return your answer as the specified JSON structure.`;
+Based ONLY on the above document excerpts, determine if this farmer is eligible for ${schemeName}. Return your answer as the specified JSON structure.
+
+IMPORTANT MULTILINGUAL RULE: 
+You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'benefitAmount', 'paymentFrequency', and the string values inside the 'rejectionExplanation' object into the following target language: **${language === 'hi' ? 'Hindi (हिंदी)' : language === 'mr' ? 'Marathi (मराठी)' : 'English'}**. Keep the JSON keys in English, but output the human-readable text strictly in the target language. Use simple, conversational language suitable for a farmer.`;
 
   try {
     const completion = await withRetry(() => groq.chat.completions.create({
