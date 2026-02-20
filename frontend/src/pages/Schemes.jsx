@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { getSchemes, uploadScheme, deleteScheme } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -142,6 +143,8 @@ export default function Schemes() {
   const [showUpload, setShowUpload] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const { addToast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const loadSchemes = async () => {
     try {
@@ -182,18 +185,23 @@ export default function Schemes() {
             Government <span className="gradient-text">Schemes</span>
           </h1>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            Upload PDFs to build the knowledge base — {schemes.length} schemes loaded
+            {isAdmin
+              ? `Upload PDFs to build the knowledge base — ${schemes.length} schemes loaded`
+              : `Browse available government schemes — ${schemes.length} schemes indexed`
+            }
           </p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="btn-glow"
-          onClick={() => setShowUpload(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-        >
-          <Plus size={18} /> Upload PDF
-        </motion.button>
+        {isAdmin && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn-glow"
+            onClick={() => setShowUpload(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <Plus size={18} /> Upload PDF
+          </motion.button>
+        )}
       </motion.div>
 
       {loading ? (
@@ -260,23 +268,25 @@ export default function Schemes() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleDelete(scheme._id)}
-                    disabled={deleting === scheme._id}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '6px',
-                      padding: '8px 16px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                      background: 'rgba(244,63,94,0.1)', color: 'var(--accent-rose)',
-                      fontSize: '0.8rem', fontWeight: 500, fontFamily: 'Inter, sans-serif',
-                    }}
-                  >
-                    {deleting === scheme._id ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
-                    Delete
-                  </motion.button>
-                </div>
+                {isAdmin && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleDelete(scheme._id)}
+                      disabled={deleting === scheme._id}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        padding: '8px 16px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                        background: 'rgba(244,63,94,0.1)', color: 'var(--accent-rose)',
+                        fontSize: '0.8rem', fontWeight: 500, fontFamily: 'Inter, sans-serif',
+                      }}
+                    >
+                      {deleting === scheme._id ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
+                      Delete
+                    </motion.button>
+                  </div>
+                )}
               </motion.div>
             );
           })}

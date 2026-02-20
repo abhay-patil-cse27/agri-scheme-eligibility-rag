@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Sidebar from './components/layout/Sidebar';
 import LandingNav from './components/layout/LandingNav';
@@ -68,6 +68,13 @@ export default function App() {
               <Route path="/forgotpassword" element={<ForgotPassword />} />
               <Route path="/resetpassword/:token" element={<ResetPassword />} />
             </Route>
+
+            {/* Redirect old shorthand paths → /dashboard/* */}
+            <Route path="/check"    element={<Navigate to="/dashboard/check"    replace />} />
+            <Route path="/schemes"  element={<Navigate to="/dashboard/schemes"  replace />} />
+            <Route path="/farmers"  element={<Navigate to="/dashboard/farmers"  replace />} />
+            <Route path="/history"  element={<Navigate to="/dashboard/history"  replace />} />
+            <Route path="/settings" element={<Navigate to="/dashboard/settings" replace />} />
 
             {/* Protected app — proper nested Outlet routing */}
             <Route path="/dashboard" element={<AppShell />}>

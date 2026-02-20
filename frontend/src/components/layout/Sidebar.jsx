@@ -36,7 +36,8 @@ export default function Sidebar() {
   
   // Filter navigation items based on role
   const filteredNavItems = navItems.filter(item => {
-    if (user?.role === 'farmer' && (item.label === 'Schemes' || item.label === 'Farmers')) {
+    // Only hide the Farmers admin page from farmer accounts
+    if (user?.role === 'farmer' && item.label === 'Farmers') {
       return false;
     }
     return true;
