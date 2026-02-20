@@ -46,9 +46,11 @@ STRICT RULES:
     - If Category is 'Minority', append exactly "Minority Community Certificate".
     - If Category is 'General', do NOT append any category-related certificates.
 7. REALISTIC ASSESSMENT & EXCLUSIONS:
-    - Actively look for exclusion criteria (e.g., income tax payee, pensioner, institutional landholder). If the profile exceeds standard realistic limits (e.g., 40 acres might be too large for small/marginal schemes or indicate high wealth), scrutinize the excerpts heavily.
-    - Be highly conservative. If a scheme (or component) is meant for institutions, primary cooperatives, FPOs, or large-scale industrial infrastructure (e.g., Agri-Infrastructure-Fund, 2MW solar plants), assume an individual standard farmer is NOT ELIGIBLE unless the excerpts explicitly state individual farmers can apply for that *exact* component.
-    - If crucial eligibility parameters clearly required by the scheme are missing from the excerpts, default to NOT ELIGIBLE or reduce confidence, explicitly stating the lack of data.
+    - Carefully evaluate numerical criteria. For example, if the scheme requires age 18-40, and the farmer is 22, they ARE ELIGIBLE. Do NOT reject them.
+    - If the scheme requires land up to 2 hectares, and the farmer has 5 acres (approx 2.02 hectares), carefully check the exact limits.
+    - Be objective. If the Farmer meets the conditions mentioned in the excerpts (e.g. they are a farmer, age matches, land matches), mark them ELIGIBLE. Do not invent reasons to reject them.
+    - If a scheme is meant for farmers/agri-entrepreneurs (e.g. Agri-Infrastructure-Fund) and the farmer is an individual, assume they ARE ELIGIBLE unless the excerpts explicitly ban individuals.
+    - If crucial eligibility parameters (like income limits) are missing from the excerpts, DO NOT automatically reject the farmer. Instead, assume they ARE ELIGIBLE but set confidence to 'medium' or 'low', and mention the missing confirmation in your reasoning.
 
 Your task:
 - Compare the farmer's profile against the scheme's eligibility criteria found in the document excerpts.
@@ -108,10 +110,10 @@ async function checkEligibility(profile, relevantChunks, schemeName, language = 
 
 FARMER PROFILE:
 - Name: ${profile.name || 'N/A'}
-- Age: ${profile.age || 'Not specified'}
+- Age: ${profile.age || 'Not specified'} (Evaluate carefully against age limits)
 - State: ${profile.state}
 - District: ${profile.district}
-- Land Holding: ${profile.landHolding} acres (${profile.landHoldingHectares} hectares)
+- Land Holding: ${profile.landHolding} acres (${profile.landHoldingHectares || (profile.landHolding * 0.404686).toFixed(3)} hectares) (IMPORTANT: 1 acre = 0.404686 hectares. Check limits accurately)
 - Crop Type: ${profile.cropType}
 - Social Category: ${profile.category}
 - Annual Income: ${profile.annualIncome ? '₹' + profile.annualIncome : 'Not specified'}
