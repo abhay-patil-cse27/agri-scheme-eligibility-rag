@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, Zap, Loader2, Eye, EyeOff } from 'lucide-react';
@@ -18,7 +18,7 @@ export default function Register() {
 
   useEffect(() => {
     if (user && !loading) {
-      navigate('/');
+      navigate('/dashboard/');
     }
   }, [user, loading, navigate]);
 
@@ -170,3 +170,5 @@ export default function Register() {
     </div>
   );
 }
+
+

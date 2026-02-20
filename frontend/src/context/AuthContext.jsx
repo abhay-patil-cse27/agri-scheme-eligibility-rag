@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+﻿import { createContext, useContext, useState, useEffect } from 'react';
 import { getMe, login as apiLogin, register as apiRegister, googleLogin as apiGoogleLogin } from '../services/api';
 
 const AuthContext = createContext();
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
-    window.location.href = '/login';
+    window.location.href = '/';
   };
 
   return (
@@ -92,3 +92,4 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
+

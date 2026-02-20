@@ -20,12 +20,12 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/check', icon: Search, label: 'Eligibility Check' },
-  { to: '/schemes', icon: FileText, label: 'Schemes' },
-  { to: '/farmers', icon: Users, label: 'Farmers' },
-  { to: '/history', icon: History, label: 'History' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/dashboard/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/dashboard/check', icon: Search, label: 'Eligibility Check' },
+  { to: '/dashboard/schemes', icon: FileText, label: 'Schemes' },
+  { to: '/dashboard/farmers', icon: Users, label: 'Farmers' },
+  { to: '/dashboard/history', icon: History, label: 'History' },
+  { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function Sidebar() {

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Sidebar from './components/layout/Sidebar';
+import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import EligibilityCheck from './pages/EligibilityCheck';
 import Schemes from './pages/Schemes';
@@ -26,12 +27,15 @@ export default function App() {
       <ToastProvider>
         <BrowserRouter>
           <Routes>
+            {/* Public pages */}
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgotpassword" element={<ForgotPassword />} />
             <Route path="/resetpassword/:token" element={<ResetPassword />} />
-            
-            <Route path="/*" element={
+
+            {/* Protected app — all routes under /dashboard/* */}
+            <Route path="/dashboard/*" element={
               <ProtectedRoute>
                 <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
                   <Sidebar />
