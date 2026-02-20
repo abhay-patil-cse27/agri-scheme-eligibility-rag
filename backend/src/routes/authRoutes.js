@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorHandler');
 const config = require('../config/env');
 const { protect } = require('../middleware/auth');
