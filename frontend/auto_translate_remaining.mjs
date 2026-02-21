@@ -3,12 +3,8 @@ import path from 'path';
 
 const envFile = fs.readFileSync('../backend/.env', 'utf8');
 const match1 = envFile.match(/^GROQ_API_KEY=(.*)$/m);
-const match2 = envFile.match(/^GROQ_API_KEY_BACKUP1=(.*)$/m);
-const match3 = envFile.match(/^GROQ_API_KEY_BACKUP2=(.*)$/m);
 
-const apiKeys = [match1, match2, match3]
-  .map(m => m ? m[1].trim() : null)
-  .filter(Boolean);
+const apiKeys = match1 ? [match1[1].trim()] : [];
 
 if (apiKeys.length === 0) {
   console.error("No GROQ_API_KEY found in ../backend/.env");

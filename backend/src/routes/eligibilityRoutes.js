@@ -68,8 +68,9 @@ router.post(
 
     logger.info(`Eligibility check: ${profile.name} → ${schemeName === 'all' || !schemeName ? 'ALL SCHEMES' : schemeName}`);
 
-    // Process all schemes in parallel
-    const results = await Promise.all(schemesToCheck.map(async (scheme) => {
+    // Process schemes sequentially to avoid overwhelming Groq LLM API with parallel 70b calls
+    const results = [];
+    for (const scheme of schemesToCheck) {
       try {
         // Use a generic search query aimed at retrieving the RULES, not matching the specific profile numbers
         const searchQuery = `eligibility criteria, beneficiary conditions, who is eligible, age limit, land holding limit, income limit, exclusions, who is not eligible for ${scheme.name}`;
@@ -78,7 +79,8 @@ router.post(
         const relevantChunks = await vectorSearchService.searchSimilarChunks(queryEmbedding, scheme._id.toString(), 8);
 
         if (relevantChunks.length === 0) {
-          return { scheme: scheme.name, error: 'No relevant document sections found.' };
+          results.push({ scheme: scheme.name, error: 'No relevant document sections found.' });
+          continue;
         }
 
         const llmResult = await llmService.checkEligibility(profile, relevantChunks, scheme.name, language);
@@ -110,7 +112,7 @@ router.post(
           responseTime: totalResponseTime,
         });
 
-        return {
+        results.push({
           checkId: eligibilityRecord._id,
           scheme: scheme.name,
           eligible: llmResult.eligible,
@@ -125,12 +127,17 @@ router.post(
           suggestions: suggestions,
           responseTime: totalResponseTime,
           chunksAnalyzed: relevantChunks.length,
-        };
+        });
+
+        // Add a slight delay between sequential requests to let token buckets refill
+        if (schemesToCheck.length > 1) {
+          await new Promise(r => setTimeout(r, 1000));
+        }
       } catch (err) {
         logger.error(`Error processing scheme ${scheme.name}:`, err.message);
-        return { scheme: scheme.name, error: err.message };
+        results.push({ scheme: scheme.name, error: err.message });
       }
-    }));
+    }
 
     // Return array if all, or single object if one scheme for backwards compatibility
     const responseData = (schemesToCheck.length === 1 && schemeName !== 'all') ? results[0] : results;
@@ -181,15 +188,17 @@ router.post(
 
     logger.info(`Public Eligibility check: ${profileData.name} → ${schemeName === 'all' || !schemeName ? 'ALL SCHEMES' : schemeName}`);
 
-    // Process all schemes in parallel
-    const results = await Promise.all(schemesToCheck.map(async (scheme) => {
+    // Process schemes sequentially for public checks as well
+    const results = [];
+    for (const scheme of schemesToCheck) {
       try {
         const searchQuery = `eligibility criteria, beneficiary conditions, who is eligible, age limit, land holding limit, income limit, exclusions, who is not eligible for ${scheme.name}`;
         const queryEmbedding = await embeddingService.generateEmbedding(searchQuery);
         const relevantChunks = await vectorSearchService.searchSimilarChunks(queryEmbedding, scheme._id.toString(), 8);
 
         if (relevantChunks.length === 0) {
-          return { scheme: scheme.name, error: 'No relevant document sections found.' };
+          results.push({ scheme: scheme.name, error: 'No relevant document sections found.' });
+          continue;
         }
 
         const llmResult = await llmService.checkEligibility(profileData, relevantChunks, scheme.name, language);
@@ -204,7 +213,7 @@ router.post(
         const officialWebsiteUrl = scheme.officialWebsite || llmResult.officialWebsite;
         const documentUrl = `${req.protocol}://${req.get('host')}/api/schemes/docs/${scheme.sourceFile}`;
 
-        return {
+        results.push({
           checkId: 'public-' + Date.now(),
           scheme: scheme.name,
           ...llmResult,
@@ -214,12 +223,16 @@ router.post(
           responseTime: totalResponseTime,
           chunksAnalyzed: relevantChunks.length,
           isPublicCheck: true
-        };
+        });
+
+        if (schemesToCheck.length > 1) {
+          await new Promise(r => setTimeout(r, 1000));
+        }
       } catch (err) {
         logger.error(`Error processing public scheme check ${scheme.name}:`, err.message);
-        return { scheme: scheme.name, error: err.message };
+        results.push({ scheme: scheme.name, error: err.message });
       }
-    }));
+    }
 
     const responseData = (schemesToCheck.length === 1 && schemeName !== 'all') ? results[0] : results;
     res.json({ success: true, data: responseData });
@@ -285,6 +298,31 @@ router.delete(
       success: true,
       data: {},
     });
+  })
+);
+
+/**
+ * POST /api/eligibility/translate-result
+ * Translates an existing eligibility result into a target language.
+ */
+router.post(
+  '/translate-result',
+  asyncHandler(async (req, res) => {
+    const { result, language } = req.body;
+    if (!result || !language) {
+      return res.status(400).json({ success: false, error: 'Result object and language are required' });
+    }
+
+    try {
+      const translatedData = await llmService.translateEligibilityResult(result, language);
+      res.json({
+        success: true,
+        data: translatedData
+      });
+    } catch (err) {
+      logger.error('Failed to translate result:', err.message);
+      res.status(500).json({ success: false, error: 'Failed to translate result' });
+    }
   })
 );
 

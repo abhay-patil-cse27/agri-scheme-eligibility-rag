@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useVoice } from '../hooks/useVoice';
 import { useAuth } from '../context/AuthContext';
-import { getSchemes, createProfile, checkEligibility, checkEligibilityPublic } from '../services/api';
+import { getSchemes, createProfile, checkEligibility, checkEligibilityPublic, generateSpeech, translateResult } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import html2canvas from 'html2canvas';
@@ -59,9 +59,15 @@ const indianStates = {
 /* ── Voice Input Section ────────────────── */
 function VoiceInput({ onProfileExtracted }) {
   const { t, i18n } = useTranslation();
-  const { isListening, transcript, error: voiceError, startListening, stopListening, resetTranscript } = useVoice(i18n.language);
+  const [selectedLanguage, setSelectedLanguage] = useState(i18n.language || 'hi-IN');
+  const { isListening, transcript, error: voiceError, startListening, stopListening, resetTranscript } = useVoice(selectedLanguage);
   const [processing, setProcessing] = useState(false);
   const { addToast } = useToast();
+
+  // Sync state if user changes global app language
+  useEffect(() => {
+    setSelectedLanguage(i18n.language || 'hi-IN');
+  }, [i18n.language]);
 
   const handleStop = async () => {
     setProcessing(true);
@@ -96,7 +102,28 @@ function VoiceInput({ onProfileExtracted }) {
         {t('vi_subtitle')} — <em>"I am Ramesh from Maharashtra, I have 2 acres of wheat land..."</em>
       </p>
 
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+        
+        {/* Language Selector for Voice */}
+        <select 
+          value={selectedLanguage}
+          onChange={(e) => setSelectedLanguage(e.target.value)}
+          disabled={isListening || processing}
+          className="select-dark"
+          style={{ padding: '10px 16px', borderRadius: '12px', fontSize: '0.9rem', maxWidth: '200px' }}
+        >
+          <option value="en">English</option>
+          <option value="hi-IN">Hindi (हिंदी)</option>
+          <option value="mr-IN">Marathi (मराठी)</option>
+          <option value="bn-IN">Bengali (বাংলা)</option>
+          <option value="te-IN">Telugu (తెలుగు)</option>
+          <option value="ta-IN">Tamil (தமிழ்)</option>
+          <option value="gu-IN">Gujarati (ગુજરાતી)</option>
+          <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
+          <option value="ml-IN">Malayalam (മലയാളം)</option>
+          <option value="pa-IN">Punjabi (ਪੰਜਾਬੀ)</option>
+        </select>
+
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
@@ -297,13 +324,22 @@ const labelStyle = {
 function ProofCard({ result }) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [audioObj, setAudioObj] = useState(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatedResult, setTranslatedResult] = useState(null);
   const { addToast } = useToast();
+  const { t, i18n } = useTranslation();
+
+  const displayResult = translatedResult || result;
 
   useEffect(() => {
     return () => {
-      window.speechSynthesis.cancel();
+      if (audioObj) {
+        audioObj.pause();
+        audioObj.currentTime = 0;
+      }
     };
-  }, []);
+  }, [audioObj]);
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -330,28 +366,72 @@ function ProofCard({ result }) {
     }
   };
 
-  const toggleSpeech = () => {
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-      addToast('Playback Stopped', 'Voice analysis paused', 'info');
-    } else {
-      const textToSpeak = `AI Analysis results for ${result.scheme}. ${result.reason}`;
-      const utterance = new SpeechSynthesisUtterance(textToSpeak);
-      // Optional customization
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      
-      window.speechSynthesis.speak(utterance);
-      setIsSpeaking(true);
-      addToast('Playing Audio', 'Reading AI analysis reasoning...', 'info');
+  const handleTranslate = async (e) => {
+    const targetLang = e.target.value;
+    if (!targetLang || targetLang === 'en') {
+        setTranslatedResult(null);
+        return;
+    }
+    
+    setIsTranslating(true);
+    addToast('Translating', 'Translating result into your language...', 'info');
+    try {
+        const langCode = targetLang.split('-')[0];
+        const res = await translateResult(result, langCode);
+        if (res.success) {
+            setTranslatedResult(res.data);
+            addToast('Success', 'AI Analysis translated successfully', 'success');
+        }
+    } catch (err) {
+        console.error('Translation failed:', err);
+        addToast('Translation Error', 'Could not translate the results', 'error');
+    } finally {
+        setIsTranslating(false);
     }
   };
 
-  if (result.error) {
+  const toggleSpeech = async () => {
+    if (isSpeaking) {
+      if (audioObj) {
+        audioObj.pause();
+        audioObj.currentTime = 0;
+      }
+      setIsSpeaking(false);
+      addToast('Playback Stopped', 'Voice analysis paused', 'info');
+    } else {
+      setIsSpeaking(true);
+      addToast('Generating Audio', 'Fetching high-quality AI voice...', 'info');
+      try {
+        const textToSpeak = `AI Analysis regarding ${displayResult.scheme}. ${displayResult.reason}`;
+        
+        // Fetch audio blob from our new ElevenLabs proxy endpoint
+        const langCode = i18n?.language?.split('-')[0] || 'hi';
+        const audioBlob = await generateSpeech(textToSpeak, langCode);
+        
+        const url = URL.createObjectURL(audioBlob);
+        const audio = new Audio(url);
+        setAudioObj(audio);
+        
+        audio.onended = () => {
+          setIsSpeaking(false);
+          setAudioObj(null);
+        };
+        audio.onerror = () => {
+          setIsSpeaking(false);
+          setAudioObj(null);
+          addToast('Audio Error', 'Could not play generated audio', 'error');
+        }
+        
+        await audio.play();
+      } catch (err) {
+        console.error("Speech generation error", err);
+        addToast('Audio Error', 'Failed to fetch natural voice', 'error');
+        setIsSpeaking(false);
+      }
+    }
+  };
+
+  if (displayResult.error) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 30 }}
@@ -361,18 +441,21 @@ function ProofCard({ result }) {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
           <AlertCircle size={24} style={{ color: 'var(--accent-rose)' }} />
-          <h3 style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-primary)' }}>{result.scheme}</h3>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-primary)' }}>{displayResult.scheme}</h3>
         </div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{result.error}</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{displayResult.error}</p>
       </motion.div>
     );
   }
 
-  const isEligible = result.eligible;
+  const isEligible = displayResult.eligible;
+  const reqDocs = Array.isArray(displayResult.requiredDocuments) ? displayResult.requiredDocuments : (typeof displayResult.requiredDocuments === 'string' ? [displayResult.requiredDocuments] : []);
+  const actionSteps = Array.isArray(displayResult.actionSteps) ? displayResult.actionSteps : (typeof displayResult.actionSteps === 'string' ? [displayResult.actionSteps] : []);
+  const suggestions = Array.isArray(displayResult.suggestions) ? displayResult.suggestions : [];
 
   return (
     <motion.div
-      id={`proof-card-${result.scheme.replace(/\s+/g, '-')}`}
+      id={`proof-card-${displayResult.scheme.replace(/\s+/g, '-')}`}
       initial={{ opacity: 0, scale: 0.95, y: 30 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 100, damping: 20 }}
@@ -399,10 +482,10 @@ function ProofCard({ result }) {
               {isEligible ? t('pc_eligible') : t('pc_not_eligible')}
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 600 }}>{result.scheme}</span>
+              <span style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 600 }}>{displayResult.scheme}</span>
               <span style={{ color: 'var(--text-muted)' }}>•</span>
               <span className={`badge ${isEligible ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.7rem' }}>
-                {t('pc_confidence')}: {result.confidence}
+                {t('pc_confidence')}: {displayResult.confidence}
               </span>
             </div>
           </div>
@@ -428,32 +511,56 @@ function ProofCard({ result }) {
           <Brain size={18} style={{ color: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }} />
           <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pc_ai_analysis')}</h4>
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px' }}>
-          <p style={{ fontSize: '1.05rem', color: 'var(--text-primary)', fontWeight: 500, margin: 0, lineHeight: 1.7, flex: 1 }}>
-            {result.reason}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+          <p style={{ fontSize: '1.05rem', color: 'var(--text-primary)', fontWeight: 500, margin: 0, lineHeight: 1.7, flex: 1, minWidth: '200px' }}>
+            {displayResult.reason}
           </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleSpeech}
-            data-html2canvas-ignore="true"
-            style={{ 
-              background: isSpeaking ? 'var(--accent-indigo)' : 'var(--bg-glass)',
-              color: isSpeaking ? 'white' : 'var(--accent-indigo)',
-              border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '20px',
-              fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
-            }}
-          >
-            {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
-            {isSpeaking ? t('pc_stop_audio') : t('pc_listen')}
-          </motion.button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ position: 'relative' }}>
+              <Globe size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent-violet)', pointerEvents: 'none' }} />
+              <select
+                onChange={handleTranslate}
+                disabled={isTranslating}
+                style={{
+                  background: 'var(--bg-glass)', color: 'var(--text-primary)',
+                  border: '1px solid var(--border-color)', padding: '8px 16px 8px 36px', borderRadius: '20px',
+                  fontSize: '0.85rem', fontWeight: 600, cursor: isTranslating ? 'not-allowed' : 'pointer',
+                  appearance: 'none', WebkitAppearance: 'none', outline: 'none'
+                }}
+              >
+                <option value="en">Translate ▾</option>
+                <option value="hi-IN">Hindi (हिंदी)</option>
+                <option value="mr-IN">Marathi (मराठी)</option>
+                <option value="bn-IN">Bengali (বাংলা)</option>
+                <option value="te-IN">Telugu (తెలుగు)</option>
+                <option value="ta-IN">Tamil (தமிழ்)</option>
+              </select>
+              {isTranslating && <Loader2 size={14} className="spin" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent-violet)' }} />}
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleSpeech}
+              data-html2canvas-ignore="true"
+              style={{ 
+                background: isSpeaking ? 'var(--accent-indigo)' : 'var(--bg-glass)',
+                color: isSpeaking ? 'white' : 'var(--accent-indigo)',
+                border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '20px',
+                fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
+              }}
+            >
+              {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              {isSpeaking ? t('pc_stop_audio') : t('pc_listen')}
+            </motion.button>
+          </div>
         </div>
       </div>
 
       {/* 3. Details Grid (Amount & Documents) */}
-      <div style={{ display: 'grid', gridTemplateColumns: (isEligible && result.benefitAmount) ? 'minmax(250px, 1fr) 2fr' : '1fr', gap: '20px', marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: (isEligible && displayResult.benefitAmount) ? 'minmax(250px, 1fr) 2fr' : '1fr', gap: '20px', marginBottom: '20px' }}>
         {/* Benefit Amount Widget */}
-        {isEligible && result.benefitAmount && (
+        {isEligible && displayResult.benefitAmount && (
           <div style={{ 
             padding: '28px', borderRadius: '16px', 
             background: 'var(--gradient-success)', 
@@ -466,28 +573,28 @@ function ProofCard({ result }) {
             </div>
             <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '8px', fontWeight: 600, letterSpacing: '0.05em' }}>{t('pc_benefit_amount')}</p>
             <p style={{ fontSize: '2.5rem', fontWeight: 800, color: 'white', letterSpacing: '-0.02em', marginBottom: '4px' }}>
-              {result.benefitAmount.startsWith('₹') ? result.benefitAmount : `₹${result.benefitAmount}`}
+              {String(displayResult.benefitAmount).startsWith('₹') ? displayResult.benefitAmount : `₹${displayResult.benefitAmount}`}
             </p>
-            {result.paymentFrequency && (
+            {displayResult.paymentFrequency && (
               <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
-                {result.paymentFrequency}
+                {displayResult.paymentFrequency}
               </p>
             )}
           </div>
         )}
 
         {/* Required Documents Card — always show if available */}
-        {result.requiredDocuments && result.requiredDocuments.length > 0 && (
+        {reqDocs.length > 0 && (
           <div className="glass-card" style={{ padding: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <ClipboardList size={18} style={{ color: 'var(--accent-amber)' }} />
               <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>{t('pc_required_docs')}</h4>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 'auto', background: 'var(--bg-glass)', padding: '2px 8px', borderRadius: '20px', border: '1px solid var(--border-glass)' }}>
-                {result.requiredDocuments.length} {t('pc_items')}
+                {reqDocs.length} {t('pc_items')}
               </span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
-              {result.requiredDocuments.map((doc, i) => {
+              {reqDocs.map((doc, i) => {
                 const isCategoryCert = /caste|obc|sc\/st|ews|minority|ncl|creamy/i.test(doc);
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: isCategoryCert ? 'rgba(245,158,11,0.06)' : 'var(--bg-glass)', borderRadius: '10px', border: `1px solid ${isCategoryCert ? 'rgba(245,158,11,0.2)' : 'var(--border-glass)'}` }}>
@@ -506,14 +613,14 @@ function ProofCard({ result }) {
         )}
 
         {/* Action Steps (Kya Karna Hoga) */}
-        {isEligible && result.actionSteps && result.actionSteps.length > 0 && (
+        {isEligible && actionSteps.length > 0 && (
           <div className="glass-card" style={{ padding: '24px', gridColumn: '1 / -1', background: 'var(--bg-card)' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <Sparkles size={18} style={{ color: 'var(--accent-indigo)' }} />
               <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{t('pc_next_steps')}</h4>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {result.actionSteps.map((step, i) => (
+              {actionSteps.map((step, i) => (
                 <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                   <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent-indigo)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, flexShrink: 0, marginTop: '2px' }}>
                     {i + 1}
@@ -526,7 +633,7 @@ function ProofCard({ result }) {
         )}
 
         {/* Rejection Explanation (Kyu Nahi Mil Raha?) */}
-        {!isEligible && result.rejectionExplanation && result.rejectionExplanation.criteria && (
+        {!isEligible && displayResult.rejectionExplanation && displayResult.rejectionExplanation.criteria && (
            <div className="glass-card" style={{ padding: '24px', gridColumn: '1 / -1', borderLeft: '4px solid var(--accent-rose)', background: 'var(--bg-glass)' }}>
              <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--accent-rose)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                <XCircle size={18} /> {t('pc_why_rejected')}
@@ -534,11 +641,11 @@ function ProofCard({ result }) {
              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div style={{ padding: '16px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase' }}>{t('pc_scheme_requirement')}</p>
-                  <p style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: 0 }}>{result.rejectionExplanation.criteria}</p>
+                  <p style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: 0 }}>{displayResult.rejectionExplanation.criteria}</p>
                 </div>
                 <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(244, 63, 94, 0.05)', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
                   <p style={{ fontSize: '0.8rem', color: 'var(--accent-rose)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase' }}>{t('pc_your_profile')}</p>
-                  <p style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: 0, fontWeight: 500 }}>{result.rejectionExplanation.yourProfile}</p>
+                  <p style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: 0, fontWeight: 500 }}>{displayResult.rejectionExplanation.yourProfile}</p>
                 </div>
              </div>
            </div>
@@ -580,7 +687,7 @@ function ProofCard({ result }) {
                 </a>
               )}
               {result.officialWebsite && (
-                <a href={result.officialWebsite.startsWith('http') ? result.officialWebsite : `https://${result.officialWebsite}`} target="_blank" rel="noreferrer" 
+                <a href={String(result.officialWebsite).startsWith('http') ? result.officialWebsite : `https://${result.officialWebsite}`} target="_blank" rel="noreferrer" 
                    style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-glass)', padding: '6px 12px', borderRadius: '8px', transition: 'all 0.2s', border: '1px solid var(--border-color)' }}
                    onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--border-glow)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
                    onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.transform = 'translateY(0)' }}>
@@ -593,7 +700,7 @@ function ProofCard({ result }) {
       )}
 
       {/* 5. Alternative Suggestions Prompt for Ineligible Farmers */}
-      {!isEligible && result.suggestions && result.suggestions.length > 0 ? (
+      {!isEligible && suggestions.length > 0 ? (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} style={{ marginTop: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
             <Sparkles size={20} style={{ color: 'var(--accent-violet)' }} />
@@ -601,7 +708,7 @@ function ProofCard({ result }) {
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {result.suggestions.map((suggestion, idx) => (
+            {suggestions.map((suggestion, idx) => (
               <div key={idx} className="glass-card" style={{ 
                 padding: '24px', 
                 borderLeft: suggestion.eligible ? '4px solid var(--accent-emerald)' : '4px solid var(--accent-amber)', 
@@ -618,7 +725,7 @@ function ProofCard({ result }) {
                     <div style={{ textAlign: 'right' }}>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 2px 0', fontWeight: 600, textTransform: 'uppercase' }}>{t('pc_potential_benefit')}</p>
                       <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--accent-emerald)', margin: 0 }}>
-                        {suggestion.benefitAmount.startsWith('₹') ? suggestion.benefitAmount : `₹${suggestion.benefitAmount}`}
+                        {String(suggestion.benefitAmount).startsWith('₹') ? suggestion.benefitAmount : `₹${suggestion.benefitAmount}`}
                       </p>
                     </div>
                   )}

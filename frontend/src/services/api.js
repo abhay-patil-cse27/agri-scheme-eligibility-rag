@@ -59,6 +59,9 @@ export const checkEligibility = (profileId, schemeName, language = 'en') =>
 export const checkEligibilityPublic = (profileData, schemeName, language = 'en') =>
   api.post('/eligibility/public-check', { profileData, schemeName, language }).then((r) => r.data);
 
+export const translateResult = (result, language) =>
+  api.post('/eligibility/translate-result', { result, language }).then((r) => r.data);
+
 export const getEligibilityHistory = (profileId) =>
   api.get(`/eligibility/history/${profileId}`).then((r) => r.data);
 
@@ -78,6 +81,9 @@ export const transcribeAudio = (audioBlob, language = 'en') => {
     timeout: 60000,
   }).then((r) => r.data);
 };
+
+export const generateSpeech = (text, language = 'hi') =>
+  api.post('/voice/tts', { text, language }, { responseType: 'blob' }).then((r) => r.data);
 
 // ── Health ────────────────────────────────
 export const getHealth = () => api.get('/health').then((r) => r.data);

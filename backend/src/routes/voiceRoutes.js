@@ -105,4 +105,64 @@ router.post(
   })
 );
 
+/**
+ * POST /api/voice/tts
+ * Proxy text to ElevenLabs API and stream back the MP3
+ */
+router.post(
+  '/tts',
+  asyncHandler(async (req, res) => {
+    const { text, language = 'hi' } = req.body;
+    if (!text) return res.status(400).json({ success: false, error: 'No text provided' });
+
+    const config = require('../config/env');
+    if (!config.elevenlabsApiKey) {
+       return res.status(500).json({ success: false, error: 'ElevenLabs API key is not configured' });
+    }
+
+    try {
+      // Use the Multilingual v2 model with a default voice (e.g., Rachel, or any generic voice ID)
+      // Voice ID "EXAVITQu4vr4xnSDxMaL" is a common default 'Bella' or 'Rachel' '21m00Tcm4TlvDq8ikWAM'
+      const voiceId = "21m00Tcm4TlvDq8ikWAM"; 
+      
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'xi-api-key': config.elevenlabsApiKey,
+          'Accept': 'audio/mpeg'
+        },
+        body: JSON.stringify({
+          text: text,
+          model_id: "eleven_multilingual_v2",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75,
+            style: 0.0,
+            use_speaker_boost: true
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`ElevenLabs API Error: ${response.status} - ${errText}`);
+      }
+
+      res.set({
+        'Content-Type': 'audio/mpeg'
+      });
+
+      // Send the audio buffer back to the client
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      res.send(buffer);
+
+    } catch (err) {
+      logger.error('TTS route error:', err.message);
+      res.status(500).json({ success: false, error: 'Failed to generate speech audio' });
+    }
+  })
+);
+
 module.exports = router;

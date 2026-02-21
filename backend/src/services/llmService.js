@@ -3,9 +3,7 @@ const config = require('../config/env');
 const logger = require('../config/logger');
 
 const groqInstances = [
-  new Groq({ apiKey: config.groqApiKey }),
-  ...(config.groqApiKeyBackup1 ? [new Groq({ apiKey: config.groqApiKeyBackup1 })] : []),
-  ...(config.groqApiKeyBackup2 ? [new Groq({ apiKey: config.groqApiKeyBackup2 })] : [])
+  new Groq({ apiKey: config.groqApiKey })
 ];
 let currentGroqIndex = 0;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -13,7 +11,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 /**
  * Execute a function with exponential backoff retries (useful for 429 Too Many Requests)
  */
-async function withRetry(fn, maxRetries = 3, baseDelay = 2000) {
+async function withRetry(fn, maxRetries = 8, baseDelay = 2000) {
   let attempt = 0;
   while (attempt < maxRetries) {
     try {
@@ -21,15 +19,27 @@ async function withRetry(fn, maxRetries = 3, baseDelay = 2000) {
     } catch (error) {
       if ((error.status === 429 || error.status >= 500) && attempt < maxRetries - 1) {
         attempt++;
-        if (error.status === 429 && groqInstances.length > 1) {
-          currentGroqIndex = (currentGroqIndex + 1) % groqInstances.length;
-          logger.warn(`API Rate Limit hit (429). Rotating to backup API Key (index ${currentGroqIndex})...`);
-        } else {
-          logger.warn(`API Rate Limit hit (429/50x). Retrying attempt ${attempt}/${maxRetries} in ${delay}ms...`);
-        }
-        const delay = baseDelay * Math.pow(2, attempt - 1);
-        await sleep(delay);
+        let delay = baseDelay * Math.pow(2, attempt - 1);
+        
+        // Key rotation fallback logic completely commented out per user request:
+        // if (error.status === 429 && groqInstances.length > 1) {
+        //   currentGroqIndex = (currentGroqIndex + 1) % groqInstances.length;
+        //   logger.warn(`API Rate Limit hit (429). Rotating to backup API Key (index ${currentGroqIndex})...`);
+        //   delay = 1000; 
+        // } else {
+        logger.warn(`API Rate Limit hit (${error.status}). Retrying attempt ${attempt}/${maxRetries} in ${delay}ms...`);
+        // }
+        
+        // Add random jitter between 200ms and 800ms
+        const jitter = Math.floor(Math.random() * 600) + 200;
+        await sleep(delay + jitter);
       } else {
+        if (error.status === 429) {
+          throw new Error('API Rate Limit Exceeded. The service is currently handling too many requests. Please try again in a few moments.');
+        }
+        if (error.status >= 500) {
+          throw new Error('AI Service is temporarily unavailable. Please try again later.');
+        }
         throw error;
       }
     }
@@ -153,6 +163,8 @@ Based ONLY on the above document excerpts, determine if this farmer is eligible 
 IMPORTANT MULTILINGUAL RULE: 
 You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'benefitAmount', 'paymentFrequency', and the string values inside the 'rejectionExplanation' object into the following target language: **${targetLangString}**. Keep the JSON keys in English, but output the human-readable text strictly in the target language. Use simple, conversational language suitable for a farmer.`;
 
+  let rawResponse;
+
   try {
     const completion = await withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
       model: config.groqModel,
@@ -165,11 +177,17 @@ You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'b
       response_format: { type: 'json_object' },
     }));
 
-    const rawResponse = completion.choices[0]?.message?.content;
-    if (!rawResponse) {
-      throw new Error('Empty response from Groq LLM');
-    }
+    rawResponse = completion.choices[0]?.message?.content;
+  } catch (error) {
+    logger.error(`Groq LLM error for ${schemeName}:`, error.message);
+    throw new Error(`LLM eligibility check failed: ${error.message}`);
+  }
 
+  if (!rawResponse) {
+    throw new Error('Empty response from Groq LLM');
+  }
+
+  try {
     const result = parseResponse(rawResponse);
     result.responseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
 
@@ -179,8 +197,8 @@ You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'b
 
     return result;
   } catch (error) {
-    logger.error(`Groq LLM error for ${schemeName}:`, error.message);
-    throw new Error(`LLM eligibility check failed: ${error.message}`);
+    logger.error(`Failed to parse LLM response for ${schemeName}:`, error.message);
+    throw new Error(`LLM parsing failed: ${error.message}`);
   }
 }
 
@@ -242,22 +260,45 @@ function parseResponse(rawResponse) {
  * Extract structured profile from a voice transcript using LLM.
  */
 async function extractProfileFromTranscript(transcript) {
-  const systemPrompt = `You are a profile extraction assistant. Extract farmer details from the given voice transcript.
+  const systemPrompt = `You are an expert AI data extractor for an Indian agricultural platform.
+Your ONLY job is to extract farmer profile details from a raw, conversational voice transcript (which may be in Hindi, Marathi, English, Telugu, Bengali, Tamil etc.) and output strict JSON.
 
-RESPOND ONLY WITH THIS JSON STRUCTURE:
+STRICT TRANSLATION & STANDARDIZATION RULES:
+1. Translating Text: Always translate the extracted state, district, crop type, and name into English text, regardless of the language spoken in the transcript.
+2. Handling Numbers: Regional spoken numbers (e.g. "दोन एकर", "दो", "पाच") MUST be converted into actual JSON numbers (e.g. 2, 5).
+3. Social Category: If the user says "मागासवर्गीय", "पिछड़ा वर्ग", "OBC", map it to "OBC". If they say "SC/ST", "दलित", map to "SC" or "ST". If they don't explicitly mention it, set it to null.
+4. Land Units: If they say "एकर" or "Bigha" or "Gunta", attempt to roughly convert to Acres if possible, or just extract the raw number.
+5. Irrigation: If they mention well, canal, river, pump ("विहीर", "नदी", "कालवा", "सिंचाई"), set hasIrrigationAccess to true.
+
+RESPOND ONLY WITH THIS EXACT JSON STRUCTURE (No markdown, no explanation):
 {
-  "name": "farmer name or null",
+  "name": "English name or null",
   "age": number_or_null,
-  "state": "state name or null",
-  "district": "district name or null",
+  "state": "English state name or null",
+  "district": "English district name or null",
   "landHolding": number_in_acres_or_null,
-  "cropType": "crop type or null",
+  "cropType": "English crop type or null",
   "category": "General or SC or ST or OBC or null",
   "annualIncome": number_or_null,
   "hasIrrigationAccess": true_or_false_or_null
 }
 
-  Extract whatever information is available. Set null for missing fields.`;
+EXAMPLE TRANSCRIPT (Marathi):
+"नमस्ते, माझं नाव रमेश पाटील आहे, मी ४५ वर्षांचा आहे. मी महाराष्ट्र राज्यातील पुणे जिल्ह्यात राहतो. माझ्याकडे २ एकर जमीन आहे आणि मी गहू पिकवतो. माझ्याकडे विहीर आहे."
+EXPECTED OUTPUT:
+{
+  "name": "Ramesh Patil",
+  "age": 45,
+  "state": "Maharashtra",
+  "district": "Pune",
+  "landHolding": 2,
+  "cropType": "Wheat",
+  "category": null,
+  "annualIncome": null,
+  "hasIrrigationAccess": true
+}
+
+Extract whatever information is available from the actual provided transcript. Set null for completely missing fields.`;
 
   try {
     const completion = await withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
@@ -289,10 +330,11 @@ RESPOND ONLY WITH THIS JSON STRUCTURE:
 async function transcribeAudio(filePath, language = 'en') {
   const fs = require('fs');
   try {
-    const whisperLanguage = language || 'en';
+    const whisperLanguage = language ? language.substring(0, 2).toLowerCase() : 'en';
     const transcription = await withRetry(() => groqInstances[currentGroqIndex].audio.transcriptions.create({
       file: fs.createReadStream(filePath),
-      model: "whisper-large-v3-turbo",
+      model: "whisper-large-v3", // upgraded from turbo for much better Indian language accuracy
+      prompt: "This is an agricultural application. Farmers will speak in Indian languages like Hindi, Marathi, Bengali, Tamil, etc. Example: नमस्ते, माझं नाव रमेश आहे आणि मी शेतकरी आहे. Please transcribe exactly in the spoken language without translating to English.",
       response_format: "json",
       language: whisperLanguage
     }));
@@ -305,8 +347,55 @@ async function transcribeAudio(filePath, language = 'en') {
   }
 }
 
+/**
+ * Translate an eligibility result JSON natively into the target language.
+ */
+async function translateEligibilityResult(resultObj, targetLanguage = 'hi') {
+  const targetLangString = languageMap[targetLanguage] || targetLanguage;
+  
+  const systemPrompt = `You are a professional agricultural translator. Your task is to translate specific fields of the provided JSON object into ${targetLangString}.
+Keep ALL JSON keys exactly the same in English. Do NOT translate the keys.
+ONLY translate the following text values into ${targetLangString}:
+- 'reason' (string)
+- 'actionSteps' (array of strings)
+- 'benefitAmount' (string)
+- 'paymentFrequency' (string)
+- 'requiredDocuments' (array of strings)
+- 'rejectionExplanation' (object with 'criteria' and 'yourProfile' strings)
+
+Ensure the tone remains conversational, simple, and respectful to an Indian farmer.`;
+
+  try {
+    const completion = await withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
+      model: config.groqModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: JSON.stringify(resultObj) },
+      ],
+      temperature: 0.1,
+      response_format: { type: 'json_object' },
+    }));
+
+    const translated = JSON.parse(completion.choices[0]?.message?.content || '{}');
+    
+    return {
+      ...resultObj,
+      reason: translated.reason || resultObj.reason,
+      actionSteps: translated.actionSteps || resultObj.actionSteps,
+      benefitAmount: translated.benefitAmount || resultObj.benefitAmount,
+      paymentFrequency: translated.paymentFrequency || resultObj.paymentFrequency,
+      requiredDocuments: translated.requiredDocuments || resultObj.requiredDocuments,
+      rejectionExplanation: translated.rejectionExplanation || resultObj.rejectionExplanation,
+    };
+  } catch (error) {
+    logger.error('Translation failed:', error.message);
+    throw new Error(`LLM translation failed: ${error.message}`);
+  }
+}
+
 module.exports = {
   checkEligibility,
   extractProfileFromTranscript,
-  transcribeAudio
+  transcribeAudio,
+  translateEligibilityResult
 };
