@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -26,6 +26,7 @@ const navItems = [
   { to: '/dashboard/check', icon: Search, label: 'Eligibility Check' },
   { to: '/dashboard/schemes', icon: FileText, label: 'Schemes' },
   { to: '/dashboard/farmers', icon: Users, label: 'Farmers' },
+  { to: '/dashboard/users', icon: Users, label: 'Users' },
   { to: '/dashboard/history', icon: History, label: 'History' },
   { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
@@ -39,8 +40,8 @@ export default function Sidebar() {
   
   // Filter navigation items based on role
   const filteredNavItems = navItems.filter(item => {
-    // Only hide the Farmers admin page from farmer accounts
-    if (user?.role === 'farmer' && item.label === 'Farmers') {
+    // Only hide the Farmers and Users admin pages from farmer accounts
+    if (user?.role === 'farmer' && (item.label === 'Farmers' || item.label === 'Users')) {
       return false;
     }
     return true;
@@ -51,6 +52,7 @@ export default function Sidebar() {
       style={{
         width: '260px',
         minHeight: '100vh',
+        maxHeight: '100vh',
         background: 'var(--bg-secondary)',
         borderRight: '1px solid var(--border-glass)',
         display: 'flex',
@@ -60,10 +62,12 @@ export default function Sidebar() {
         left: 0,
         top: 0,
         zIndex: 50,
+        overflowY: 'auto',
+        scrollbarWidth: 'thin',
       }}
     >
-      {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 8px', marginBottom: '40px' }}>
+      {/* Logo — links to landing page */}
+      <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
         <div
           style={{
             width: '40px',
@@ -74,20 +78,21 @@ export default function Sidebar() {
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
+            flexShrink: 0,
           }}
         >
           <Zap size={20} color="white" />
         </div>
         <div>
           <h1 style={{ fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            <span className="gradient-text">{t('app_name', 'Niti')}</span>
+            <span className="gradient-text">{t('app_name_prefix', 'Niti')}</span>
             <span style={{ color: 'var(--text-primary)' }}>{t('app_name_suffix', '-Setu')}</span>
           </h1>
           <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '2px' }}>
             {t('tagline')}
           </p>
         </div>
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
@@ -144,127 +149,124 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {/* User Card */}
         <div
           style={{
-            padding: '16px',
+            padding: '14px',
             borderRadius: '12px',
             background: 'var(--bg-glass)',
             border: '1px solid var(--border-glass)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '0.85rem', flexShrink: 0 }}>
               {user?.name?.charAt(0) || 'U'}
             </div>
-            <div style={{ overflow: 'hidden' }}>
-              <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{user?.name || 'User'}</p>
-              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{user?.role === 'admin' ? t('sb_admin', 'Administrator') : t('sb_farmer', 'Farmer Portal')}</p>
+            <div style={{ overflow: 'hidden', minWidth: 0 }}>
+              <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name || 'User'}</p>
+              <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{user?.role === 'admin' ? t('sb_admin', 'Administrator') : t('sb_farmer', 'Farmer Portal')}</p>
             </div>
           </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={logout}
-                className="btn-secondary"
-                style={{ flex: 1, padding: '8px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: 'pointer', background: 'rgba(244,63,94,0.1)', color: 'var(--accent-rose)', border: 'none', borderRadius: '8px' }}
-              >
-                <LogOut size={14} /> {t('sb_logout', 'Logout')}
-              </button>
-              <button
-                onClick={() => setIsNotifOpen(true)}
-                style={{ width: '40px', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-indigo)', border: 'none', borderRadius: '8px', transition: 'all 0.2s' }}
-                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'}
-                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'}
-                title="View Notifications"
-              >
-                <Bell size={16} />
-              </button>
-            </div>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              onClick={logout}
+              className="btn-secondary"
+              style={{ flex: 1, padding: '7px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', cursor: 'pointer', background: 'rgba(244,63,94,0.1)', color: 'var(--accent-rose)', border: 'none', borderRadius: '8px' }}
+            >
+              <LogOut size={13} /> {t('sb_logout', 'Logout')}
+            </button>
+            <button
+              onClick={() => setIsNotifOpen(true)}
+              style={{ width: '36px', padding: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-indigo)', border: 'none', borderRadius: '8px', transition: 'all 0.2s' }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'}
+              title="View Notifications"
+            >
+              <Bell size={15} />
+            </button>
+          </div>
         </div>
 
-        {/* Language Switcher */}
-        <div style={{ paddingBottom: '4px' }}>
-          <LanguageSwitcher placement="up" />
-        </div>
-
-        {/* Theme Toggle */}
+        {/* Language + Theme Row */}
         <div
           style={{
-            padding: '12px 16px',
+            padding: '10px 12px',
             borderRadius: '12px',
             background: 'var(--bg-glass)',
             border: '1px solid var(--border-glass)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: '8px',
           }}
         >
+          {/* Language Switcher */}
+          <LanguageSwitcher placement="up" />
+
+          {/* Divider */}
+          <div style={{ width: '1px', height: '24px', background: 'var(--border-glass)', flexShrink: 0 }} />
+
+          {/* Theme Toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <motion.div
               animate={{ rotate: theme === 'light' ? 0 : 180 }}
               transition={{ duration: 0.4 }}
             >
               {theme === 'light'
-                ? <Sun size={16} style={{ color: 'var(--accent-amber)' }} />
-                : <Moon size={16} style={{ color: 'var(--accent-indigo)' }} />
+                ? <Sun size={15} style={{ color: 'var(--accent-amber)' }} />
+                : <Moon size={15} style={{ color: 'var(--accent-indigo)' }} />
               }
             </motion.div>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-              {theme === 'light' ? t('sb_light_mode', 'Light Mode') : t('sb_dark_mode', 'Dark Mode')}
-            </span>
-          </div>
-          {/* Pill toggle switch */}
-          <button
-            onClick={toggleTheme}
-            style={{
-              position: 'relative',
-              width: '44px',
-              height: '24px',
-              borderRadius: '100px',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-              background: theme === 'light'
-                ? 'rgba(99, 102, 241, 0.7)'
-                : 'rgba(99, 102, 241, 0.3)',
-              transition: 'background 0.3s ease',
-              flexShrink: 0,
-            }}
-            title="Toggle Theme"
-          >
-            <motion.div
-              animate={{ x: theme === 'light' ? 22 : 2 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            <button
+              onClick={toggleTheme}
               style={{
-                position: 'absolute',
-                top: '3px',
-                width: '18px',
-                height: '18px',
-                borderRadius: '50%',
-                background: 'white',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+                position: 'relative',
+                width: '40px',
+                height: '22px',
+                borderRadius: '100px',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                background: theme === 'light'
+                  ? 'rgba(99, 102, 241, 0.7)'
+                  : 'rgba(99, 102, 241, 0.3)',
+                transition: 'background 0.3s ease',
+                flexShrink: 0,
               }}
-            />
-          </button>
+              title="Toggle Theme"
+            >
+              <motion.div
+                animate={{ x: theme === 'light' ? 20 : 2 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                style={{
+                  position: 'absolute',
+                  top: '3px',
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '50%',
+                  background: 'white',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+                }}
+              />
+            </button>
+          </div>
         </div>
 
         {/* System Status */}
         <div
           style={{
-            padding: '16px',
+            padding: '10px 14px',
             borderRadius: '12px',
             background: 'var(--bg-glass)',
             border: '1px solid var(--border-glass)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div className="pulse-dot" />
-            <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>{t('sb_system_online', 'System Online')}</span>
+            <span style={{ fontSize: '0.72rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>{t('sb_system_online', 'System Online')}</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>RAG • Groq</span>
           </div>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-            RAG Engine • Groq LLM
-          </p>
         </div>
       </div>
       <NotificationCenter isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />

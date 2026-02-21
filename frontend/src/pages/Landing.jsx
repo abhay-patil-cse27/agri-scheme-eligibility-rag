@@ -10,6 +10,7 @@ import {
   Cpu, Lock, Languages, HeartHandshake, Wheat, MapPin,
   Github, Sprout, TrendingUp, Clock, CheckCircle2, Search, Info, Check, Quote
 } from 'lucide-react';
+import LanguageSwitcher from '../components/common/LanguageSwitcher';
 
 /* ─── Agricultural color system ─────────────────────────── */
 const C = (isDark) => ({
@@ -56,29 +57,7 @@ function Wave({ fill, flip }) {
   );
 }
 
-/* ─── Data ───────────────────────────────────────────────── */
-const WHY = [
-  { icon: Clock,      val: '< 1s',  label: 'Eligibility answer',   sub: 'Powered by Groq LLaMA 3.3' },
-  { icon: FileText,   val: '4+',    label: 'Central schemes',       sub: 'PM-KISAN, KUSUM, AIF, KMY' },
-  { icon: Sprout,     val: '6+',    label: 'Social categories',     sub: 'OBC, SC/ST, EWS, Minority…' },
-  { icon: TrendingUp, val: '100%',  label: 'Open source',           sub: 'By students, for farmers' },
-];
-
-const FEATURES = [
-  { icon: Mic,      label: 'Voice Input',           desc: 'Speak in your language — Whisper AI transcribes and processes your details instantly.' },
-  { icon: Brain,    label: 'Intelligent Matching',  desc: 'LLaMA 3.3 reads scheme PDFs and matches your profile against real eligibility clauses.' },
-  { icon: FileText, label: 'Citation-Backed',       desc: 'Every answer cites the exact scheme section so you know the reasoning — not just the result.' },
-  { icon: BarChart3,label: 'Admin Dashboard',       desc: 'District-level analytics: scheme adoption trends, demographic breakdowns, history logs.' },
-  { icon: Shield,   label: 'Secure & Private',      desc: 'JWT auth with strict RBAC. Farmer data stays private — admins see only aggregated insights.' },
-  { icon: Globe,    label: 'Google Sign-In',        desc: 'One-tap Google login — no password set-up needed for farmers accessing for the first time.' },
-];
-
-const AUDIENCE = [
-  { icon: Wheat,         g: GREEN_GRAD, title: 'Marginal Farmers',   desc: 'Type or speak your farm details and get a clear list of eligible schemes with exact benefit amounts — in seconds.' },
-  { icon: Users,         g: GOLD_GRAD,  title: 'District Officers',  desc: 'Monitor which schemes are gaining traction, identify underserved populations, and track historical checks.' },
-  { icon: FileText,      g: GREEN_GRAD, title: 'Policy Analysts',    desc: 'Upload new scheme PDFs to instantly expand the knowledge base and stress-test eligibility logic.' },
-  { icon: HeartHandshake,g: GOLD_GRAD,  title: 'NGOs & Gram Sabhas', desc: 'Run bulk eligibility checks on behalf of rural communities to identify overlooked benefit gaps.' },
-];
+/* ─── Data (moved inside component for i18n) ────────────── */
 
 /* ─── Main Component ─────────────────────────────────────── */
 export default function Landing() {
@@ -95,7 +74,30 @@ export default function Landing() {
   const isDark = theme === 'dark';
   const c      = C(isDark);
 
-  useEffect(() => { if (user) navigate('/dashboard/'); }, [user, navigate]);
+  const WHY = [
+    { icon: Clock,      val: t('lp_why_val1'),  label: t('lp_why_label1'),   sub: t('lp_why_sub1') },
+    { icon: FileText,   val: t('lp_why_val2'),  label: t('lp_why_label2'),   sub: t('lp_why_sub2') },
+    { icon: Sprout,     val: t('lp_why_val3'),  label: t('lp_why_label3'),   sub: t('lp_why_sub3') },
+    { icon: TrendingUp, val: t('lp_why_val4'),  label: t('lp_why_label4'),   sub: t('lp_why_sub4') },
+  ];
+
+  const FEATURES = [
+    { icon: Mic,      label: t('lp_feat1_label'), desc: t('lp_feat1_desc') },
+    { icon: Brain,    label: t('lp_feat2_label'), desc: t('lp_feat2_desc') },
+    { icon: FileText, label: t('lp_feat3_label'), desc: t('lp_feat3_desc') },
+    { icon: BarChart3,label: t('lp_feat4_label'), desc: t('lp_feat4_desc') },
+    { icon: Shield,   label: t('lp_feat5_label'), desc: t('lp_feat5_desc') },
+    { icon: Globe,    label: t('lp_feat6_label'), desc: t('lp_feat6_desc') },
+  ];
+
+  const AUDIENCE = [
+    { icon: Wheat,         g: GREEN_GRAD, title: t('lp_aud1_title'), desc: t('lp_aud1_desc') },
+    { icon: Users,         g: GOLD_GRAD,  title: t('lp_aud2_title'), desc: t('lp_aud2_desc') },
+    { icon: FileText,      g: GREEN_GRAD, title: t('lp_aud3_title'), desc: t('lp_aud3_desc') },
+    { icon: HeartHandshake,g: GOLD_GRAD,  title: t('lp_aud4_title'), desc: t('lp_aud4_desc') },
+  ];
+
+  // Landing page is accessible to all users (no auth redirect)
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', h);
@@ -105,10 +107,10 @@ export default function Landing() {
   const go = (id) => { setOpen(false); document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' }); };
 
   const NAV = [
-    { label: 'Features', id: '#features' },
-    { label: 'Who We Serve', id: '#audience' },
-    { label: 'Technology', id: '#technology' },
-    { label: 'Contact', id: '#contact' },
+    { label: t('nav_features', 'Features'), id: '#features' },
+    { label: t('nav_audience', 'Who We Serve'), id: '#audience' },
+    { label: t('nav_tech', 'Technology'), id: '#technology' },
+    { label: t('nav_contact', 'Contact'), id: '#contact' },
   ];
 
   /* ── shared section wrapper ── */
@@ -158,6 +160,8 @@ export default function Landing() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <LanguageSwitcher />
+
             <motion.button whileTap={{ scale: 0.9 }} onClick={toggleTheme} title="Toggle theme" style={{
               background: c.bgGlass, border: `1px solid ${c.border}`, borderRadius: '8px',
               padding: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center',
@@ -165,24 +169,36 @@ export default function Landing() {
             }}>
               {isDark ? <Sun size={16} color="#fbbf24" /> : <Moon size={16} color="#166534" />}
             </motion.button>
-            <Link to="/login" style={{ textDecoration: 'none' }}>
-              <button style={{
-                background: 'none', color: isDark ? '#4ade80' : '#166534',
-                border: `1px solid ${c.border}`, borderRadius: '10px',
-                padding: '9px 18px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-                onMouseOver={e => { e.currentTarget.style.background = c.bgGlass; }}
-                onMouseOut={e => { e.currentTarget.style.background = 'none'; }}
-              >Sign In</button>
-            </Link>
-            <Link to="/check" style={{ textDecoration: 'none' }}>
-              <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} style={{
-                background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '10px',
-                padding: '9px 22px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(22,163,74,0.4)',
-              }}>Free Check</motion.button>
-            </Link>
+            {user ? (
+              <Link to="/dashboard" style={{ textDecoration: 'none' }}>
+                <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} style={{
+                  background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '10px',
+                  padding: '9px 22px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
+                  boxShadow: '0 4px 16px rgba(22,163,74,0.4)',
+                }}>{t('lp_go_dashboard')}</motion.button>
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" style={{ textDecoration: 'none' }}>
+                  <button style={{
+                    background: 'none', color: isDark ? '#4ade80' : '#166534',
+                    border: `1px solid ${c.border}`, borderRadius: '10px',
+                    padding: '9px 18px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                    onMouseOver={e => { e.currentTarget.style.background = c.bgGlass; }}
+                    onMouseOut={e => { e.currentTarget.style.background = 'none'; }}
+                  >{t('btn_signin', 'Sign In')}</button>
+                </Link>
+                <Link to="/check" style={{ textDecoration: 'none' }}>
+                  <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} style={{
+                    background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '10px',
+                    padding: '9px 22px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(22,163,74,0.4)',
+                  }}>{t('btn_free_check', 'Free Check')}</motion.button>
+                </Link>
+              </>
+            )}
             <button onClick={() => setOpen(!open)} style={{ background: 'none', border: `1px solid ${c.border}`, borderRadius: '8px', padding: '8px', cursor: 'pointer', color: c.textSec, display: 'none' }} className="ns-hamburger">
               {open ? <X size={18} /> : <Menu size={18} />}
             </button>
@@ -209,7 +225,7 @@ export default function Landing() {
 
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1, duration: 0.5 }} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: isDark ? 'rgba(22,163,74,0.12)' : 'rgba(22,101,52,0.08)', border: `1px solid ${c.border}`, borderRadius: '100px', padding: '6px 18px', marginBottom: '32px' }}>
             <Wheat size={13} color={isDark ? '#4ade80' : '#166534'} />
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: isDark ? '#4ade80' : '#166534', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Agricultural Scheme Intelligence</span>
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: isDark ? '#4ade80' : '#166534', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{t('lp_hero_badge')}</span>
           </motion.div>
 
           <h1 style={{ fontSize: 'clamp(2.4rem, 5.5vw, 4.2rem)', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.08, marginBottom: '24px', color: c.text }}>
@@ -229,7 +245,7 @@ export default function Landing() {
                 display: 'flex', alignItems: 'center', gap: '10px',
                 boxShadow: '0 6px 24px rgba(22,163,74,0.4)', transition: 'box-shadow 0.3s',
               }}>
-                Check Your Eligibility (Free) <ArrowRight size={18} />
+                {t('lp_hero_btn_check')} <ArrowRight size={18} />
               </motion.button>
             </Link>
             <button onClick={() => go('#features')} style={{
@@ -262,9 +278,9 @@ export default function Landing() {
       {/* ══ Features ══ */}
       <InView id="features" style={{ ...sec(), background: c.bg2 }}>
         <motion.div variants={FU}>
-          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534' }}>How It Works</span>
-          <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em', color: c.text, lineHeight: 1.15, marginTop: '10px', marginBottom: '12px' }}>A Complete Picture, Not Just a Yes or No</h2>
-          <p style={{ fontSize: '1rem', color: c.textSec, maxWidth: '560px', lineHeight: 1.75, marginBottom: '48px' }}>Built on real government documents — not guesswork. Every eligibility answer comes with the clause it was drawn from.</p>
+          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534' }}>{t('lp_feat_tag')}</span>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em', color: c.text, lineHeight: 1.15, marginTop: '10px', marginBottom: '12px' }}>{t('lp_feat_title')}</h2>
+          <p style={{ fontSize: '1rem', color: c.textSec, maxWidth: '560px', lineHeight: 1.75, marginBottom: '48px' }}>{t('lp_feat_desc')}</p>
         </motion.div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
@@ -287,9 +303,9 @@ export default function Landing() {
       {/* ══ Who We Serve ══ */}
       <InView id="audience" style={{ ...sec(), background: c.bg }}>
         <motion.div variants={FU}>
-          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534' }}>Who We Serve</span>
-          <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em', color: c.text, lineHeight: 1.15, marginTop: '10px', marginBottom: '12px' }}>From the Field to the District Office</h2>
-          <p style={{ fontSize: '1rem', color: c.textSec, maxWidth: '540px', lineHeight: 1.75, marginBottom: '48px' }}>Niti-Setu is built for everyone across the agricultural support chain — not just administrators.</p>
+          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534' }}>{t('lp_aud_tag')}</span>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em', color: c.text, lineHeight: 1.15, marginTop: '10px', marginBottom: '12px' }}>{t('lp_aud_title')}</h2>
+          <p style={{ fontSize: '1rem', color: c.textSec, maxWidth: '540px', lineHeight: 1.75, marginBottom: '48px' }}>{t('lp_aud_desc')}</p>
         </motion.div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
@@ -312,30 +328,30 @@ export default function Landing() {
       {/* ══ Technology ══ */}
       <InView id="technology" style={{ ...sec(), background: c.bg2 }}>
         <motion.div variants={FU}>
-          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534' }}>Under the Hood</span>
-          <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em', color: c.text, lineHeight: 1.15, marginTop: '10px', marginBottom: '48px' }}>Serious Engineering for Real-World Needs</h2>
+          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534' }}>{t('lp_tech_tag')}</span>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em', color: c.text, lineHeight: 1.15, marginTop: '10px', marginBottom: '48px' }}>{t('lp_tech_title')}</h2>
         </motion.div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
           {[
-            { icon: Cpu,       title: 'Groq LLaMA 3.3 70B',     desc: 'Sub-second LLM inference for reliable eligibility judgment on any farm profile.' },
-            { icon: Lock,      title: 'Bcrypt + JWT Security',   desc: 'All passwords bcrypt-hashed. Role-based access splits farmer and admin views completely.' },
-            { icon: Languages, title: 'Whisper Voice AI',         desc: 'Multilingual speech recognition — farmers can dictate in their regional language.' },
-            { icon: Brain,     title: 'Custom RAG Pipeline',      desc: 'No LangChain. Built from scratch: PDF → chunks → embeddings → Atlas vector search.' },
-          ].map(t => (
-            <motion.div key={t.title} variants={FU} style={{ background: c.bgCard, border: `1px solid ${c.border}`, borderRadius: '16px', padding: '22px' }}>
+            { icon: Cpu,       title: t('lp_tech1_title'), desc: t('lp_tech1_desc') },
+            { icon: Lock,      title: t('lp_tech2_title'), desc: t('lp_tech2_desc') },
+            { icon: Languages, title: t('lp_tech3_title'), desc: t('lp_tech3_desc') },
+            { icon: Brain,     title: t('lp_tech4_title'), desc: t('lp_tech4_desc') },
+          ].map(tech => (
+            <motion.div key={tech.title} variants={FU} style={{ background: c.bgCard, border: `1px solid ${c.border}`, borderRadius: '16px', padding: '22px' }}>
               <div style={{ width: '42px', height: '42px', borderRadius: '11px', background: 'rgba(22,163,74,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
-                <t.icon size={20} color={isDark ? '#4ade80' : '#166534'} />
+                <tech.icon size={20} color={isDark ? '#4ade80' : '#166534'} />
               </div>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: c.text, marginBottom: '6px' }}>{t.title}</h3>
-              <p style={{ fontSize: '0.85rem', color: c.textSec, lineHeight: 1.65 }}>{t.desc}</p>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: c.text, marginBottom: '6px' }}>{tech.title}</h3>
+              <p style={{ fontSize: '0.85rem', color: c.textSec, lineHeight: 1.65 }}>{tech.desc}</p>
             </motion.div>
           ))}
         </div>
 
         {/* checklist card */}
         <motion.div variants={FU} style={{ background: c.bgCard, border: `1px solid ${c.border}`, borderRadius: '20px', padding: '28px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
-          {['Custom RAG (no LangChain)','MongoDB Atlas Vector Search','Nodemailer SMTP email lifecycle','Google OAuth 2.0 Login','GZIP response compression','Memory API caching','JWT Role-Based Access Control','Vite code-split production builds'].map(item => (
+          {[t('lp_check1'),t('lp_check2'),t('lp_check3'),t('lp_check4'),t('lp_check5'),t('lp_check6'),t('lp_check7'),t('lp_check8')].map(item => (
             <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <CheckCircle size={15} color={isDark ? '#4ade80' : '#166534'} style={{ flexShrink: 0 }} />
               <span style={{ fontSize: '0.86rem', color: c.textSec }}>{item}</span>
@@ -356,12 +372,12 @@ export default function Landing() {
           border: `1px solid ${c.borderGlow}`,
           boxShadow: isDark ? '0 0 60px rgba(22,163,74,0.06)' : '0 0 60px rgba(22,163,74,0.04)',
         }}>
-          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534', display: 'block', marginBottom: '12px' }}>Open Source · Built in India</span>
+          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534', display: 'block', marginBottom: '12px' }}>{t('lp_cta_tag')}</span>
           <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em', color: c.text, lineHeight: 1.12, marginBottom: '16px' }}>
-            Ready to Bridge Farmers<br />to Their Schemes?
+            {t('lp_cta_title1')}<br />{t('lp_cta_title2')}
           </h2>
           <p style={{ fontSize: '1rem', color: c.textSec, maxWidth: '480px', margin: '0 auto 36px', lineHeight: 1.78 }}>
-            Register as a farmer to check your eligibility right now, or explore the source code to understand how it works — everything is open.
+            {t('lp_cta_desc')}
           </p>
 
           <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '44px' }}>
@@ -372,7 +388,7 @@ export default function Landing() {
                 display: 'flex', alignItems: 'center', gap: '8px',
                 boxShadow: '0 4px 18px rgba(22,163,74,0.4)',
               }}>
-                Start Free Check <ArrowRight size={17} />
+                {t('lp_start_free_check')} <ArrowRight size={17} />
               </motion.button>
             </Link>
             <a href="https://github.com/abhay-patil-cse27/agri-scheme-eligibility-rag" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
@@ -381,7 +397,7 @@ export default function Landing() {
                 borderRadius: '12px', padding: '13px 30px', fontSize: '1rem', fontWeight: 600,
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
               }}>
-                <Github size={17} /> View on GitHub
+                <Github size={17} /> {t('lp_view_github')}
               </motion.button>
             </a>
           </div>
@@ -389,9 +405,9 @@ export default function Landing() {
           {/* Contact info — legitimate & minimal */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: c.bgGlass, border: `1px solid ${c.border}`, borderRadius: '100px', padding: '10px 20px' }}>
             <MapPin size={15} color={isDark ? '#4ade80' : '#166534'} />
-            <span style={{ fontSize: '0.88rem', color: c.textSec, fontWeight: 500 }}>Kolhapur, Maharashtra, India</span>
+            <span style={{ fontSize: '0.88rem', color: c.textSec, fontWeight: 500 }}>{t('lp_cta_location')}</span>
             <span style={{ color: c.textMute }}>·</span>
-            <span style={{ fontSize: '0.83rem', color: c.textMute }}>A student project for agricultural equity</span>
+            <span style={{ fontSize: '0.83rem', color: c.textMute }}>{t('lp_cta_student')}</span>
           </div>
         </motion.div>
       </InView>
@@ -409,12 +425,12 @@ export default function Landing() {
                 <span style={{ color: c.text }}>Setu</span>
               </span>
             </div>
-            <p style={{ fontSize: '0.83rem', color: c.textMute, lineHeight: 1.65 }}>Helping Indian farmers discover the welfare schemes they're entitled to — through voice, AI, and open data.</p>
+            <p style={{ fontSize: '0.83rem', color: c.textMute, lineHeight: 1.65 }}>{t('lp_footer_desc')}</p>
           </div>
 
           <div style={{ display: 'flex', gap: '44px', flexWrap: 'wrap' }}>
             <div>
-              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>Navigate</p>
+              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>{t('lp_footer_navigate')}</p>
               {NAV.map(n => (
                 <button key={n.id} onClick={() => go(n.id)} style={{ display: 'block', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textAlign: 'left', transition: 'color 0.2s' }}
                   onMouseOver={e => e.currentTarget.style.color = c.text}
@@ -423,8 +439,8 @@ export default function Landing() {
               ))}
             </div>
             <div>
-              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>Portal</p>
-              {[['Free Check', '/check'], ['Sign In', '/login'], ['Register', '/register']].map(([l, to]) => (
+              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>{t('lp_footer_portal')}</p>
+              {[[t('btn_free_check'), '/check'], [t('btn_signin'), '/login'], [t('btn_register'), '/register']].map(([l, to]) => (
                 <Link key={l} to={to} style={{ display: 'block', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textDecoration: 'none', transition: 'color 0.2s' }}
                   onMouseOver={e => e.currentTarget.style.color = c.text}
                   onMouseOut={e => e.currentTarget.style.color = c.textMute}
@@ -435,8 +451,8 @@ export default function Landing() {
         </div>
 
         <div style={{ borderTop: `1px solid ${c.border}`, paddingTop: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-          <p style={{ fontSize: '0.78rem', color: c.textMute }}>© 2026 Niti-Setu. All rights reserved.</p>
-          <p style={{ fontSize: '0.78rem', color: c.textMute }}>Made with ❤️ in Kolhapur, Maharashtra.</p>
+          <p style={{ fontSize: '0.78rem', color: c.textMute }}>{t('lp_footer_copyright')}</p>
+          <p style={{ fontSize: '0.78rem', color: c.textMute }}>{t('lp_footer_made')}</p>
         </div>
       </footer>
 

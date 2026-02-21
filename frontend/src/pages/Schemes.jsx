@@ -6,6 +6,7 @@ import {
 import { getSchemes, uploadScheme, deleteScheme } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -20,6 +21,7 @@ const categoryColors = {
 };
 
 function UploadModal({ onClose, onUpload }) {
+  const { t } = useTranslation();
   const [file, setFile] = useState(null);
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
@@ -73,7 +75,7 @@ function UploadModal({ onClose, onUpload }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <h2 style={{ fontSize: '1.2rem', fontWeight: 700 }}>
             <Upload size={20} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-indigo)' }} />
-            Upload Scheme PDF
+            {t('sh_upload_pdf')}
           </h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
             <X size={20} />
@@ -82,24 +84,24 @@ function UploadModal({ onClose, onUpload }) {
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>Scheme Name *</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. PM-KISAN" className="input-dark" required />
+            <label style={labelStyle}>{t('sh_name')} *</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('sh_name_ph')} className="input-dark" required />
           </div>
           <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>Description</label>
-            <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Brief description" className="input-dark" />
+            <label style={labelStyle}>{t('sh_desc')}</label>
+            <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder={t('sh_desc_ph')} className="input-dark" />
           </div>
           <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>Category</label>
+            <label style={labelStyle}>{t('sh_tbl_category')}</label>
             <select value={category} onChange={(e) => setCategory(e.target.value)} className="select-dark">
-              <option value="income_support">Income Support</option>
-              <option value="infrastructure">Infrastructure</option>
-              <option value="energy">Energy</option>
-              <option value="other">Other</option>
+              <option value="income_support">{t('sh_cat_income')}</option>
+              <option value="infrastructure">{t('sh_cat_infra')}</option>
+              <option value="energy">{t('sh_cat_energy')}</option>
+              <option value="other">{t('sh_cat_other')}</option>
             </select>
           </div>
           <div style={{ marginBottom: '24px' }}>
-            <label style={labelStyle}>PDF File *</label>
+            <label style={labelStyle}>{t('sh_file')} *</label>
             <div
               style={{
                 padding: '24px', borderRadius: '12px', textAlign: 'center',
@@ -114,7 +116,7 @@ function UploadModal({ onClose, onUpload }) {
                   {file.name} ({(file.size / 1024).toFixed(0)} KB)
                 </p>
               ) : (
-                <p style={{ color: 'var(--text-muted)' }}>Click to select PDF file</p>
+                <p style={{ color: 'var(--text-muted)' }}>{t('sh_file_select')}</p>
               )}
               <input ref={fileRef} type="file" accept=".pdf" style={{ display: 'none' }}
                 onClick={(e) => e.stopPropagation()}
@@ -124,7 +126,7 @@ function UploadModal({ onClose, onUpload }) {
 
           <button type="submit" className="btn-glow" disabled={uploading || !file || !name}
             style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            {uploading ? <><Loader2 size={18} className="spin" /> Processing PDF...</> : <><Upload size={18} /> Upload & Process</>}
+            {uploading ? <><Loader2 size={18} className="spin" /> {t('sh_btn_uploading')}</> : <><Upload size={18} /> {t('sh_btn_upload')}</>}
           </button>
         </form>
       </motion.div>
@@ -138,6 +140,7 @@ const labelStyle = {
 };
 
 export default function Schemes() {
+  const { t } = useTranslation();
   const [schemes, setSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
@@ -182,13 +185,10 @@ export default function Schemes() {
         <div>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
             <FileText size={24} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-violet)' }} />
-            Government <span className="gradient-text">Schemes</span>
+            {t('sh_title')}
           </h1>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            {isAdmin
-              ? `Upload PDFs to build the knowledge base — ${schemes.length} schemes loaded`
-              : `Browse available government schemes — ${schemes.length} schemes indexed`
-            }
+            {t('sh_subtitle')}
           </p>
         </div>
         {isAdmin && (
@@ -199,7 +199,7 @@ export default function Schemes() {
             onClick={() => setShowUpload(true)}
             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <Plus size={18} /> Upload PDF
+            <Plus size={18} /> {t('sh_add_new')}
           </motion.button>
         )}
       </motion.div>
@@ -218,10 +218,10 @@ export default function Schemes() {
           style={{ padding: '60px', textAlign: 'center' }}
         >
           <FileText size={48} style={{ color: 'var(--text-muted)', margin: '0 auto 16px' }} />
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '8px' }}>No schemes uploaded</h3>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>Upload government scheme PDFs to power the eligibility engine</p>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '8px' }}>{t('sh_empty')}</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>{t('sh_upload_desc')}</p>
           <button className="btn-glow" onClick={() => setShowUpload(true)}>
-            <Upload size={16} style={{ display: 'inline', marginRight: '8px' }} /> Upload First PDF
+            <Upload size={16} style={{ display: 'inline', marginRight: '8px' }} /> {t('sh_add_new')}
           </button>
         </motion.div>
       ) : (
@@ -242,7 +242,7 @@ export default function Schemes() {
                   <div style={{ flex: 1 }}>
                     <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '4px' }}>{scheme.name}</h3>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                      {scheme.description || 'Government scheme document'}
+                      {scheme.description || t('sh_govt_scheme_doc')}
                     </p>
                   </div>
                   <span className="badge" style={{ background: cat.bg, color: cat.text, border: `1px solid ${cat.border}`, marginLeft: '12px' }}>
@@ -252,18 +252,18 @@ export default function Schemes() {
 
                 <div style={{ display: 'flex', gap: '20px', marginBottom: '16px' }}>
                   <div>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '2px' }}>CHUNKS</p>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '2px' }}>{t('sh_tbl_chunks').toUpperCase()}</p>
                     <p style={{ fontSize: '1.2rem', fontWeight: 700 }}>{scheme.totalChunks}</p>
                   </div>
                   <div>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '2px' }}>VERSION</p>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '2px' }}>{t('sh_tbl_version')}</p>
                     <p style={{ fontSize: '1.2rem', fontWeight: 700 }}>{scheme.version || 1}</p>
                   </div>
                   <div>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '2px' }}>STATUS</p>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '2px' }}>{t('sh_tbl_status').toUpperCase()}</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
                       <CheckCircle2 size={14} style={{ color: 'var(--accent-emerald)' }} />
-                      <span style={{ fontSize: '0.85rem', color: 'var(--accent-emerald)', fontWeight: 500 }}>Indexed</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--accent-emerald)', fontWeight: 500 }}>{t('sh_active')}</span>
                     </div>
                   </div>
                 </div>
@@ -283,7 +283,7 @@ export default function Schemes() {
                       }}
                     >
                       {deleting === scheme._id ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
-                      Delete
+                      {t('sh_delete')}
                     </motion.button>
                   </div>
                 )}

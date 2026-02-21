@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Sidebar from './components/layout/Sidebar';
 import LandingNav from './components/layout/LandingNav';
@@ -11,6 +11,7 @@ import Farmers from './pages/Farmers';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Settings from './pages/Settings';
+import UsersPage from './pages/Users';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -72,38 +73,32 @@ export default function App() {
             {/* Landing page */}
             <Route path="/" element={<Landing />} />
 
-            {/* Auth pages — share the LandingNav */}
+            {/* Public auth pages — share the LandingNav */}
             <Route element={<AuthShell />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgotpassword" element={<ForgotPassword />} />
               <Route path="/resetpassword/:token" element={<ResetPassword />} />
-              {/* Public Eligibility Check Tool */}
+              {/* Public Eligibility Check Tool (unauthenticated / guest) */}
               <Route path="/check" element={<EligibilityCheck />} />
             </Route>
 
-            {/* Redirect old shorthand paths → /dashboard/* */}
-            <Route path="/check"    element={<Navigate to="/dashboard/check"    replace />} />
-            <Route path="/schemes"  element={<Navigate to="/dashboard/schemes"  replace />} />
-            <Route path="/farmers"  element={<Navigate to="/dashboard/farmers"  replace />} />
-            <Route path="/history"  element={<Navigate to="/dashboard/history"  replace />} />
-            <Route path="/settings" element={<Navigate to="/dashboard/settings" replace />} />
-
-            {/* Protected app — proper nested Outlet routing */}
+            {/* Protected app — proper nested Outlet routing inside Sidebar shell */}
             <Route path="/dashboard" element={<AppShell />}>
               <Route index element={<Dashboard />} />
-              {/* The authenticated wrapper for Check just redirects to the public check, but with user session active */}
-              <Route path="check" element={<Navigate to="/check" replace />} />
+              {/* Authenticated Eligibility Check renders INSIDE the Sidebar layout */}
+              <Route path="check" element={<EligibilityCheck />} />
               <Route path="schemes" element={<Schemes />} />
               <Route path="farmers" element={<Farmers />} />
               <Route path="history" element={<HistoryPage />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="users" element={<UsersPage />} />
             </Route>
           </Routes>
         </BrowserRouter>
         <ToastContainer />
       </ToastProvider>
-    </AuthProvider>
+      </AuthProvider>
     </GoogleOAuthProvider>
     </ThemeProvider>
   );

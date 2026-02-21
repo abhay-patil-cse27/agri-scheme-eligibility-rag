@@ -24,6 +24,7 @@ export const updateDetails = (data) => api.put('/auth/updatedetails', data).then
 export const updatePassword = (data) => api.put('/auth/updatepassword', data).then(r => r.data);
 export const forgotPassword = (email) => api.post('/auth/forgotpassword', { email }).then(r => r.data);
 export const resetPassword = (token, password) => api.put(`/auth/resetpassword/${token}`, { password }).then(r => r.data);
+export const getAllUsers = () => api.get('/auth/users').then((r) => r.data);
 
 // ── Schemes ───────────────────────────────
 export const getSchemes = () => api.get('/schemes').then((r) => r.data);

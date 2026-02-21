@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { User, Mail, Lock, Zap, Loader2, Eye, EyeOff } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../context/ToastContext';
 
 export default function Register() {
@@ -13,6 +14,7 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, googleAuth, user, loading } = useAuth();
+  const { t } = useTranslation();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -27,7 +29,7 @@ export default function Register() {
     setIsSubmitting(true);
     
     if (password.length < 6) {
-      addToast('Invalid Password', 'Password must be at least 6 characters', 'warning');
+      addToast(t('reg_invalid_password'), t('reg_invalid_password'), 'warning');
       setIsSubmitting(false);
       return;
     }
@@ -35,12 +37,12 @@ export default function Register() {
     try {
       const res = await register(name.trim(), email.trim(), password.trim());
       if (res.success) {
-        addToast('Registration Successful', 'Welcome to Niti-Setu', 'success');
+        addToast(t('reg_success'), t('reg_welcome'), 'success');
       } else {
-        addToast('Registration Failed', res.error, 'error');
+        addToast(t('reg_failed'), res.error, 'error');
       }
     } catch (err) {
-      addToast('System Error', 'An unexpected error occurred during registration.', 'error');
+      addToast(t('toast_system_error'), t('reg_system_error'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -51,12 +53,12 @@ export default function Register() {
     try {
       const res = await googleAuth(credentialResponse.credential);
       if (res.success) {
-        addToast('Registration Successful', 'Authenticated via Google', 'success');
+        addToast(t('reg_success'), t('login_google_success'), 'success');
       } else {
-        addToast('Authentication Failed', res.error, 'error');
+        addToast(t('login_auth_failed'), res.error, 'error');
       }
     } catch (err) {
-      addToast('System Error', 'An unexpected error occurred during Google login.', 'error');
+      addToast(t('toast_system_error'), t('reg_system_error'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -74,42 +76,42 @@ export default function Register() {
           <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)', marginBottom: '16px' }}>
             <Zap size={24} color="white" />
           </div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: '4px' }}>Create Account</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Farmer Registration</p>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: '4px' }}>{t('reg_title')}</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{t('reg_subtitle')}</p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div>
             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '8px' }}>
-              <User size={14} /> Full Name
+              <User size={14} /> {t('reg_name')}
             </label>
             <input
               type="text" required
               value={name} onChange={(e) => setName(e.target.value)}
-              className="input-dark" placeholder="Enter your name"
+              className="input-dark" placeholder={t('reg_name_ph')}
             />
           </div>
 
           <div>
             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '8px' }}>
-              <Mail size={14} /> Email Address
+              <Mail size={14} /> {t('login_email')}
             </label>
             <input
               type="email" required
               value={email} onChange={(e) => setEmail(e.target.value)}
-              className="input-dark" placeholder="Enter your email"
+              className="input-dark" placeholder={t('login_email_ph')}
             />
           </div>
           
           <div>
             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '8px' }}>
-              <Lock size={14} /> Password
+              <Lock size={14} /> {t('login_password')}
             </label>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? 'text' : 'password'} required
                 value={password} onChange={(e) => setPassword(e.target.value)}
-                className="input-dark" placeholder="Create a password (min 6)"
+                className="input-dark" placeholder={t('login_password_ph')}
                 style={{ paddingRight: '40px' }}
               />
               <button
@@ -140,13 +142,13 @@ export default function Register() {
             type="submit" disabled={isSubmitting} className="btn-glow"
             style={{ marginTop: '12px', padding: '14px', width: '100%', display: 'flex', justifyContent: 'center', gap: '8px', fontSize: '1rem' }}
           >
-            {isSubmitting ? <><Loader2 size={20} className="spin" /> Registering...</> : 'Register'}
+            {isSubmitting ? <><Loader2 size={20} className="spin" /> {t('reg_btn_loading')}</> : t('reg_btn')}
           </motion.button>
         </form>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0' }}>
           <div style={{ height: '1px', flex: 1, background: 'var(--border-color)' }}></div>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>OR</span>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('reg_or')}</span>
           <div style={{ height: '1px', flex: 1, background: 'var(--border-color)' }}></div>
         </div>
 
@@ -154,7 +156,7 @@ export default function Register() {
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => {
-              addToast('Google Registration Failed', 'Popup closed or authentication failed', 'error');
+              addToast(t('reg_google_failed'), t('login_google_failed_desc'), 'error');
             }}
             theme="filled_black"
             text="signup_with"
@@ -164,7 +166,7 @@ export default function Register() {
         </div>
 
         <p style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-          Already have an account? <Link to="/login" style={{ color: 'var(--accent-indigo)', fontWeight: 600, textDecoration: 'none' }}>Sign In here</Link>
+          {t('reg_have_account')} <Link to="/login" style={{ color: 'var(--accent-indigo)', fontWeight: 600, textDecoration: 'none' }}>{t('reg_signin_link')}</Link>
         </p>
       </motion.div>
     </div>

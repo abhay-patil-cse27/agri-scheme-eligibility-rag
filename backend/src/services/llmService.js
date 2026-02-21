@@ -2,8 +2,12 @@ const Groq = require('groq-sdk');
 const config = require('../config/env');
 const logger = require('../config/logger');
 
-const groq = new Groq({ apiKey: config.groqApiKey });
-
+const groqInstances = [
+  new Groq({ apiKey: config.groqApiKey }),
+  ...(config.groqApiKeyBackup1 ? [new Groq({ apiKey: config.groqApiKeyBackup1 })] : []),
+  ...(config.groqApiKeyBackup2 ? [new Groq({ apiKey: config.groqApiKeyBackup2 })] : [])
+];
+let currentGroqIndex = 0;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
@@ -17,8 +21,13 @@ async function withRetry(fn, maxRetries = 3, baseDelay = 2000) {
     } catch (error) {
       if ((error.status === 429 || error.status >= 500) && attempt < maxRetries - 1) {
         attempt++;
+        if (error.status === 429 && groqInstances.length > 1) {
+          currentGroqIndex = (currentGroqIndex + 1) % groqInstances.length;
+          logger.warn(`API Rate Limit hit (429). Rotating to backup API Key (index ${currentGroqIndex})...`);
+        } else {
+          logger.warn(`API Rate Limit hit (429/50x). Retrying attempt ${attempt}/${maxRetries} in ${delay}ms...`);
+        }
         const delay = baseDelay * Math.pow(2, attempt - 1);
-        logger.warn(`API Rate Limit hit (429/50x). Retrying attempt ${attempt}/${maxRetries} in ${delay}ms...`);
         await sleep(delay);
       } else {
         throw error;
@@ -70,21 +79,24 @@ RESPOND ONLY WITH THIS EXACT JSON STRUCTURE:
 {
   "eligible": true or false,
   "confidence": "high" or "medium" or "low",
-  "reason": "Very brief 1 sentence summary (e.g., 'You are eligible for ₹6,000 yearly' or 'You do not meet the land limits').",
+  "reason": "Detailed 3-5 sentence explanation that: (a) states whether the farmer is eligible or not, (b) explains which specific criteria from the document matched or failed against the farmer's profile, (c) mentions the specific numbers (e.g. land size, income, age) that led to the decision, and (d) uses a warm, empathetic tone addressing the farmer directly.",
   "benefitAmount": "Exact amount as string or null (e.g., '₹6,000')",
   "paymentFrequency": "Frequency as string or null (e.g., 'Yearly in 3 installments')",
   "actionSteps": ["Upload Aadhar on portal", "Wait for verification"] or [],
+  "requiredDocuments": ["Aadhaar Card", "Land ownership records / 7/12 extract", "Bank passbook with IFSC", "Passport-size photo"] (ALWAYS provide this list — include all standard documents needed to apply for this scheme, plus any category-specific certificates as per the rules above),
   "rejectionExplanation": {
     "criteria": "Rule they failed (e.g., 'Maximum land holding allowed is 2 hectares')",
     "yourProfile": "Their profile value (e.g., 'You have 3 hectares of land')"
   } or null,
-  "citation": "Exact text quoted from the document excerpts that supports your decision",
+  "citation": "Exact verbatim text quoted from the document excerpts that supports your decision. Must be a direct quote, not a paraphrase.",
   "citationSource": {
     "page": 12,
-    "section": "Eligibility Criteria"
+    "section": "Eligibility Criteria",
+    "paragraph": 3
   },
   "officialWebsite": "URL or null"
 }`;
+
 
 const languageMap = {
   en: 'English',
@@ -142,14 +154,14 @@ IMPORTANT MULTILINGUAL RULE:
 You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'benefitAmount', 'paymentFrequency', and the string values inside the 'rejectionExplanation' object into the following target language: **${targetLangString}**. Keep the JSON keys in English, but output the human-readable text strictly in the target language. Use simple, conversational language suitable for a farmer.`;
 
   try {
-    const completion = await withRetry(() => groq.chat.completions.create({
+    const completion = await withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
       model: config.groqModel,
       messages: [
         { role: 'system', content: ELIGIBILITY_SYSTEM_PROMPT },
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.1,
-      max_tokens: 1024,
+      max_tokens: 2048,
       response_format: { type: 'json_object' },
     }));
 
@@ -186,16 +198,33 @@ function parseResponse(rawResponse) {
 
   try {
     const parsed = JSON.parse(cleaned);
+
+    // Sanitize citationSource.page — LLM sometimes returns strings like "Various"
+    let pageVal = parsed.citationSource?.page;
+    if (pageVal !== null && pageVal !== undefined) {
+      const num = Number(pageVal);
+      pageVal = isNaN(num) ? String(pageVal) : String(num);
+    } else {
+      pageVal = '';
+    }
+
+    let paragraphVal = parsed.citationSource?.paragraph;
+    if (paragraphVal !== null && paragraphVal !== undefined) {
+      paragraphVal = String(paragraphVal);
+    } else {
+      paragraphVal = '';
+    }
+
     return {
       eligible: Boolean(parsed.eligible),
       confidence: parsed.confidence || 'medium',
       reason: parsed.reason || 'No reason provided',
       citation: parsed.citation || '',
       citationSource: {
-        page: parsed.citationSource?.page || null,
+        page: pageVal,
         section: parsed.citationSource?.section || '',
         subsection: parsed.citationSource?.subsection || '',
-        paragraph: parsed.citationSource?.paragraph || null,
+        paragraph: paragraphVal,
       },
       officialWebsite: parsed.officialWebsite || '',
       benefitAmount: parsed.benefitAmount || null,
@@ -231,7 +260,7 @@ RESPOND ONLY WITH THIS JSON STRUCTURE:
   Extract whatever information is available. Set null for missing fields.`;
 
   try {
-    const completion = await withRetry(() => groq.chat.completions.create({
+    const completion = await withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
       model: config.groqModel,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -261,7 +290,7 @@ async function transcribeAudio(filePath, language = 'en') {
   const fs = require('fs');
   try {
     const whisperLanguage = language || 'en';
-    const transcription = await withRetry(() => groq.audio.transcriptions.create({
+    const transcription = await withRetry(() => groqInstances[currentGroqIndex].audio.transcriptions.create({
       file: fs.createReadStream(filePath),
       model: "whisper-large-v3-turbo",
       response_format: "json",

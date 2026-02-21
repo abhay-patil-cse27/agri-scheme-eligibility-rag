@@ -11,6 +11,7 @@ import {
   PieChart as PieChartIcon
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { getSchemes, getProfiles, getHealth, getAnalytics } from "../services/api";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -87,6 +88,7 @@ function StatCard({ icon: Icon, label, value, color, index }) {
 }
 
 function SchemeCard({ scheme, index }) {
+  const { t } = useTranslation();
   const categoryColors = {
     income_support: "#10b981",
     infrastructure: "#6366f1",
@@ -142,7 +144,7 @@ function SchemeCard({ scheme, index }) {
               marginBottom: "2px",
             }}
           >
-            CHUNKS
+            {t('db_chunks')}
           </p>
           <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>
             {scheme.totalChunks}
@@ -156,7 +158,7 @@ function SchemeCard({ scheme, index }) {
               marginBottom: "2px",
             }}
           >
-            PROCESSED
+            {t('db_processed')}
           </p>
           <p
             style={{
@@ -165,7 +167,7 @@ function SchemeCard({ scheme, index }) {
               color: "var(--accent-emerald)",
             }}
           >
-            Active
+            {t('db_active')}
           </p>
         </div>
       </div>
@@ -174,6 +176,7 @@ function SchemeCard({ scheme, index }) {
 }
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [schemes, setSchemes] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [health, setHealth] = useState(null);
@@ -183,18 +186,16 @@ export default function Dashboard() {
   useEffect(() => {
     async function load() {
       try {
-        const [s, p, h, a] = await Promise.all([
+        const [s, p, h, a] = await Promise.allSettled([
           getSchemes(),
           getProfiles(),
           getHealth(),
           getAnalytics()
         ]);
-        setSchemes(s.data || []);
-        setProfiles(p.data || []);
-        setHealth(h);
-        if (a && a.success) {
-          setAnalytics(a.data);
-        }
+        if (s.status === 'fulfilled') setSchemes(s.value.data || []);
+        if (p.status === 'fulfilled') setProfiles(p.value.data || []);
+        if (h.status === 'fulfilled') setHealth(h.value);
+        if (a.status === 'fulfilled' && a.value?.success) setAnalytics(a.value.data);
       } catch (e) {
         console.error("Dashboard load error:", e);
       } finally {
@@ -222,10 +223,10 @@ export default function Dashboard() {
             marginBottom: "8px",
           }}
         >
-          Welcome to <span className="gradient-text">NitiSetu</span>
+          {t('db_welcome')} <span className="gradient-text">{t('app_name')}</span>
         </h1>
         <p style={{ fontSize: "0.95rem", color: "var(--text-secondary)" }}>
-          Voice-powered scheme eligibility engine — AI meets agricultural policy
+          {t('db_subtitle')}
         </p>
       </motion.div>
 
@@ -240,29 +241,29 @@ export default function Dashboard() {
       >
         <StatCard
           icon={FileText}
-          label="Schemes Loaded"
+          label={t('db_schemes_loaded')}
           value={analytics?.rawStats?.totalSchemes || schemes.length}
           color="#6366f1"
           index={0}
         />
         <StatCard
           icon={BarChart3}
-          label="Total Eligibility Checks"
+          label={t('db_total_checks')}
           value={analytics?.rawStats?.totalChecks || 0}
           color="#8b5cf6"
           index={1}
         />
         <StatCard
           icon={Users}
-          label="Farmer Profiles"
+          label={t('db_farmer_profiles')}
           value={analytics?.rawStats?.totalProfiles || profiles.length}
           color="#10b981"
           index={2}
         />
         <StatCard
           icon={Zap}
-          label="System Status"
-          value={health?.status === "ok" ? "Online" : "Offline"}
+          label={t('db_system_status')}
+          value={health?.status === "ok" ? t('db_online') : t('db_offline')}
           color="#f59e0b"
           index={3}
         />
@@ -279,7 +280,7 @@ export default function Dashboard() {
             <div className="glass-card" style={{ padding: '24px' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <TrendingUp size={18} color="var(--accent-indigo)" />
-                Eligibility Checks Output (Last 30 Days)
+                {t('db_checks_chart')}
               </h3>
               <div style={{ width: '100%', height: 300 }}>
                 {analytics.checksOverTime.length > 0 ? (
@@ -296,7 +297,7 @@ export default function Dashboard() {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available</div>
+                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>{t('db_no_data')}</div>
                 )}
               </div>
             </div>
@@ -305,7 +306,7 @@ export default function Dashboard() {
             <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <PieChartIcon size={18} color="var(--accent-emerald)" />
-                Overall Eligibility Split
+                {t('db_eligibility_split')}
               </h3>
               <div style={{ flex: 1, width: '100%', minHeight: 250 }}>
                 {(analytics.eligibilitySplit.eligible > 0 || analytics.eligibilitySplit.notEligible > 0) ? (
@@ -327,12 +328,12 @@ export default function Dashboard() {
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available</div>
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>{t('db_no_data')}</div>
                 )}
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--accent-emerald)' }} /><span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Eligible ({analytics.eligibilitySplit.eligible})</span></div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--accent-rose)' }} /><span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Not Eligible ({analytics.eligibilitySplit.notEligible})</span></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--accent-emerald)' }} /><span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t('db_eligible')} ({analytics.eligibilitySplit.eligible})</span></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--accent-rose)' }} /><span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t('db_not_eligible')} ({analytics.eligibilitySplit.notEligible})</span></div>
               </div>
             </div>
           </div>
@@ -342,7 +343,7 @@ export default function Dashboard() {
             <div className="glass-card" style={{ padding: '24px' }}>
                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Users size={18} color="var(--accent-sky)" />
-                Top Matched Schemes
+                {t('db_top_schemes')}
               </h3>
               <div style={{ width: '100%', height: 300 }}>
                 {analytics.topSchemes.length > 0 ? (
@@ -363,7 +364,7 @@ export default function Dashboard() {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available</div>
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>{t('db_no_data')}</div>
                 )}
               </div>
             </div>
@@ -372,7 +373,7 @@ export default function Dashboard() {
             <div className="glass-card" style={{ padding: '24px' }}>
                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <BarChart3 size={18} color="#f59e0b" />
-                Farmer Registrations by State
+                {t('db_farmer_by_state')}
               </h3>
               <div style={{ width: '100%', height: 300 }}>
                 {analytics.profilesByState.length > 0 ? (
@@ -393,7 +394,7 @@ export default function Dashboard() {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>No data available</div>
+                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>{t('db_no_data')}</div>
                 )}
               </div>
             </div>
@@ -437,14 +438,13 @@ export default function Dashboard() {
                   color: "var(--accent-indigo)",
                 }}
               />
-              Check Scheme Eligibility
+              {t('db_check_title')}
             </h2>
             <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-              Use voice or form input to check farmer eligibility — get results
-              with PDF citations in under 5 seconds
+              {t('db_check_desc')}
             </p>
           </div>
-          <Link to="/check" style={{ textDecoration: "none" }}>
+          <Link to="/dashboard/check" style={{ textDecoration: "none" }}>
             <motion.button
               className="btn-glow"
               whileHover={{ scale: 1.05 }}
@@ -456,7 +456,7 @@ export default function Dashboard() {
                 whiteSpace: "nowrap",
               }}
             >
-              Start Check <ArrowRight size={18} />
+              {t('db_start_check')} <ArrowRight size={18} />
             </motion.button>
           </Link>
         </div>
@@ -471,9 +471,9 @@ export default function Dashboard() {
           alignItems: "center",
         }}
       >
-        <h2 style={{ fontSize: "1.1rem", fontWeight: 700 }}>Loaded Schemes</h2>
+        <h2 style={{ fontSize: "1.1rem", fontWeight: 700 }}>{t('db_loaded_schemes')}</h2>
         <Link
-          to="/schemes"
+          to="/dashboard/schemes"
           style={{
             fontSize: "0.85rem",
             color: "var(--accent-indigo)",
@@ -481,7 +481,7 @@ export default function Dashboard() {
             fontWeight: 500,
           }}
         >
-          View all →
+          {t('db_view_all')}
         </Link>
       </div>
 
@@ -526,7 +526,7 @@ export default function Dashboard() {
                 style={{ color: "var(--text-muted)", margin: "0 auto 12px" }}
               />
               <p style={{ color: "var(--text-secondary)" }}>
-                No schemes uploaded yet. Go to Schemes page to upload PDFs.
+              {t('db_no_schemes')}
               </p>
             </div>
           )}

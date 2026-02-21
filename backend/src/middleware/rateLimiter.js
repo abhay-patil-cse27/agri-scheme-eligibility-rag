@@ -5,7 +5,7 @@ const rateLimit = require('express-rate-limit');
  */
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 500,
   message: {
     success: false,
     error: 'Too many requests. Please try again after 15 minutes.',
@@ -15,12 +15,12 @@ const generalLimiter = rateLimit({
 });
 
 /**
- * Eligibility check rate limiter: 20 requests per 15 minutes per IP.
+ * Eligibility check rate limiter: 60 requests per 15 minutes per IP.
  * Stricter because each request hits LLM + vector search.
  */
 const eligibilityLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 60,
   message: {
     success: false,
     error: 'Too many eligibility checks. Please try again after 15 minutes.',

@@ -30,12 +30,12 @@ export default function Login() {
     try {
       const res = await login(email.trim(), password.trim());
       if (res.success) {
-        addToast('Login Successful', 'Welcome back to Niti-Setu', 'success');
+        addToast(t('login_success'), t('login_welcome_back'), 'success');
       } else {
-        addToast('Authentication Failed', res.error, 'error');
+        addToast(t('login_auth_failed'), res.error, 'error');
       }
     } catch (err) {
-      addToast('System Error', 'An unexpected error occurred during login.', 'error');
+      addToast(t('toast_system_error'), t('login_system_error'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -46,12 +46,12 @@ export default function Login() {
     try {
       const res = await googleAuth(credentialResponse.credential);
       if (res.success) {
-        addToast('Login Successful', 'Authenticated via Google', 'success');
+        addToast(t('login_success'), t('login_google_success'), 'success');
       } else {
-        addToast('Authentication Failed', res.error, 'error');
+        addToast(t('login_auth_failed'), res.error, 'error');
       }
     } catch (err) {
-      addToast('System Error', 'An unexpected error occurred during Google login.', 'error');
+      addToast(t('toast_system_error'), t('login_system_error'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -130,7 +130,7 @@ export default function Login() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0' }}>
           <div style={{ height: '1px', flex: 1, background: 'var(--border-color)' }}></div>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>OR</span>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('login_or', 'OR')}</span>
           <div style={{ height: '1px', flex: 1, background: 'var(--border-color)' }}></div>
         </div>
 
@@ -138,7 +138,7 @@ export default function Login() {
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => {
-              addToast('Google Login Failed', 'Popup closed or authentication failed', 'error');
+              addToast(t('login_google_failed'), t('login_google_failed_desc'), 'error');
             }}
             theme="filled_black"
             shape="rectangular"

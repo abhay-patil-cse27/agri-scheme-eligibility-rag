@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Trash2, Edit2, Loader2, MapPin, Ruler, Search, User, Droplets, Wallet, Sprout, Shield, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { getProfiles, deleteProfile, updateProfile } from '../services/api';
+import { useTranslation } from 'react-i18next';
 
 const indianStates = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -12,6 +13,7 @@ const indianStates = [
 ];
 
 export default function Farmers() {
+  const { t } = useTranslation();
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -93,10 +95,10 @@ export default function Farmers() {
         <div>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
             <Users size={24} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-violet)' }} />
-            Farmer <span className="gradient-text">Profiles</span>
+            {t('fm_title')}
           </h1>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            Manage extracted farmer data and scheme beneficiaries
+            {t('fm_subtitle')}
           </p>
         </div>
         
@@ -105,7 +107,7 @@ export default function Farmers() {
           <Search size={16} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             type="text"
-            placeholder="Search farmers or locations..."
+            placeholder={t('fm_search_ph')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="input-dark"
@@ -126,7 +128,7 @@ export default function Farmers() {
       ) : filtered.length === 0 ? (
         <div className="glass-card" style={{ padding: '60px', textAlign: 'center' }}>
           <Users size={48} style={{ color: 'var(--text-muted)', margin: '0 auto 16px', opacity: 0.5 }} />
-          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>No profiles found</h3>
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>{t('fm_empty')}</h3>
         </div>
       ) : (
         <div style={{ display: 'grid', gap: '16px' }}>
@@ -142,9 +144,9 @@ export default function Farmers() {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {profile.name || "Unknown Farmer"}
+                    {profile.name || t('fm_unknown')}
                   </h3>
-                  {profile.age && <span className="badge badge-info">{profile.age} yrs</span>}
+                  {profile.age && <span className="badge badge-info">{profile.age} {t('fm_yrs')}</span>}
                   <span className="badge badge-success">{profile.category}</span>
                 </div>
                 
@@ -153,7 +155,7 @@ export default function Farmers() {
                     <MapPin size={14} /> {profile.district ? `${profile.district}, ` : ''}{profile.state}
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Ruler size={14} /> {profile.landHolding} acres
+                    <Ruler size={14} /> {profile.landHolding} {t('fm_acres')}
                   </span>
                   {profile.cropType && (
                     <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -225,66 +227,66 @@ export default function Farmers() {
               
               <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Edit2 size={20} style={{ color: 'var(--accent-indigo)' }} />
-                Edit Farmer Profile
+                {t('pf_title')}
               </h2>
               
               <form onSubmit={handleEditSubmit}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
-                    <label style={labelStyle}><User size={14} /> Full Name</label>
+                    <label style={labelStyle}><User size={14} /> {t('reg_name')}</label>
                     <input name="name" value={editingProfile.name || ''} onChange={handleChange} className="input-dark" required />
                   </div>
                   <div>
-                    <label style={labelStyle}><User size={14} /> Age</label>
+                    <label style={labelStyle}><User size={14} /> {t('cm_age')}</label>
                     <input name="age" type="number" value={editingProfile.age || ''} onChange={handleChange} className="input-dark" required />
                   </div>
                   <div>
-                    <label style={labelStyle}><MapPin size={14} /> State</label>
+                    <label style={labelStyle}><MapPin size={14} /> {t('cm_state')}</label>
                     <select name="state" value={editingProfile.state || ''} onChange={handleChange} className="select-dark" required>
-                      <option value="">Select state</option>
+                      <option value="">{t('cm_search')}</option>
                       {indianStates.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label style={labelStyle}><MapPin size={14} /> District</label>
+                    <label style={labelStyle}><MapPin size={14} /> {t('cm_district')}</label>
                     <input name="district" value={editingProfile.district || ''} onChange={handleChange} className="input-dark" />
                   </div>
                   <div>
-                    <label style={labelStyle}><Ruler size={14} /> Land (acres)</label>
+                    <label style={labelStyle}><Ruler size={14} /> {t('cm_land')}</label>
                     <input name="landHolding" type="number" step="0.1" value={editingProfile.landHolding || ''} onChange={handleChange} className="input-dark" required />
                   </div>
                   <div>
-                    <label style={labelStyle}><Sprout size={14} /> Crop Type</label>
+                    <label style={labelStyle}><Sprout size={14} /> {t('cm_crop')}</label>
                     <input name="cropType" value={editingProfile.cropType || ''} onChange={handleChange} className="input-dark" />
                   </div>
                   <div>
-                    <label style={labelStyle}><Shield size={14} /> Category</label>
+                    <label style={labelStyle}><Shield size={14} /> {t('cm_category')}</label>
                     <select name="category" value={editingProfile.category || 'General'} onChange={handleChange} className="select-dark">
-                      <option value="General">General</option>
-                      <option value="SC">SC</option>
-                      <option value="ST">ST</option>
-                      <option value="OBC">OBC</option>
+                      <option value="General">{t('cm_general')}</option>
+                      <option value="SC">{t('cm_scst')}</option>
+                      <option value="ST">{t('cm_scst')}</option>
+                      <option value="OBC">{t('cm_obc')}</option>
                     </select>
                   </div>
                   <div>
-                    <label style={labelStyle}><Wallet size={14} /> Annual Income (₹)</label>
+                    <label style={labelStyle}><Wallet size={14} /> {t('cm_income')}</label>
                     <input name="annualIncome" type="number" value={editingProfile.annualIncome || ''} onChange={handleChange} className="input-dark" />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '12px' }}>
                     <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: 0 }}>
                       <input type="checkbox" name="hasIrrigationAccess" checked={editingProfile.hasIrrigationAccess || false} onChange={handleChange} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-                      <Droplets size={14} /> Has Irrigation
+                      <Droplets size={14} /> {t('cm_has_irrigation')}
                     </label>
                   </div>
                 </div>
                 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '32px' }}>
                   <button type="button" onClick={() => setEditingProfile(null)} disabled={saving} className="btn-secondary" style={{ padding: '10px 20px', borderRadius: '8px', background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}>
-                    Cancel
+                    {t('cm_cancel')}
                   </button>
                   <button type="submit" disabled={saving} className="btn-glow" style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {saving ? <Loader2 size={16} className="spin" /> : <CheckCircle2 size={16} />}
-                    Save Changes
+                    {t('st_save')}
                   </button>
                 </div>
               </form>

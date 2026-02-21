@@ -5,21 +5,22 @@ import { Globe, Check } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 export const languageMap = {
-  en: 'English (EN)',
-  hi: 'हिंदी (Hindi)',
-  mr: 'मराठी (Marathi)',
-  bn: 'বাংলা (Bengali)',
-  te: 'తెలుగు (Telugu)',
-  ta: 'தமிழ் (Tamil)',
-  gu: 'ગુજરાતી (Gujarati)',
-  kn: 'ಕನ್ನಡ (Kannada)',
-  ml: 'മലയാളം (Malayalam)',
-  pa: 'ਪੰਜਾਬੀ (Punjabi)'
+  en: 'English',
+  hi: 'Hindi (हिंदी)',
+  mr: 'Marathi (मराठी)',
+  bn: 'Bengali (বাংলা)',
+  te: 'Telugu (తెలుగు)',
+  ta: 'Tamil (தமிழ்)',
+  gu: 'Gujarati (ગુજરાતી)',
+  kn: 'Kannada (ಕನ್ನಡ)',
+  ml: 'Malayalam (മലയാളം)',
+  pa: 'Punjabi (ਪੰਜਾਬੀ)'
 };
 
 export default function LanguageSwitcher({ placement = 'down' }) {
   const { i18n } = useTranslation();
-  const { isDark } = useTheme();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -37,6 +38,7 @@ export default function LanguageSwitcher({ placement = 'down' }) {
   const handleSelect = (code) => {
     i18n.changeLanguage(code);
     setIsOpen(false);
+    window.location.reload(); // Mandatory reload to ensure all UI elements translate
   };
 
   const bgGlass = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255,255,255,0.6)';
@@ -75,9 +77,9 @@ export default function LanguageSwitcher({ placement = 'down' }) {
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
             style={{
-              position: 'absolute', right: 0,
+              position: 'absolute', left: 0,
               ...(placement === 'up' ? { bottom: '100%', marginBottom: '8px' } : { top: '100%', marginTop: '8px' }),
-              width: '180px', maxHeight: '300px', overflowY: 'auto',
+              width: '200px', maxHeight: '300px', overflowY: 'auto',
               background: dropdownBg, border: `1px solid ${border}`,
               borderRadius: '12px', padding: '8px', zIndex: 50,
               boxShadow: isDark ? '0 10px 40px rgba(0,0,0,0.5)' : '0 10px 40px rgba(0,0,0,0.1)',
@@ -110,7 +112,7 @@ export default function LanguageSwitcher({ placement = 'down' }) {
                     }}
                   >
                     <span style={{ fontSize: '0.85rem', fontWeight: isActive ? 600 : 500 }}>
-                      {name.split(' ')[0]}
+                      {name}
                     </span>
                     {isActive && <Check size={14} style={{ color: 'var(--accent-emerald)' }} />}
                   </button>

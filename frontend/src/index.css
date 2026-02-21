@@ -2,56 +2,87 @@
 
 /* ── Design Tokens (Dark Mode — Agricultural Forest) ── */
 :root {
-  --bg-primary:    #060d06;
-  --bg-secondary:  #0c170c;
-  --bg-card:       rgba(12, 24, 12, 0.85);
-  --bg-glass:      rgba(34, 197, 94, 0.04);
-  --border-glass:  rgba(34, 197, 94, 0.08);
-  --border-color:  rgba(34, 197, 94, 0.1);
-  --border-glow:   rgba(34, 197, 94, 0.28);
-  --text-primary:  #e8f5e0;
-  --text-secondary:#6b9a60;
-  --text-muted:    #3d5e38;
+  --bg-primary: #060d06;
+  --bg-secondary: #0c170c;
+  --bg-card: rgba(12, 24, 12, 0.85);
+  --bg-glass: rgba(34, 197, 94, 0.04);
+  --border-glass: rgba(34, 197, 94, 0.08);
+  --border-color: rgba(34, 197, 94, 0.1);
+  --border-glow: rgba(34, 197, 94, 0.28);
+  --text-primary: #e8f5e0;
+  --text-secondary: #6b9a60;
+  --text-muted: #3d5e38;
   --accent-indigo: #4ade80;
   --accent-violet: #fbbf24;
-  --accent-emerald:#16a34a;
-  --accent-amber:  #f59e0b;
-  --accent-rose:   #f43f5e;
-  --accent-cyan:   #34d399;
+  --accent-emerald: #16a34a;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-cyan: #34d399;
   --gradient-primary: linear-gradient(135deg, #166534, #16a34a, #4ade80);
   --gradient-success: linear-gradient(135deg, #16a34a, #4ade80);
-  --gradient-danger:  linear-gradient(135deg, #f43f5e, #e11d48);
-  --gradient-bg:   radial-gradient(ellipse at top, #0c170c 0%, #060d06 60%);
-  --shadow-glow:   0 0 30px rgba(34, 197, 94, 0.15);
-  --shadow-card:   0 4px 24px rgba(0, 0, 0, 0.5);
+  --gradient-danger: linear-gradient(135deg, #f43f5e, #e11d48);
+  --gradient-bg: radial-gradient(ellipse at top, #0c170c 0%, #060d06 60%);
+  --shadow-glow: 0 0 30px rgba(34, 197, 94, 0.15);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.5);
 }
 
 /* ── Light Mode Overrides (Agricultural — Warm Wheat/Earthy) ── */
 [data-theme="light"] {
-  --bg-primary:    #faf7ee;
-  --bg-secondary:  #f2ead8;
-  --bg-card:       rgba(255, 253, 244, 0.97);
-  --bg-glass:      rgba(101, 67, 33, 0.06);
-  --border-glass:  rgba(101, 67, 33, 0.12);
-  --border-color:  rgba(101, 67, 33, 0.15);
-  --border-glow:   rgba(22, 101, 52, 0.28);
-  --text-primary:  #1a2a0e;
-  --text-secondary:#3d5c28;
-  --text-muted:    #8a7750;
+  --bg-primary: #faf7ee;
+  --bg-secondary: #f2ead8;
+  --bg-card: rgba(255, 253, 244, 0.97);
+  --bg-glass: rgba(101, 67, 33, 0.06);
+  --border-glass: rgba(101, 67, 33, 0.12);
+  --border-color: rgba(101, 67, 33, 0.15);
+  --border-glow: rgba(22, 101, 52, 0.28);
+  --text-primary: #1a2a0e;
+  --text-secondary: #3d5c28;
+  --text-muted: #8a7750;
   --accent-indigo: #166534;
   --accent-violet: #ca8a04;
-  --accent-emerald:#16a34a;
-  --accent-amber:  #d97706;
-  --accent-rose:   #dc2626;
-  --accent-cyan:   #0891b2;
+  --accent-emerald: #16a34a;
+  --accent-amber: #d97706;
+  --accent-rose: #dc2626;
+  --accent-cyan: #0891b2;
   --gradient-primary: linear-gradient(135deg, #166534, #16a34a, #4ade80);
   --gradient-success: linear-gradient(135deg, #16a34a, #4ade80);
-  --gradient-danger:  linear-gradient(135deg, #dc2626, #ef4444);
-  --gradient-bg:   radial-gradient(ellipse at top, #f2ead8 0%, #faf7ee 55%);
-  --shadow-card:   0 4px 24px rgba(101, 67, 33, 0.10);
-  --shadow-glow:   0 0 30px rgba(22, 101, 52, 0.12);
+  --gradient-danger: linear-gradient(135deg, #dc2626, #ef4444);
+  --gradient-bg: radial-gradient(ellipse at top, #f2ead8 0%, #faf7ee 55%);
+  --shadow-card: 0 4px 24px rgba(101, 67, 33, 0.1);
+  --shadow-glow: 0 0 30px rgba(22, 101, 52, 0.12);
 }
 
+/* ── Custom Scrollbar (Dark Mode) ──────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(34, 197, 94, 0.2);
+  border-radius: 100px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 197, 94, 0.4);
+}
+
+/* ── Custom Scrollbar (Light Mode) ─────── */
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(101, 67, 33, 0.2);
+  border-radius: 100px;
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(101, 67, 33, 0.35);
+}
+/* Firefox */
+* {
+  scrollbar-color: rgba(34, 197, 94, 0.2) transparent;
+}
+[data-theme="light"] * {
+  scrollbar-color: rgba(101, 67, 33, 0.2) transparent;
+}
 
 /* ── Base Reset ────────────────────────── */
 * {

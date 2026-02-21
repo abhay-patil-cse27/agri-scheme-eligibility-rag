@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import {
   Mic, MicOff, Search, User, MapPin, Ruler, Sprout, Shield, Wallet,
   Droplets, CheckCircle2, XCircle, AlertCircle, FileText, ChevronDown,
-  Loader2, Sparkles, Quote, ClipboardList, Clock, Globe, Download, Volume2, VolumeX
+  Loader2, Sparkles, Quote, ClipboardList, Clock, Globe, Download, Volume2, VolumeX, Brain
 } from 'lucide-react';
 import { useVoice } from '../hooks/useVoice';
 import { useAuth } from '../context/AuthContext';
@@ -88,12 +88,12 @@ function VoiceInput({ onProfileExtracted }) {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
         <Mic size={20} style={{ color: 'var(--accent-indigo)' }} />
-        <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Voice Input</h3>
-        <span className="badge badge-info">AI Powered</span>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>{t('vi_title')}</h3>
+        <span className="badge badge-info">{t('vi_ai_powered')}</span>
       </div>
 
       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-        Speak in English or Hindi — <em>"I am Ramesh from Maharashtra, I have 2 acres of wheat land..."</em>
+        {t('vi_subtitle')} — <em>"I am Ramesh from Maharashtra, I have 2 acres of wheat land..."</em>
       </p>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
@@ -113,11 +113,11 @@ function VoiceInput({ onProfileExtracted }) {
           }}
         >
           {processing ? (
-            <><Loader2 size={18} className="spin" /> Transcribing Audio...</>
+            <><Loader2 size={18} className="spin" /> {t('vi_processing')}</>
           ) : isListening ? (
-            <><MicOff size={18} /> Stop & Process</>
+            <><MicOff size={18} /> {t('vi_stop')}</>
           ) : (
-            <><Mic size={18} /> Start Speaking</>
+            <><Mic size={18} /> {t('vi_start')}</>
           )}
         </motion.button>
       </div>
@@ -129,7 +129,7 @@ function VoiceInput({ onProfileExtracted }) {
           style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}
         >
           <div className="pulse-dot" style={{ background: 'var(--accent-rose)' }} />
-          <span style={{ fontSize: '0.8rem', color: 'var(--accent-rose)', fontWeight: 500 }}>Recording... click Stop when finished</span>
+          <span style={{ fontSize: '0.8rem', color: 'var(--accent-rose)', fontWeight: 500 }}>{t('vi_listening')}</span>
         </motion.div>
       )}
 
@@ -142,7 +142,7 @@ function VoiceInput({ onProfileExtracted }) {
             background: 'var(--bg-glass)', border: '1px solid var(--border-glass)',
           }}
         >
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 500 }}>TRANSCRIPT FROM WHISPER AI</p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 500 }}>{t('vi_transcript').toUpperCase()}</p>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: 1.6 }}>{transcript}</p>
         </motion.div>
       )}
@@ -158,6 +158,7 @@ function VoiceInput({ onProfileExtracted }) {
 
 /* ── Profile Form ───────────────────────── */
 function ProfileForm({ initialData, onSubmit, loading }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: '', age: '', state: '', district: '', landHolding: '',
     cropType: '', category: 'General', annualIncome: '', hasIrrigationAccess: false,
@@ -205,27 +206,27 @@ function ProfileForm({ initialData, onSubmit, loading }) {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
         <User size={20} style={{ color: 'var(--accent-violet)' }} />
-        <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Farmer Profile</h3>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>{t('pf_title')}</h3>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <div>
-          <label style={labelStyle}><User size={14} /> Full Name</label>
+          <label style={labelStyle}><User size={14} /> {t('reg_name')}</label>
           <input name="name" value={form.name} onChange={handleChange} placeholder="e.g. Ramesh Patil" className="input-dark" required />
         </div>
         <div>
-          <label style={labelStyle}><User size={14} /> Age</label>
+          <label style={labelStyle}><User size={14} /> {t('cm_age')}</label>
           <input name="age" type="number" min="18" max="120" value={form.age} onChange={handleChange} placeholder="e.g. 35" className="input-dark" required />
         </div>
         <div>
-          <label style={labelStyle}><MapPin size={14} /> State / UT</label>
+          <label style={labelStyle}><MapPin size={14} /> {t('cm_state')}</label>
           <select name="state" value={form.state} onChange={handleChange} className="select-dark" required>
-            <option value="">Select State / UT</option>
+            <option value="">{t('cm_search')}</option>
             {Object.keys(indianStates).map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
         <div>
-          <label style={labelStyle}><MapPin size={14} /> District</label>
+          <label style={labelStyle}><MapPin size={14} /> {t('cm_district')}</label>
           <select 
             name="district" 
             value={form.district} 
@@ -233,40 +234,40 @@ function ProfileForm({ initialData, onSubmit, loading }) {
             className="select-dark" 
             disabled={!form.state}
           >
-            <option value="">Select district</option>
+            <option value="">{t('cm_district_ph')}</option>
             {form.state && indianStates[form.state] && indianStates[form.state].map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}
           </select>
         </div>
         <div>
-          <label style={labelStyle}><Ruler size={14} /> Land (acres)</label>
+          <label style={labelStyle}><Ruler size={14} /> {t('cm_land')}</label>
           <input name="landHolding" type="number" step="0.1" value={form.landHolding} onChange={handleChange} placeholder="e.g. 2.5" className="input-dark" required />
         </div>
         <div>
-          <label style={labelStyle}><Sprout size={14} /> Crop Type</label>
+          <label style={labelStyle}><Sprout size={14} /> {t('cm_crop')}</label>
           <input name="cropType" value={form.cropType} onChange={handleChange} placeholder="e.g. Wheat, Rice" className="input-dark" />
         </div>
         <div>
-          <label style={labelStyle}><Shield size={14} /> Category</label>
+          <label style={labelStyle}><Shield size={14} /> {t('cm_category')}</label>
           <select name="category" value={form.category} onChange={handleChange} className="select-dark">
-            <option value="General">General</option>
-            <option value="EWS">EWS</option>
-            <option value="OBC">OBC</option>
-            <option value="SC">SC</option>
-            <option value="ST">ST</option>
-            <option value="Minority">Minority</option>
+            <option value="General">{t('cm_general')}</option>
+            <option value="EWS">{t('cm_ews')}</option>
+            <option value="OBC">{t('cm_obc')}</option>
+            <option value="SC">{t('cm_scst')}</option>
+            <option value="ST">{t('cm_scst')}</option>
+            <option value="Minority">{t('cm_minority')}</option>
           </select>
         </div>
         <div>
-          <label style={labelStyle}><Wallet size={14} /> Annual Income (₹)</label>
+          <label style={labelStyle}><Wallet size={14} /> {t('cm_income')}</label>
           <input name="annualIncome" type="number" value={form.annualIncome} onChange={handleChange} placeholder="e.g. 200000" className="input-dark" />
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end' }}>
           <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '12px 0' }}>
             <input type="checkbox" name="hasIrrigationAccess" checked={form.hasIrrigationAccess} onChange={handleChange}
               style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-            <span><Droplets size={14} style={{ display: 'inline', marginRight: '4px' }} /> Has Irrigation</span>
+            <span><Droplets size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t('cm_has_irrigation')}</span>
           </label>
         </div>
       </div>
@@ -280,7 +281,7 @@ function ProfileForm({ initialData, onSubmit, loading }) {
         style={{ marginTop: '24px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
       >
         {loading ? <Loader2 size={18} className="spin" /> : <Search size={18} />}
-        {loading ? 'Checking Eligibility...' : 'Check Eligibility'}
+        {loading ? t('pf_btn_loading') : t('pf_btn')}
       </motion.button>
     </motion.form>
   );
@@ -395,13 +396,13 @@ function ProofCard({ result }) {
           </motion.div>
           <div>
             <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '2px', letterSpacing: '-0.02em', color: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
-              {isEligible ? 'Eligible' : 'Not Eligible'}
+              {isEligible ? t('pc_eligible') : t('pc_not_eligible')}
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 600 }}>{result.scheme}</span>
               <span style={{ color: 'var(--text-muted)' }}>•</span>
               <span className={`badge ${isEligible ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.7rem' }}>
-                Confidence: {result.confidence}
+                {t('pc_confidence')}: {result.confidence}
               </span>
             </div>
           </div>
@@ -417,36 +418,40 @@ function ProofCard({ result }) {
           style={{ padding: '10px 16px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}
         >
           {isDownloading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}
-          {isDownloading ? 'Exporting...' : 'Download PDF'}
+          {isDownloading ? t('pc_exporting') : t('pc_download_pdf')}
         </motion.button>
       </div>
 
       {/* 2. AI Decision Summary */}
-      <div className="glass-card" style={{ padding: '20px 28px', marginBottom: '20px', borderTop: '4px solid', borderTopColor: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: '1.2rem', color: 'var(--text-primary)', fontWeight: 600, margin: 0, lineHeight: 1.4 }}>
+      <div className="glass-card" style={{ padding: '24px 28px', marginBottom: '20px', borderTop: '4px solid', borderTopColor: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)', background: 'var(--bg-card)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+          <Brain size={18} style={{ color: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }} />
+          <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pc_ai_analysis')}</h4>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px' }}>
+          <p style={{ fontSize: '1.05rem', color: 'var(--text-primary)', fontWeight: 500, margin: 0, lineHeight: 1.7, flex: 1 }}>
             {result.reason}
           </p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={toggleSpeech}
+            data-html2canvas-ignore="true"
+            style={{ 
+              background: isSpeaking ? 'var(--accent-indigo)' : 'var(--bg-glass)',
+              color: isSpeaking ? 'white' : 'var(--accent-indigo)',
+              border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '20px',
+              fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
+            }}
+          >
+            {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
+            {isSpeaking ? t('pc_stop_audio') : t('pc_listen')}
+          </motion.button>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={toggleSpeech}
-          data-html2canvas-ignore="true"
-          style={{ 
-            background: isSpeaking ? 'var(--accent-indigo)' : 'var(--bg-glass)',
-            color: isSpeaking ? 'white' : 'var(--accent-indigo)',
-            border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '20px',
-            fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
-          }}
-        >
-          {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
-          {isSpeaking ? 'Stop Audio' : 'Listen'}
-        </motion.button>
       </div>
 
       {/* 3. Details Grid (Amount & Documents) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 1fr) 2fr', gap: '20px', marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: (isEligible && result.benefitAmount) ? 'minmax(250px, 1fr) 2fr' : '1fr', gap: '20px', marginBottom: '20px' }}>
         {/* Benefit Amount Widget */}
         {isEligible && result.benefitAmount && (
           <div style={{ 
@@ -459,7 +464,7 @@ function ProofCard({ result }) {
             <div style={{ position: 'absolute', top: -20, right: -20, opacity: 0.1 }}>
               <Wallet size={120} color="white" />
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '8px', fontWeight: 600, letterSpacing: '0.05em' }}>BENEFIT AMOUNT</p>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '8px', fontWeight: 600, letterSpacing: '0.05em' }}>{t('pc_benefit_amount')}</p>
             <p style={{ fontSize: '2.5rem', fontWeight: 800, color: 'white', letterSpacing: '-0.02em', marginBottom: '4px' }}>
               {result.benefitAmount.startsWith('₹') ? result.benefitAmount : `₹${result.benefitAmount}`}
             </p>
@@ -471,22 +476,31 @@ function ProofCard({ result }) {
           </div>
         )}
 
-        {/* Required Documents Checklist */}
-        {isEligible && result.requiredDocuments && result.requiredDocuments.length > 0 && (
-          <div className="glass-card" style={{ padding: '24px', gridColumn: (isEligible && result.benefitAmount) ? 'auto' : '1 / -1' }}>
+        {/* Required Documents Card — always show if available */}
+        {result.requiredDocuments && result.requiredDocuments.length > 0 && (
+          <div className="glass-card" style={{ padding: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <ClipboardList size={18} style={{ color: 'var(--accent-amber)' }} />
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>Required Documents Checklist</h4>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>{t('pc_required_docs')}</h4>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 'auto', background: 'var(--bg-glass)', padding: '2px 8px', borderRadius: '20px', border: '1px solid var(--border-glass)' }}>
+                {result.requiredDocuments.length} {t('pc_items')}
+              </span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {result.requiredDocuments.map((doc, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', background: 'var(--bg-glass)', borderRadius: '10px', border: '1px solid var(--border-glass)' }}>
-                  <div style={{ width: '20px', height: '20px', borderRadius: '6px', background: 'var(--bg-glass)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-glow)' }}>
-                    <CheckCircle2 size={12} style={{ color: 'var(--accent-indigo)' }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
+              {result.requiredDocuments.map((doc, i) => {
+                const isCategoryCert = /caste|obc|sc\/st|ews|minority|ncl|creamy/i.test(doc);
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: isCategoryCert ? 'rgba(245,158,11,0.06)' : 'var(--bg-glass)', borderRadius: '10px', border: `1px solid ${isCategoryCert ? 'rgba(245,158,11,0.2)' : 'var(--border-glass)'}` }}>
+                    <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: isCategoryCert ? 'rgba(245,158,11,0.15)' : 'var(--bg-glass)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${isCategoryCert ? 'rgba(245,158,11,0.3)' : 'var(--border-glow)'}`, flexShrink: 0 }}>
+                      {isCategoryCert
+                        ? <Shield size={12} style={{ color: 'var(--accent-amber)' }} />
+                        : <FileText size={12} style={{ color: 'var(--accent-indigo)' }} />
+                      }
+                    </div>
+                    <span style={{ fontSize: '0.88rem', color: 'var(--text-primary)', fontWeight: 500 }}>{doc}</span>
                   </div>
-                  <span style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 500 }}>{doc}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -496,7 +510,7 @@ function ProofCard({ result }) {
           <div className="glass-card" style={{ padding: '24px', gridColumn: '1 / -1', background: 'var(--bg-card)' }}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <Sparkles size={18} style={{ color: 'var(--accent-indigo)' }} />
-              <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Next Steps (How to Apply)</h4>
+              <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{t('pc_next_steps')}</h4>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {result.actionSteps.map((step, i) => (
@@ -515,15 +529,15 @@ function ProofCard({ result }) {
         {!isEligible && result.rejectionExplanation && result.rejectionExplanation.criteria && (
            <div className="glass-card" style={{ padding: '24px', gridColumn: '1 / -1', borderLeft: '4px solid var(--accent-rose)', background: 'var(--bg-glass)' }}>
              <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--accent-rose)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-               <XCircle size={18} /> Why was this profile rejected?
+               <XCircle size={18} /> {t('pc_why_rejected')}
              </h4>
              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div style={{ padding: '16px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase' }}>Scheme Requirement</p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase' }}>{t('pc_scheme_requirement')}</p>
                   <p style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: 0 }}>{result.rejectionExplanation.criteria}</p>
                 </div>
                 <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(244, 63, 94, 0.05)', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--accent-rose)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase' }}>Your Profile</p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--accent-rose)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase' }}>{t('pc_your_profile')}</p>
                   <p style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: 0, fontWeight: 500 }}>{result.rejectionExplanation.yourProfile}</p>
                 </div>
              </div>
@@ -536,7 +550,7 @@ function ProofCard({ result }) {
         <div className="glass-card" style={{ padding: '24px', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
             <Quote size={18} style={{ color: 'var(--text-muted)' }} />
-            <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Official Document Source</h4>
+            <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pc_doc_source')}</h4>
           </div>
           <blockquote style={{
             padding: '16px 20px', borderRadius: '12px', borderLeft: '4px solid var(--text-muted)',
@@ -562,7 +576,7 @@ function ProofCard({ result }) {
                    style={{ fontSize: '0.85rem', color: 'var(--accent-emerald)', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.1)', padding: '6px 12px', borderRadius: '8px', transition: 'all 0.2s' }}
                    onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
                    onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.transform = 'translateY(0)' }}>
-                  <FileText size={14} /> View Document
+                  <FileText size={14} /> {t('pc_view_document')}
                 </a>
               )}
               {result.officialWebsite && (
@@ -570,7 +584,7 @@ function ProofCard({ result }) {
                    style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-glass)', padding: '6px 12px', borderRadius: '8px', transition: 'all 0.2s', border: '1px solid var(--border-color)' }}
                    onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--border-glow)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
                    onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.transform = 'translateY(0)' }}>
-                  <Globe size={14} /> Visit Official Portal
+                  <Globe size={14} /> {t('pc_visit_portal')}
                 </a>
               )}
             </div>
@@ -583,7 +597,7 @@ function ProofCard({ result }) {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} style={{ marginTop: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
             <Sparkles size={20} style={{ color: 'var(--accent-violet)' }} />
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Alternative Schemes You Might Qualify For</h4>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>{t('pc_alt_schemes')}</h4>
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -597,12 +611,12 @@ function ProofCard({ result }) {
                   <div>
                     <h5 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>{suggestion.schemeName}</h5>
                     <span className={`badge ${suggestion.eligible ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.7rem' }}>
-                      {suggestion.eligible ? 'High Match' : 'Potential Match'}
+                      {suggestion.eligible ? t('pc_high_match') : t('pc_potential_match')}
                     </span>
                   </div>
                   {suggestion.benefitAmount && (
                     <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 2px 0', fontWeight: 600, textTransform: 'uppercase' }}>Potential Benefit</p>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 2px 0', fontWeight: 600, textTransform: 'uppercase' }}>{t('pc_potential_benefit')}</p>
                       <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--accent-emerald)', margin: 0 }}>
                         {suggestion.benefitAmount.startsWith('₹') ? suggestion.benefitAmount : `₹${suggestion.benefitAmount}`}
                       </p>
@@ -626,9 +640,9 @@ function ProofCard({ result }) {
               <Sparkles size={24} color="white" />
             </div>
             <div>
-              <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>Looking for alternatives?</h4>
+              <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>{t('pc_looking_alt')}</h4>
               <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                Although this profile did not meet the exact parameters for {result.scheme}, our AI Eligibility Engine constantly monitors hundreds of central and state-level agricultural schemes. Try modifying your profile parameters if you believe there was an error, or run a "Simultaneous Check" against all available schemes from the dropdown above to discover other feasible options that perfectly match your specific agricultural parameters.
+                {t('pc_alt_desc')}
               </p>
             </div>
           </div>
@@ -638,7 +652,7 @@ function ProofCard({ result }) {
       {/* 6. Footer Meta */}
       <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-glass)', display: 'flex', justifyContent: 'flex-end' }}>
         <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Clock size={12} /> Processed in {result.responseTime}s • analyzed {result.chunksAnalyzed} embedded chunks
+          <Clock size={12} /> {t('pc_processed_in')} {result.responseTime}s • {result.chunksAnalyzed} {t('pc_chunks_analyzed')}
         </p>
       </div>
     </motion.div>
@@ -741,10 +755,10 @@ export default function EligibilityCheck() {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '28px', textAlign: user ? 'left' : 'center' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
           <Search size={28} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-indigo)', verticalAlign: 'text-bottom' }} />
-          {t('eligibility_check')}
+          {t('ec_title')}
         </h1>
         <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
-          Voice or form input → AI-powered eligibility analysis with PDF citations
+          {t('ec_subtitle')}
         </p>
         
         {!user && (
@@ -763,7 +777,7 @@ export default function EligibilityCheck() {
         style={{ padding: '20px', marginBottom: '24px' }}
       >
         <label style={{ ...labelStyle, marginBottom: '10px' }}>
-          <FileText size={14} /> {t('select_scheme')}
+          <FileText size={14} /> {t('ec_select_scheme')}
         </label>
         <select
           value={selectedScheme}
@@ -771,8 +785,8 @@ export default function EligibilityCheck() {
           className="select-dark"
           style={{ fontSize: '1rem', fontWeight: 500 }}
         >
-          <option value="">— Choose a scheme —</option>
-          <option value="all">🔍 Check all available schemes simultaneously</option>
+          <option value="">{t('ec_choose_scheme')}</option>
+          <option value="all">🔍 {t('ec_all_schemes')}</option>
           {schemes.map((s) => (
             <option key={s._id} value={s.name}>{s.name} ({s.totalChunks} chunks)</option>
           ))}
@@ -794,8 +808,8 @@ export default function EligibilityCheck() {
                 <CheckCircle2 size={20} color="white" />
               </div>
               <div>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>Comprehensive Scan Results</h2>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>{result.length} Schemes Analyzed</p>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>{t('ec_scan_results')}</h2>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>{result.length} {t('ec_schemes_analyzed')}</p>
               </div>
             </div>
             {result.map((r, i) => (
@@ -815,7 +829,7 @@ export default function EligibilityCheck() {
                   display: 'flex', alignItems: 'center', gap: '8px'
                 }}>
                   <Shield size={14} style={{ color: r.eligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }} />
-                  SCHEME {i + 1} OF {result.length}
+                  {t('pc_scheme_x_of_y')} {i + 1} {t('pc_of')} {result.length}
                 </div>
                 <ProofCard result={r} />
               </div>

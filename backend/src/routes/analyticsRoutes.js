@@ -15,7 +15,7 @@ const { asyncHandler } = require('../middleware/errorHandler');
 router.get(
   '/',
   protect,
-  authorize('admin'),
+  authorize('admin', 'farmer'),
   asyncHandler(async (req, res) => {
     // 1. Overall Stats
     const totalSchemes = await Scheme.countDocuments();

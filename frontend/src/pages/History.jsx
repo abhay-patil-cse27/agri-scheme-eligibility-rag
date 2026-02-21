@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { getProfiles, getEligibilityHistory, deleteEligibilityCheck, deleteProfile } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -13,6 +14,7 @@ const fadeUp = {
 };
 
 function HistoryCard({ check, index, onDelete }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const isEligible = check.eligible;
   const date = new Date(check.createdAt || check.checkedAt);
@@ -46,7 +48,7 @@ function HistoryCard({ check, index, onDelete }) {
             </h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span className={`badge ${isEligible ? 'badge-success' : 'badge-danger'}`}>
-                {isEligible ? 'Eligible' : 'Not Eligible'}
+                {isEligible ? t('hs_eligible') || 'Eligible' : t('hs_not_eligible') || 'Not Eligible'}
               </span>
               <span className={`badge badge-${check.confidence === 'high' ? 'success' : check.confidence === 'medium' ? 'warning' : 'info'}`}>
                 {check.confidence}
@@ -78,13 +80,13 @@ function HistoryCard({ check, index, onDelete }) {
           style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border-glass)' }}
         >
           <div style={{ marginBottom: '16px' }}>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 500 }}>REASON</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 500 }}>{t('hs_reason')}</p>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{check.reason}</p>
           </div>
 
           {check.citation && (
             <div style={{ marginBottom: '16px' }}>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 500 }}>CITATION</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 500 }}>{t('hs_citation')}</p>
               <blockquote style={{
                 padding: '12px 16px', borderRadius: '10px', borderLeft: '3px solid var(--accent-amber)',
                 background: 'rgba(245,158,11,0.05)', fontStyle: 'italic',
@@ -97,7 +99,7 @@ function HistoryCard({ check, index, onDelete }) {
 
           {check.benefitAmount && (
             <p style={{ fontSize: '0.85rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>
-              Benefit: ₹{Number(check.benefitAmount).toLocaleString()}
+              {t('hs_benefit')}: ₹{Number(check.benefitAmount).toLocaleString()}
             </p>
           )}
 
@@ -110,7 +112,7 @@ function HistoryCard({ check, index, onDelete }) {
                 cursor: 'pointer', padding: '6px 12px', borderRadius: '6px'
               }}
             >
-              <Trash2 size={14} /> Delete Record
+              <Trash2 size={14} /> {t('hs_delete_record')}
             </button>
           </div>
         </motion.div>
@@ -120,6 +122,7 @@ function HistoryCard({ check, index, onDelete }) {
 }
 
 export default function HistoryPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState([]);
   const [selectedProfile, setSelectedProfile] = useState('');
@@ -161,7 +164,7 @@ export default function HistoryPage() {
   const handleReuseProfile = () => {
     const profile = profiles.find(p => p._id === selectedProfile);
     if (profile) {
-      navigate('/check', { state: { profile } });
+      navigate('/dashboard/check', { state: { profile } });
     }
   };
 
@@ -198,10 +201,10 @@ export default function HistoryPage() {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
           <History size={24} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-cyan)' }} />
-          Check <span className="gradient-text">History</span>
+          {t('hs_title')}
         </h1>
         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-          Past eligibility checks with full citation trails
+          {t('hs_subtitle')}
         </p>
       </motion.div>
 
@@ -213,7 +216,7 @@ export default function HistoryPage() {
         style={{ padding: '20px', marginBottom: '24px' }}
       >
         <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <User size={14} /> Select Farmer Profile
+          <User size={14} /> {t('hs_tbl_farmer')}
         </label>
         {loadingProfiles ? (
           <div className="shimmer" style={{ height: '44px', borderRadius: '12px' }} />
@@ -223,7 +226,7 @@ export default function HistoryPage() {
             borderRadius: '12px', border: '1px solid var(--border-glass)',
             color: 'var(--text-secondary)', fontSize: '0.9rem', fontStyle: 'italic'
           }}>
-            No profiles found. Create a profile on the Eligibility Check page first.
+            {t('hs_empty')}
           </div>
         ) : (
           <select
@@ -251,7 +254,7 @@ export default function HistoryPage() {
               onMouseOver={(e) => e.currentTarget.style.background = 'rgba(244, 63, 94, 0.2)'}
               onMouseOut={(e) => e.currentTarget.style.background = 'rgba(244, 63, 94, 0.1)'}
             >
-              <Trash2 size={14} /> Delete Profile & History
+              <Trash2 size={14} /> {t('hs_delete_profile')}
             </button>
             <button
               onClick={handleReuseProfile}
@@ -261,7 +264,7 @@ export default function HistoryPage() {
                 padding: '8px 16px', fontSize: '0.85rem'
               }}
             >
-              <RefreshCw size={14} /> Run New Check for this Profile
+              <RefreshCw size={14} /> {t('hs_run_new_check')}
             </button>
           </div>
         )}
@@ -282,8 +285,8 @@ export default function HistoryPage() {
           style={{ padding: '60px', textAlign: 'center' }}
         >
           <History size={48} style={{ color: 'var(--text-muted)', margin: '0 auto 16px' }} />
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '8px' }}>No eligibility checks yet</h3>
-          <p style={{ color: 'var(--text-secondary)' }}>Run your first eligibility check from the Check page</p>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '8px' }}>{t('hs_no_checks')}</h3>
+          <p style={{ color: 'var(--text-secondary)' }}>{t('hs_no_checks_desc')}</p>
         </motion.div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

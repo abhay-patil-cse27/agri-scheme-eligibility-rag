@@ -35,10 +35,10 @@ const eligibilityCheckSchema = new mongoose.Schema(
       default: '',
     },
     citationSource: {
-      page: { type: Number, default: null },
+      page: { type: String, default: '' },
       section: { type: String, default: '' },
       subsection: { type: String, default: '' },
-      paragraph: { type: Number, default: null },
+      paragraph: { type: String, default: '' },
     },
     officialWebsite: {
       type: String,

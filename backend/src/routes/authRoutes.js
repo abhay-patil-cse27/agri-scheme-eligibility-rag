@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorHandler');
 const config = require('../config/env');
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 const sendEmail = require('../utils/sendEmail');
 const { OAuth2Client } = require('google-auth-library');
 
@@ -302,6 +302,20 @@ router.post(
     
     // Send standard JWT
     sendTokenResponse(user, 200, res);
+  })
+);
+
+/**
+ * GET /api/auth/users
+ * Get all registered users (Admin only)
+ */
+router.get(
+  '/users',
+  protect,
+  authorize('admin'),
+  asyncHandler(async (req, res) => {
+    const users = await User.find({}).select('-password').sort('-createdAt');
+    res.status(200).json({ success: true, data: users });
   })
 );
 
