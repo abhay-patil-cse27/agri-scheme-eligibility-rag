@@ -160,7 +160,7 @@ router.post(
 
     } catch (err) {
       logger.error('TTS route error:', err.message);
-      res.status(500).json({ success: false, error: 'Failed to generate speech audio' });
+      res.status(500).json({ success: false, error: err.message || 'Failed to generate speech audio' });
     }
   })
 );

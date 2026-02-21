@@ -8,6 +8,8 @@ const groqInstances = [
 let currentGroqIndex = 0;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+
+
 /**
  * Execute a function with exponential backoff retries (useful for 429 Too Many Requests)
  */
@@ -118,7 +120,10 @@ const languageMap = {
   gu: 'Gujarati (ગુજરાતી)',
   kn: 'Kannada (ಕನ್ನಡ)',
   ml: 'Malayalam (മലയാളം)',
-  pa: 'Punjabi (ਪੰਜਾਬੀ)'
+  pa: 'Punjabi (ਪੰਜਾਬੀ)',
+  or: 'Odia (ଓଡିଆ)',
+  as: 'Assamese (অসমীয়া)',
+  ur: 'Urdu (اردو)',
 };
 
 /**

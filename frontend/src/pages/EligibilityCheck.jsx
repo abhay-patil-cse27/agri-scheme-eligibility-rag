@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import {
@@ -322,15 +322,27 @@ const labelStyle = {
 
 /* ── Proof Card (Result) ────────────────── */
 function ProofCard({ result }) {
+  // ── Hooks (must be declared before any state that uses them) ──
+  const { addToast } = useToast();
+  const { t, i18n } = useTranslation();
+
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [audioObj, setAudioObj] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatedResult, setTranslatedResult] = useState(null);
-  const { addToast } = useToast();
-  const { t, i18n } = useTranslation();
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const [translateLabel, setTranslateLabel] = useState('Translate');
+  // Tracks which language the displayed result is in (for audio generation)
+  // Initialised as 'en'; updated whenever the user picks a language from the dropdown
+  const [speechLang, setSpeechLang] = useState('en');
+  // Per-card in-memory cache: { 'hi': {...result}, 'mr': {...result} }
+  const translationCache = useRef({});
+  // Per-card audio URL cache: { 'en::PM-KISAN': 'blob:...', 'hi::PM-KISAN': 'blob:...' }
+  const audioCache = useRef({});
 
   const displayResult = translatedResult || result;
+
 
   useEffect(() => {
     return () => {
@@ -366,19 +378,33 @@ function ProofCard({ result }) {
     }
   };
 
-  const handleTranslate = async (e) => {
-    const targetLang = e.target.value;
-    if (!targetLang || targetLang === 'en') {
+  const handleTranslate = async (lang, label) => {
+    setShowLangMenu(false);
+    if (!lang || lang === 'en') {
         setTranslatedResult(null);
+        setTranslateLabel('Translate');
+        setSpeechLang(i18n?.language?.split('-')[0] || 'en'); // reset to app language
         return;
     }
-    
+
+    setTranslateLabel(label);
+    const langCode = lang.split('-')[0];
+    setSpeechLang(langCode); // <-- audio will now speak in this language
+
+    // ──  Cache hit: serve instantly, no API call ──
+    if (translationCache.current[langCode]) {
+        setTranslatedResult(translationCache.current[langCode]);
+        addToast('Loaded from cache', `Showing cached ${label} translation`, 'success');
+        return;
+    }
+
+    // ── Cache miss: call backend, then store result ──
     setIsTranslating(true);
     addToast('Translating', 'Translating result into your language...', 'info');
     try {
-        const langCode = targetLang.split('-')[0];
         const res = await translateResult(result, langCode);
         if (res.success) {
+            translationCache.current[langCode] = res.data; // store in cache
             setTranslatedResult(res.data);
             addToast('Success', 'AI Analysis translated successfully', 'success');
         }
@@ -390,6 +416,22 @@ function ProofCard({ result }) {
     }
   };
 
+  const LANG_OPTIONS = [
+    { value: 'en',    label: 'English (Original)' },
+    { value: 'hi-IN', label: 'Hindi (हिंदी)' },
+    { value: 'mr-IN', label: 'Marathi (मराठी)' },
+    { value: 'bn-IN', label: 'Bengali (বাংলা)' },
+    { value: 'te-IN', label: 'Telugu (తెలుగు)' },
+    { value: 'ta-IN', label: 'Tamil (தமிழ்)' },
+    { value: 'gu-IN', label: 'Gujarati (ગુજરાતી)' },
+    { value: 'kn-IN', label: 'Kannada (ಕನ್ನಡ)' },
+    { value: 'ml-IN', label: 'Malayalam (മലയാളം)' },
+    { value: 'pa-IN', label: 'Punjabi (ਪੰਜਾਬੀ)' },
+    { value: 'or-IN', label: 'Odia (ଓଡ଼ିଆ)' },
+    { value: 'as-IN', label: 'Assamese (অসমীয়া)' },
+    { value: 'ur',    label: 'Urdu (اردو)' },
+  ];
+
   const toggleSpeech = async () => {
     if (isSpeaking) {
       if (audioObj) {
@@ -400,15 +442,25 @@ function ProofCard({ result }) {
       addToast('Playback Stopped', 'Voice analysis paused', 'info');
     } else {
       setIsSpeaking(true);
-      addToast('Generating Audio', 'Fetching high-quality AI voice...', 'info');
+      const textToSpeak = `AI Analysis regarding ${displayResult.scheme}. ${displayResult.reason}`;
+      // Use the language that the card is currently DISPLAYING in, not the global app language
+      const langCode = speechLang;
+      const cacheKey = `${langCode}::${result.scheme}`;
+
       try {
-        const textToSpeak = `AI Analysis regarding ${displayResult.scheme}. ${displayResult.reason}`;
-        
-        // Fetch audio blob from our new ElevenLabs proxy endpoint
-        const langCode = i18n?.language?.split('-')[0] || 'hi';
-        const audioBlob = await generateSpeech(textToSpeak, langCode);
-        
-        const url = URL.createObjectURL(audioBlob);
+        let url;
+
+        // ── Audio cache hit: no API call, instant playback ──
+        if (audioCache.current[cacheKey]) {
+          url = audioCache.current[cacheKey];
+        } else {
+          // ── Audio cache miss: fetch from ElevenLabs, then cache URL ──
+          addToast('Generating Audio', 'Fetching high-quality AI voice...', 'info');
+          const audioBlob = await generateSpeech(textToSpeak, langCode);
+          url = URL.createObjectURL(audioBlob);
+          audioCache.current[cacheKey] = url;
+        }
+
         const audio = new Audio(url);
         setAudioObj(audio);
         
@@ -506,7 +558,7 @@ function ProofCard({ result }) {
       </div>
 
       {/* 2. AI Decision Summary */}
-      <div className="glass-card" style={{ padding: '24px 28px', marginBottom: '20px', borderTop: '4px solid', borderTopColor: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)', background: 'var(--bg-card)' }}>
+      <div className="glass-card" style={{ padding: '24px 28px', marginBottom: '20px', borderTop: '4px solid', borderTopColor: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)', background: 'var(--bg-card)', overflow: 'visible' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
           <Brain size={18} style={{ color: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }} />
           <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pc_ai_analysis')}</h4>
@@ -515,27 +567,63 @@ function ProofCard({ result }) {
           <p style={{ fontSize: '1.05rem', color: 'var(--text-primary)', fontWeight: 500, margin: 0, lineHeight: 1.7, flex: 1, minWidth: '200px' }}>
             {displayResult.reason}
           </p>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexShrink: 0 }}>
+            {/* Custom Translate Dropdown */}
             <div style={{ position: 'relative' }}>
-              <Globe size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent-violet)', pointerEvents: 'none' }} />
-              <select
-                onChange={handleTranslate}
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setShowLangMenu(v => !v)}
                 disabled={isTranslating}
+                data-html2canvas-ignore="true"
                 style={{
-                  background: 'var(--bg-glass)', color: 'var(--text-primary)',
-                  border: '1px solid var(--border-color)', padding: '8px 16px 8px 36px', borderRadius: '20px',
-                  fontSize: '0.85rem', fontWeight: 600, cursor: isTranslating ? 'not-allowed' : 'pointer',
-                  appearance: 'none', WebkitAppearance: 'none', outline: 'none'
+                  background: translatedResult ? 'rgba(139,92,246,0.15)' : 'var(--bg-glass)',
+                  color: translatedResult ? 'var(--accent-violet)' : 'var(--text-secondary)',
+                  border: `1px solid ${translatedResult ? 'var(--accent-violet)' : 'var(--border-color)'}`,
+                  padding: '8px 14px', borderRadius: '20px',
+                  fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px',
+                  cursor: isTranslating ? 'not-allowed' : 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap'
                 }}
               >
-                <option value="en">Translate ▾</option>
-                <option value="hi-IN">Hindi (हिंदी)</option>
-                <option value="mr-IN">Marathi (मराठी)</option>
-                <option value="bn-IN">Bengali (বাংলা)</option>
-                <option value="te-IN">Telugu (తెలుగు)</option>
-                <option value="ta-IN">Tamil (தமிழ்)</option>
-              </select>
-              {isTranslating && <Loader2 size={14} className="spin" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent-violet)' }} />}
+                {isTranslating ? <Loader2 size={14} className="spin" /> : <Globe size={14} />}
+                {isTranslating ? 'Translating...' : translateLabel}
+                {!isTranslating && <ChevronDown size={12} style={{ opacity: 0.6, transform: showLangMenu ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />}
+              </motion.button>
+
+              <AnimatePresence>
+                {showLangMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    style={{
+                      position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, zIndex: 9999,
+                      background: 'var(--bg-card)', border: '1px solid var(--border-glass)',
+                      borderRadius: '14px', boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
+                      minWidth: '200px', backdropFilter: 'blur(20px)'
+                    }}
+                  >
+                    {LANG_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => handleTranslate(opt.value, opt.label)}
+                        style={{
+                          display: 'block', width: '100%', textAlign: 'left',
+                          padding: '10px 16px', background: 'transparent',
+                          color: 'var(--text-primary)', fontSize: '0.88rem', fontWeight: 500,
+                          border: 'none', cursor: 'pointer', transition: 'background 0.15s',
+                          borderBottom: '1px solid var(--border-glass)'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-glass)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <motion.button
