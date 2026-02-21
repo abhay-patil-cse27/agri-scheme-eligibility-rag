@@ -339,7 +339,20 @@ async function transcribeAudio(filePath, language = 'en') {
     const transcription = await withRetry(() => groqInstances[currentGroqIndex].audio.transcriptions.create({
       file: fs.createReadStream(filePath),
       model: "whisper-large-v3", // upgraded from turbo for much better Indian language accuracy
-      prompt: "This is an agricultural application. Farmers will speak in Indian languages like Hindi, Marathi, Bengali, Tamil, etc. Example: नमस्ते, माझं नाव रमेश आहे आणि मी शेतकरी आहे. Please transcribe exactly in the spoken language without translating to English.",
+      prompt: `Agricultural scheme eligibility app. Farmers speak in regional Indian languages.
+RULES:
+- Transcribe EXACTLY as spoken. Do NOT translate to English, do NOT paraphrase.
+- Preserve regional number words faithfully. Key number words per language:
+  Hindi: एक दो तीन चार पाँच छह सात आठ नौ दस बीस पचास सौ हजार लाख
+  Marathi: एक दोन तीन चार पाच सहा सात आठ नऊ दहा वीस पन्नास शंभर हजार लाख
+  Bengali: এক দুই তিন চার পাঁচ ছয় সাত আট নয় দশ বিশ পঞ্চাশ একশো হাজার লক্ষ
+  Telugu: ఒకటి రెండు మూడు నాలుగు అయిదు ఆరు ఏడు ఎనిమిది తొమ్మిది పది ఇరవై యాభై వంద వేయి
+  Tamil: ஒன்று இரண்டு மூன்று நான்கு ஐந்து ஆறு ஏழு எட்டு ஒன்பது பத்து இருபது ஐம்பது நூறு ஆயிரம்
+  Gujarati: એક બે ત્રણ ચાર પાંચ છ સાત આઠ નવ દસ
+  Kannada: ಒಂದು ಎರಡು ಮೂರು ನಾಲ್ಕು ಐದು ಆರು ಏಳು ಎಂಟು ಒಂಬತ್ತು ಹತ್ತು
+  Malayalam: ഒന്ന് രണ്ട് മൂന്ന് നാല് അഞ്ച് ആറ് ഏഴ് എട്ട് ഒൻപത് പത്ത്
+- Also preserve land unit words: एकर एकड़ एकरे हेक्टर बीघा गुंठा (acre/hectare/bigha/gunta)
+- Example: "माझ्याकडे दोन एकर जमीन आहे" → transcribe exactly as said.`,
       response_format: "json",
       language: whisperLanguage
     }));
@@ -358,17 +371,27 @@ async function transcribeAudio(filePath, language = 'en') {
 async function translateEligibilityResult(resultObj, targetLanguage = 'hi') {
   const targetLangString = languageMap[targetLanguage] || targetLanguage;
   
-  const systemPrompt = `You are a professional agricultural translator. Your task is to translate specific fields of the provided JSON object into ${targetLangString}.
-Keep ALL JSON keys exactly the same in English. Do NOT translate the keys.
-ONLY translate the following text values into ${targetLangString}:
-- 'reason' (string)
-- 'actionSteps' (array of strings)
-- 'benefitAmount' (string)
-- 'paymentFrequency' (string)
-- 'requiredDocuments' (array of strings)
-- 'rejectionExplanation' (object with 'criteria' and 'yourProfile' strings)
+  const systemPrompt = `You are a strict, expert translator for an Indian government agricultural scheme platform.
 
-Ensure the tone remains conversational, simple, and respectful to an Indian farmer.`;
+Translate only the specified JSON fields into ${targetLangString}. Follow every rule below WITHOUT EXCEPTION.
+
+RULES:
+1. JSON KEYS: Keep ALL keys in English. NEVER translate key names.
+2. TRANSLATE ONLY these fields: reason, actionSteps (array), benefitAmount, paymentFrequency, requiredDocuments (array), rejectionExplanation.criteria, rejectionExplanation.yourProfile.
+3. DO NOT CHANGE: eligible, confidence, scheme, responseTime, or any other field.
+4. NUMBERS & CURRENCY:
+   - Write currency using native numerals of the target language where natural.
+   - Hindi example: ₹6,000 → ₹६,०००   Marathi: ₹6,000 → ₹६,०००   Tamil: ₹6,000 → ₹6,000 (keep Arabic when Tamil native numerals are uncommon in official use)
+   - Always keep the ₹ symbol.
+   - Land sizes: translate units (acres → एकर in Hindi, एकरे in Marathi, ఎకరాలు in Telugu, etc.)
+5. COMPLETENESS: Translate EVERY sentence. Never skip, shorten, or summarise.
+6. TONE: Simple, warm, conversational — like explaining to a rural farmer. Avoid bureaucratic language.
+7. OUTPUT: Return ONLY valid JSON. No markdown, no code fences, no extra text outside JSON.
+
+EXAMPLE (English → Hindi):
+Input benefitAmount: "₹6,000 per year"
+Output benefitAmount: "₹६,००० प्रति वर्ष"`;
+
 
   try {
     const completion = await withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
