@@ -161,8 +161,10 @@ router.delete(
       return res.status(404).json({ success: false, error: 'Profile not found' });
     }
 
-    if (req.user.role === 'farmer' && profile.userId.toString() !== req.user.id) {
-      return res.status(403).json({ success: false, error: 'Not authorized to delete this profile' });
+    if (req.user.role === 'farmer') {
+      if (!profile.userId || profile.userId.toString() !== req.user.id) {
+        return res.status(403).json({ success: false, error: 'Not authorized to delete this profile' });
+      }
     }
 
     // Delete associated eligibility checks first

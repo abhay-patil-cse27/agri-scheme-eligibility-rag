@@ -333,8 +333,11 @@ router.get(
     if (!profile) {
       return res.status(404).json({ success: false, error: 'Profile not found' });
     }
-    if (req.user.role === 'farmer' && profile.userId.toString() !== req.user.id) {
-      return res.status(403).json({ success: false, error: 'Not authorized' });
+    
+    if (req.user.role === 'farmer') {
+      if (!profile.userId || profile.userId.toString() !== req.user.id) {
+        return res.status(403).json({ success: false, error: 'Not authorized' });
+      }
     }
 
     const checks = await EligibilityCheck.find({ farmerId: req.params.id })
@@ -368,7 +371,7 @@ router.delete(
     // Role check: Farmer can only delete their own checks
     if (req.user.role === 'farmer') {
       const profile = await FarmerProfile.findById(check.farmerId);
-      if (profile && profile.userId.toString() !== req.user.id) {
+      if (profile && (!profile.userId || profile.userId.toString() !== req.user.id)) {
         return res.status(403).json({ success: false, error: 'Not authorized to delete this check' });
       }
     }

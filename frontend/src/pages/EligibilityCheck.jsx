@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useVoice } from '../hooks/useVoice';
 import { useAuth } from '../context/AuthContext';
-import { getSchemes, createProfile, checkEligibility, checkEligibilityPublic, generateSpeech, translateResult } from '../services/api';
+import { getSchemes, createProfile, updateProfile, checkEligibility, checkEligibilityPublic, generateSpeech, translateResult } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import html2canvas from 'html2canvas';
@@ -1006,8 +1006,16 @@ export default function EligibilityCheck() {
     try {
       if (user) {
         addToast('Profile Update', 'Syncing farmer profile securely...', 'info');
-        const profile = await createProfile(profileData);
-        if (!profile.success) throw new Error(profile.error || 'Failed to create profile');
+        
+        // Update existing profile if it has an ID, else create new
+        let profile;
+        if (profileData._id) {
+          profile = await updateProfile(profileData._id, profileData);
+        } else {
+          profile = await createProfile(profileData);
+        }
+
+        if (!profile.success) throw new Error(profile.error || 'Failed to save profile');
 
         addToast('AI Scanning', 'Analyzing documents via RAG...', 'info');
         const eligibility = await checkEligibility(profile.data._id, selectedScheme, i18n.language);
