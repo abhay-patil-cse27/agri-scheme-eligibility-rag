@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import {
   Mic, MicOff, Search, User, MapPin, Ruler, Sprout, Shield, Wallet,
   Droplets, CheckCircle2, XCircle, AlertCircle, FileText, ChevronDown,
-  Loader2, Sparkles, Quote, ClipboardList, Clock, Globe, Download, Volume2, VolumeX, Brain
+  Loader2, Sparkles, Quote, ClipboardList, Clock, Globe, Download, Volume2, VolumeX, Brain, Plus, ExternalLink
 } from 'lucide-react';
 import { useVoice } from '../hooks/useVoice';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,7 @@ import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import AgriCard from '../components/common/AgriCard';
 
 const indianStates = {
   // ── 28 States ────────────────────────────
@@ -60,7 +61,7 @@ const indianStates = {
 function VoiceInput({ onProfileExtracted }) {
   const { t, i18n } = useTranslation();
   const [selectedLanguage, setSelectedLanguage] = useState(i18n.language || 'hi-IN');
-  const { isListening, transcript, error: voiceError, startListening, stopListening, resetTranscript } = useVoice(selectedLanguage);
+  const { isListening, transcript, error: voiceError, startListening, stopListening } = useVoice(selectedLanguage);
   const [processing, setProcessing] = useState(false);
   const { addToast } = useToast();
 
@@ -86,12 +87,12 @@ function VoiceInput({ onProfileExtracted }) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card"
-      style={{ padding: '28px', marginBottom: '24px' }}
-    >
+      <AgriCard
+        animate={true}
+        className="agri-card"
+        style={{ padding: '28px', marginBottom: '24px' }}
+        padding="28px"
+      >
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
         <Mic size={20} style={{ color: 'var(--accent-indigo)' }} />
         <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>{t('vi_title')}</h3>
@@ -99,7 +100,7 @@ function VoiceInput({ onProfileExtracted }) {
       </div>
 
       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-        {t('vi_subtitle')} — <em>"I am Ramesh from Maharashtra, I have 2 acres of wheat land..."</em>
+        Tell us about your farm, income and existing schemes. Our AI will automatically extract your profile — <em>"I am Ramesh from Maharashtra, I have 2 acres of land and I am already in PM-KISAN..."</em>
       </p>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -166,7 +167,7 @@ function VoiceInput({ onProfileExtracted }) {
           animate={{ opacity: 1, height: 'auto' }}
           style={{
             padding: '16px', borderRadius: '12px',
-            background: 'var(--bg-glass)', border: '1px solid var(--border-glass)',
+            background: 'var(--bg-secondary)', border: '1px solid var(--border-color)'
           }}
         >
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 500 }}>{t('vi_transcript').toUpperCase()}</p>
@@ -179,7 +180,7 @@ function VoiceInput({ onProfileExtracted }) {
           <AlertCircle size={14} style={{ display: 'inline', marginRight: '4px' }} /> {voiceError}
         </p>
       )}
-    </motion.div>
+      </AgriCard>
   );
 }
 
@@ -189,13 +190,35 @@ function ProfileForm({ initialData, onSubmit, loading }) {
   const [form, setForm] = useState({
     name: '', age: '', state: '', district: '', landHolding: '',
     cropType: '', category: 'General', annualIncome: '', hasIrrigationAccess: false,
+    gender: 'Male', hasBPLCard: false, ownershipType: 'Owner', hasKcc: false, isDifferentlyAbled: false, hasAadharSeededBank: false,
+    activeSchemes: []
   });
+
+  const [schemes, setSchemes] = useState([]);
+  const [schemesLoading, setSchemesLoading] = useState(false);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customSchemeName, setCustomSchemeName] = useState('');
+
+  useEffect(() => {
+    const fetchSchemes = async () => {
+      setSchemesLoading(true);
+      try {
+        const res = await getSchemes();
+        if (res.success) setSchemes(res.data);
+      } catch (err) {
+        console.error('Failed to fetch schemes for selection:', err);
+      } finally {
+        setSchemesLoading(false);
+      }
+    };
+    fetchSchemes();
+  }, []);
 
   useEffect(() => {
     if (initialData) {
       setForm((prev) => ({
         ...prev,
-        ...Object.fromEntries(Object.entries(initialData).filter(([_, v]) => v != null && v !== '')),
+        ...Object.fromEntries(Object.entries(initialData).filter((entry) => entry[1] != null && entry[1] !== '')),
       }));
     }
   }, [initialData]);
@@ -212,6 +235,16 @@ function ProfileForm({ initialData, onSubmit, loading }) {
     });
   };
 
+  const toggleScheme = (schemeName) => {
+    setForm(prev => {
+      const current = prev.activeSchemes || [];
+      const updated = current.includes(schemeName)
+        ? current.filter(s => s !== schemeName)
+        : [...current, schemeName];
+      return { ...prev, activeSchemes: updated };
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit({
@@ -223,14 +256,14 @@ function ProfileForm({ initialData, onSubmit, loading }) {
   };
 
   return (
-    <motion.form
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      onSubmit={handleSubmit}
-      className="glass-card"
-      style={{ padding: '28px', marginBottom: '24px' }}
-    >
+    <form onSubmit={handleSubmit}>
+      <AgriCard
+        animate={true}
+        transition={{ delay: 0.1 }}
+        className="agri-card"
+        style={{ padding: '28px', marginBottom: '24px' }}
+        padding="28px"
+      >
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
         <User size={20} style={{ color: 'var(--accent-violet)' }} />
         <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>{t('pf_title')}</h3>
@@ -290,13 +323,180 @@ function ProfileForm({ initialData, onSubmit, loading }) {
           <label style={labelStyle}><Wallet size={14} /> {t('cm_income')}</label>
           <input name="annualIncome" type="number" value={form.annualIncome} onChange={handleChange} placeholder="e.g. 200000" className="input-dark" />
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '12px 0' }}>
+        <div>
+          <label style={labelStyle}><User size={14} /> Gender</label>
+          <select name="gender" value={form.gender} onChange={handleChange} className="select-dark">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}><MapPin size={14} /> Ownership Type</label>
+          <select name="ownershipType" value={form.ownershipType} onChange={handleChange} className="select-dark">
+            <option value="Owner">Owner</option>
+            <option value="Tenant/Sharecropper">Tenant/Sharecropper</option>
+            <option value="Co-owner">Co-owner</option>
+          </select>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px 0' }}>
+          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
             <input type="checkbox" name="hasIrrigationAccess" checked={form.hasIrrigationAccess} onChange={handleChange}
               style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
             <span><Droplets size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t('cm_has_irrigation')}</span>
           </label>
+          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+            <input type="checkbox" name="hasBPLCard" checked={form.hasBPLCard} onChange={handleChange}
+              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
+            <span><FileText size={14} style={{ display: 'inline', marginRight: '4px' }} /> BPL Ration Card Holder</span>
+          </label>
+          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+            <input type="checkbox" name="hasKcc" checked={form.hasKcc} onChange={handleChange}
+              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
+            <span><Wallet size={14} style={{ display: 'inline', marginRight: '4px' }} /> Kisan Credit Card (KCC) Owner</span>
+          </label>
         </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px 0' }}>
+          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+            <input type="checkbox" name="isDifferentlyAbled" checked={form.isDifferentlyAbled} onChange={handleChange}
+              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
+            <span><User size={14} style={{ display: 'inline', marginRight: '4px' }} /> Differently Abled (Divyangjan)</span>
+          </label>
+          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+            <input type="checkbox" name="hasAadharSeededBank" checked={form.hasAadharSeededBank} onChange={handleChange}
+              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
+            <span><CheckCircle2 size={14} style={{ display: 'inline', marginRight: '4px' }} /> Aadhar Seeded Bank Account</span>
+          </label>
+        </div>
+
+      </div>
+
+      {/* Existing Enrollments Section */}
+      <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
+        <label style={{ ...labelStyle, marginBottom: '12px' }}>
+          <Shield size={16} style={{ color: 'var(--accent-indigo)' }} /> 
+          Are you already enrolled in any of these? (Enables Conflict Detection)
+        </label>
+        {schemesLoading ? (
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', opacity: 0.6 }}>
+            <Loader2 size={14} className="spin" />
+            <span style={{ fontSize: '0.8rem' }}>Loading schemes...</span>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {schemes.map(s => {
+              const isSelected = form.activeSchemes?.includes(s.name);
+              return (
+                <button
+                  key={s._id}
+                  type="button"
+                  onClick={() => toggleScheme(s.name)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '100px',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    background: isSelected ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.05)',
+                    color: isSelected ? 'black' : 'var(--text-secondary)',
+                    border: `1px solid ${isSelected ? 'var(--accent-indigo)' : 'var(--border-glass)'}`
+                  }}
+                >
+                  {s.name}
+                </button>
+              );
+            })}
+            
+            {/* Display custom schemes already in form.activeSchemes but not in schemes */}
+            {form.activeSchemes?.filter(s => !schemes.some(as => as.name === s)).map(customName => (
+              <button
+                key={customName}
+                type="button"
+                onClick={() => {
+                  const next = form.activeSchemes.filter(s => s !== customName);
+                  setForm({ ...form, activeSchemes: next });
+                }}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '100px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  background: 'var(--accent-indigo)',
+                  color: 'black',
+                  border: '1px solid var(--accent-indigo)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                {customName} <X size={12} />
+              </button>
+            ))}
+
+            {!showCustomInput && (
+              <button
+                type="button"
+                onClick={() => setShowCustomInput(true)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '100px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  background: 'rgba(255,255,255,0.05)',
+                  color: 'var(--accent-indigo)',
+                  border: '1px dashed var(--accent-indigo)',
+                }}
+              >
+                <Plus size={14} style={{ display: 'inline', marginRight: '4px' }} />
+                Not Listed?
+              </button>
+            )}
+          </div>
+        )}
+
+        {showCustomInput && (
+          <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+            <input 
+              type="text" 
+              value={customSchemeName}
+              onChange={(e) => setCustomSchemeName(e.target.value)}
+              placeholder="Enter scheme name..."
+              className="input-dark"
+              style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem' }}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (customSchemeName.trim()) {
+                  const next = [...(form.activeSchemes || []), customSchemeName.trim()];
+                  setForm({ ...form, activeSchemes: [...new Set(next)] });
+                  setCustomSchemeName('');
+                  setShowCustomInput(false);
+                }
+              }}
+              className="btn-glow"
+              style={{ padding: '8px 16px', fontSize: '0.8rem' }}
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowCustomInput(false);
+                setCustomSchemeName('');
+              }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem' }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+        {!schemesLoading && schemes.length === 0 && (
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No schemes uploaded yet.</p>
+        )}
       </div>
 
       <motion.button
@@ -310,7 +510,8 @@ function ProfileForm({ initialData, onSubmit, loading }) {
         {loading ? <Loader2 size={18} className="spin" /> : <Search size={18} />}
         {loading ? t('pf_btn_loading') : t('pf_btn')}
       </motion.button>
-    </motion.form>
+      </AgriCard>
+    </form>
   );
 }
 
@@ -485,25 +686,23 @@ function ProofCard({ result }) {
 
   if (displayResult.error) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 30 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="glass-card"
+      <AgriCard
+        animate={true}
+        className="agri-card"
         style={{ padding: '24px', marginBottom: '16px', background: 'rgba(244, 63, 94, 0.05)', border: '1px solid rgba(244, 63, 94, 0.2)' }}
+        padding="24px"
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
           <AlertCircle size={24} style={{ color: 'var(--accent-rose)' }} />
           <h3 style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-primary)' }}>{displayResult.scheme}</h3>
         </div>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{displayResult.error}</p>
-      </motion.div>
+      </AgriCard>
     );
   }
 
   const isEligible = displayResult.eligible;
   const reqDocs = Array.isArray(displayResult.requiredDocuments) ? displayResult.requiredDocuments : (typeof displayResult.requiredDocuments === 'string' ? [displayResult.requiredDocuments] : []);
-  const actionSteps = Array.isArray(displayResult.actionSteps) ? displayResult.actionSteps : (typeof displayResult.actionSteps === 'string' ? [displayResult.actionSteps] : []);
-  const suggestions = Array.isArray(displayResult.suggestions) ? displayResult.suggestions : [];
 
   return (
     <motion.div
@@ -558,7 +757,7 @@ function ProofCard({ result }) {
       </div>
 
       {/* 2. AI Decision Summary */}
-      <div className="glass-card" style={{ padding: '24px 28px', marginBottom: '20px', borderTop: '4px solid', borderTopColor: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)', background: 'var(--bg-card)', overflow: 'visible' }}>
+      <div className="agri-card" style={{ padding: '24px 28px', marginBottom: '20px', borderTop: '4px solid', borderTopColor: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)', background: 'var(--bg-card)', overflow: 'visible' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
           <Brain size={18} style={{ color: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }} />
           <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pc_ai_analysis')}</h4>
@@ -577,7 +776,7 @@ function ProofCard({ result }) {
                 disabled={isTranslating}
                 data-html2canvas-ignore="true"
                 style={{
-                  background: translatedResult ? 'rgba(139,92,246,0.15)' : 'var(--bg-glass)',
+                  background: translatedResult ? 'rgba(139,92,246,0.15)' : 'var(--bg-secondary)',
                   color: translatedResult ? 'var(--accent-violet)' : 'var(--text-secondary)',
                   border: `1px solid ${translatedResult ? 'var(--accent-violet)' : 'var(--border-color)'}`,
                   padding: '8px 14px', borderRadius: '20px',
@@ -587,7 +786,7 @@ function ProofCard({ result }) {
               >
                 {isTranslating ? <Loader2 size={14} className="spin" /> : <Globe size={14} />}
                 {isTranslating ? 'Translating...' : translateLabel}
-                {!isTranslating && <ChevronDown size={12} style={{ opacity: 0.6, transform: showLangMenu ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />}
+                {!isTranslating && <ChevronDown size={12} style={{ opacity: 0.6, transform: showLangMenu ? '180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />}
               </motion.button>
 
               <AnimatePresence>
@@ -599,8 +798,8 @@ function ProofCard({ result }) {
                     transition={{ duration: 0.15 }}
                     style={{
                       position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, zIndex: 9999,
-                      background: 'var(--bg-card)', border: '1px solid var(--border-glass)',
-                      borderRadius: '14px', boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
+                      background: 'var(--bg-card)', border: '1px solid var(--border-color)',
+                      borderRadius: '14px', boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
                       minWidth: '200px', backdropFilter: 'blur(20px)'
                     }}
                   >
@@ -613,9 +812,9 @@ function ProofCard({ result }) {
                           padding: '10px 16px', background: 'transparent',
                           color: 'var(--text-primary)', fontSize: '0.88rem', fontWeight: 500,
                           border: 'none', cursor: 'pointer', transition: 'background 0.15s',
-                          borderBottom: '1px solid var(--border-glass)'
+                          borderBottom: '1px solid var(--border-color)'
                         }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-glass)'}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
                         {opt.label}
@@ -632,7 +831,7 @@ function ProofCard({ result }) {
               onClick={toggleSpeech}
               data-html2canvas-ignore="true"
               style={{ 
-                background: isSpeaking ? 'var(--accent-indigo)' : 'var(--bg-glass)',
+                background: isSpeaking ? 'var(--accent-indigo)' : 'var(--bg-secondary)',
                 color: isSpeaking ? 'white' : 'var(--accent-indigo)',
                 border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '20px',
                 fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
@@ -673,11 +872,11 @@ function ProofCard({ result }) {
 
         {/* Required Documents Card — always show if available */}
         {reqDocs.length > 0 && (
-          <div className="glass-card" style={{ padding: '24px' }}>
+          <div className="agri-card" style={{ padding: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <ClipboardList size={18} style={{ color: 'var(--accent-amber)' }} />
               <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>{t('pc_required_docs')}</h4>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 'auto', background: 'var(--bg-glass)', padding: '2px 8px', borderRadius: '20px', border: '1px solid var(--border-glass)' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 'auto', background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
                 {reqDocs.length} {t('pc_items')}
               </span>
             </div>
@@ -685,8 +884,8 @@ function ProofCard({ result }) {
               {reqDocs.map((doc, i) => {
                 const isCategoryCert = /caste|obc|sc\/st|ews|minority|ncl|creamy/i.test(doc);
                 return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: isCategoryCert ? 'rgba(245,158,11,0.06)' : 'var(--bg-glass)', borderRadius: '10px', border: `1px solid ${isCategoryCert ? 'rgba(245,158,11,0.2)' : 'var(--border-glass)'}` }}>
-                    <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: isCategoryCert ? 'rgba(245,158,11,0.15)' : 'var(--bg-glass)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${isCategoryCert ? 'rgba(245,158,11,0.3)' : 'var(--border-glow)'}`, flexShrink: 0 }}>
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: isCategoryCert ? 'rgba(245,158,11,0.06)' : 'var(--bg-secondary)', borderRadius: '10px', border: `1px solid ${isCategoryCert ? 'rgba(245,158,11,0.2)' : 'var(--border-color)'}` }}>
+                    <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: isCategoryCert ? 'rgba(245,158,11,0.15)' : 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${isCategoryCert ? 'rgba(245,158,11,0.3)' : 'var(--border-color)'}`, flexShrink: 0 }}>
                       {isCategoryCert
                         ? <Shield size={12} style={{ color: 'var(--accent-amber)' }} />
                         : <FileText size={12} style={{ color: 'var(--accent-indigo)' }} />
@@ -699,157 +898,66 @@ function ProofCard({ result }) {
             </div>
           </div>
         )}
-
-        {/* Action Steps (Kya Karna Hoga) */}
-        {isEligible && actionSteps.length > 0 && (
-          <div className="glass-card" style={{ padding: '24px', gridColumn: '1 / -1', background: 'var(--bg-card)' }}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <Sparkles size={18} style={{ color: 'var(--accent-indigo)' }} />
-              <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{t('pc_next_steps')}</h4>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {actionSteps.map((step, i) => (
-                <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent-indigo)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, flexShrink: 0, marginTop: '2px' }}>
-                    {i + 1}
-                  </div>
-                  <p style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)', lineHeight: 1.5 }}>{step}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Rejection Explanation (Kyu Nahi Mil Raha?) */}
-        {!isEligible && displayResult.rejectionExplanation && displayResult.rejectionExplanation.criteria && (
-           <div className="glass-card" style={{ padding: '24px', gridColumn: '1 / -1', borderLeft: '4px solid var(--accent-rose)', background: 'var(--bg-glass)' }}>
-             <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--accent-rose)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-               <XCircle size={18} /> {t('pc_why_rejected')}
-             </h4>
-             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div style={{ padding: '16px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase' }}>{t('pc_scheme_requirement')}</p>
-                  <p style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: 0 }}>{displayResult.rejectionExplanation.criteria}</p>
-                </div>
-                <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(244, 63, 94, 0.05)', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--accent-rose)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase' }}>{t('pc_your_profile')}</p>
-                  <p style={{ fontSize: '1rem', color: 'var(--text-primary)', margin: 0, fontWeight: 500 }}>{displayResult.rejectionExplanation.yourProfile}</p>
-                </div>
-             </div>
-           </div>
-        )}
       </div>
 
-      {/* 4. Citation Block */}
-      {result.citation && (
-        <div className="glass-card" style={{ padding: '24px', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-            <Quote size={18} style={{ color: 'var(--text-muted)' }} />
-            <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('pc_doc_source')}</h4>
+      {/* Citation Box */}
+      {displayResult.citation && (
+        <div style={{ padding: '20px', background: 'rgba(56, 189, 248, 0.05)', borderRadius: '16px', border: '1px solid rgba(56, 189, 248, 0.2)', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <Quote size={18} style={{ color: 'var(--accent-cyan)' }} />
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Official Document Citation</h4>
           </div>
-          <blockquote style={{
-            padding: '16px 20px', borderRadius: '12px', borderLeft: '4px solid var(--text-muted)',
-            background: 'var(--bg-secondary)', fontStyle: 'italic',
-            fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: 1.7,
-            marginBottom: '12px'
-          }}>
-            "{result.citation}"
-          </blockquote>
-          
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
-            {result.citationSource && (
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <FileText size={14} /> 
-                {result.scheme} Document • Page {result.citationSource.page || 'N/A'}, Section: {result.citationSource.section || 'General'}
-                {result.citationSource.subsection ? ` • ${result.citationSource.subsection}` : ''}
-              </p>
-            )}
-            
-            <div style={{ display: 'flex', gap: '12px' }}>
-              {result.documentUrl && (
-                <a href={result.documentUrl} target="_blank" rel="noreferrer" 
-                   style={{ fontSize: '0.85rem', color: 'var(--accent-emerald)', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.1)', padding: '6px 12px', borderRadius: '8px', transition: 'all 0.2s' }}
-                   onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                   onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.transform = 'translateY(0)' }}>
-                  <FileText size={14} /> {t('pc_view_document')}
-                </a>
+          <p style={{ fontSize: '0.9rem', fontStyle: 'italic', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 12px 10px', paddingLeft: '12px', borderLeft: '3px solid var(--accent-cyan)' }}>
+            "{displayResult.citation}"
+          </p>
+          {displayResult.citationSource && (
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginLeft: '10px' }}>
+              {displayResult.citationSource.page && (
+                <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-glass)' }}>
+                  Page {displayResult.citationSource.page}
+                </span>
               )}
-              {result.officialWebsite && (
-                <a href={String(result.officialWebsite).startsWith('http') ? result.officialWebsite : `https://${result.officialWebsite}`} target="_blank" rel="noreferrer" 
-                   style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-glass)', padding: '6px 12px', borderRadius: '8px', transition: 'all 0.2s', border: '1px solid var(--border-color)' }}
-                   onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--border-glow)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                   onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.transform = 'translateY(0)' }}>
-                  <Globe size={14} /> {t('pc_visit_portal')}
-                </a>
+              {displayResult.citationSource.section && (
+                <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-glass)' }}>
+                  Sect: {displayResult.citationSource.section}
+                </span>
+              )}
+              {displayResult.citationSource.paragraph && (
+                <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-glass)' }}>
+                  Para: {displayResult.citationSource.paragraph}
+                </span>
               )}
             </div>
-          </div>
+          )}
         </div>
       )}
 
-      {/* 5. Alternative Suggestions Prompt for Ineligible Farmers */}
-      {!isEligible && suggestions.length > 0 ? (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} style={{ marginTop: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <Sparkles size={20} style={{ color: 'var(--accent-violet)' }} />
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>{t('pc_alt_schemes')}</h4>
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {suggestions.map((suggestion, idx) => (
-              <div key={idx} className="glass-card" style={{ 
-                padding: '24px', 
-                borderLeft: suggestion.eligible ? '4px solid var(--accent-emerald)' : '4px solid var(--accent-amber)', 
-                background: 'var(--bg-glass)' 
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                  <div>
-                    <h5 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>{suggestion.schemeName}</h5>
-                    <span className={`badge ${suggestion.eligible ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.7rem' }}>
-                      {suggestion.eligible ? t('pc_high_match') : t('pc_potential_match')}
-                    </span>
-                  </div>
-                  {suggestion.benefitAmount && (
-                    <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 2px 0', fontWeight: 600, textTransform: 'uppercase' }}>{t('pc_potential_benefit')}</p>
-                      <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--accent-emerald)', margin: 0 }}>
-                        {String(suggestion.benefitAmount).startsWith('₹') ? suggestion.benefitAmount : `₹${suggestion.benefitAmount}`}
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
-                  {suggestion.reason}
-                </p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      ) : !isEligible && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} style={{ marginTop: '24px' }}>
-          <div className="glass-card" style={{ padding: '24px', borderLeft: '4px solid var(--accent-violet)', background: 'var(--bg-glass)', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-            <div style={{ 
-              width: '48px', height: '48px', borderRadius: '12px', background: 'var(--gradient-primary)', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-            }}>
-              <Sparkles size={24} color="white" />
-            </div>
-            <div>
-              <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>{t('pc_looking_alt')}</h4>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                {t('pc_alt_desc')}
-              </p>
-            </div>
-          </div>
-        </motion.div>
+      {/* 4. Action Buttons */}
+      {(displayResult.officialWebsite || displayResult.documentUrl) && (
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '4px' }} data-html2canvas-ignore="true">
+          {displayResult.officialWebsite && (
+            <a 
+              href={displayResult.officialWebsite.startsWith('http') ? displayResult.officialWebsite : `https://${displayResult.officialWebsite}`} 
+              target="_blank" rel="noopener noreferrer"
+              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-indigo)', borderRadius: '12px', fontWeight: 600, fontSize: '0.9rem', border: '1px solid rgba(99, 102, 241, 0.2)', transition: 'all 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'}
+            >
+              <ExternalLink size={16} /> Official Website
+            </a>
+          )}
+          {displayResult.documentUrl && (
+            <a 
+              href={displayResult.documentUrl} target="_blank" rel="noopener noreferrer"
+              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-primary)', borderRadius: '12px', fontWeight: 600, fontSize: '0.9rem', border: '1px solid var(--border-glass)', transition: 'all 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+            >
+              <FileText size={16} /> View Document
+            </a>
+          )}
+        </div>
       )}
-
-      {/* 6. Footer Meta */}
-      <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-glass)', display: 'flex', justifyContent: 'flex-end' }}>
-        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Clock size={12} /> {t('pc_processed_in')} {result.responseTime}s • {result.chunksAnalyzed} {t('pc_chunks_analyzed')}
-        </p>
-      </div>
     </motion.div>
   );
 }
@@ -890,7 +998,6 @@ export default function EligibilityCheck() {
         'You have used your 1 free public check. Please log in or register to securely save your profile and continue checking.', 
         'warning'
       );
-      // Optional: Redirection logic could go here, for now it just blocks
       return;
     }
 
@@ -898,7 +1005,6 @@ export default function EligibilityCheck() {
     setResult(null);
     try {
       if (user) {
-        // Authenticated flow: Save profile to DB, then Check
         addToast('Profile Update', 'Syncing farmer profile securely...', 'info');
         const profile = await createProfile(profileData);
         if (!profile.success) throw new Error(profile.error || 'Failed to create profile');
@@ -912,7 +1018,6 @@ export default function EligibilityCheck() {
           addToast('Analysis Failed', eligibility.error || 'Eligibility check failed', 'error');
         }
       } else {
-        // Unauthenticated Freemium flow: Direct Check without DB saving
         addToast('Fast AI Scan', 'Analyzing criteria...', 'info');
         const eligibility = await checkEligibilityPublic(profileData, selectedScheme, i18n.language);
         if (eligibility.success) {
@@ -922,7 +1027,6 @@ export default function EligibilityCheck() {
           localStorage.setItem('niti_setu_public_checks', newCount.toString());
           addToast('Check Complete', `Free check used. Please login next time.`, 'success');
         } else {
-          
           if (eligibility.message?.requiresLogin) {
             addToast('Limit Reached', eligibility.error, 'error');
             setPublicChecksUsed(1);
@@ -947,95 +1051,97 @@ export default function EligibilityCheck() {
 
   return (
     <div style={{ maxWidth: '800px', margin: user ? '0' : '0 auto', paddingTop: user ? '0' : '100px', paddingBottom: '60px' }}>
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '28px', textAlign: user ? 'left' : 'center' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
-          <Search size={28} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-indigo)', verticalAlign: 'text-bottom' }} />
-          {t('ec_title')}
-        </h1>
-        <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
-          {t('ec_subtitle')}
-        </p>
-        
-        {!user && (
-           <div style={{ marginTop: '16px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(99, 102, 241, 0.1)', padding: '6px 16px', borderRadius: '20px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-             <Shield size={14} style={{ color: 'var(--accent-indigo)' }} />
-             <span style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', fontWeight: 600 }}>{t('guest_mode')} {1 - publicChecksUsed} {t('free_checks_remaining')}</span>
-           </div>
-        )}
-      </motion.div>
-
-      {/* Scheme Selector */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card"
-        style={{ padding: '20px', marginBottom: '24px' }}
+      <AgriCard
+        animate={true}
+        className="agri-card"
+        style={{ padding: '32px', marginBottom: '24px' }}
+        padding="32px"
       >
-        <label style={{ ...labelStyle, marginBottom: '10px' }}>
-          <FileText size={14} /> {t('ec_select_scheme')}
-        </label>
-        <select
-          value={selectedScheme}
-          onChange={(e) => setSelectedScheme(e.target.value)}
-          className="select-dark"
-          style={{ fontSize: '1rem', fontWeight: 500 }}
-        >
-          <option value="">{t('ec_choose_scheme')}</option>
-          <option value="all">🔍 {t('ec_all_schemes')}</option>
-          {schemes.map((s) => (
-            <option key={s._id} value={s.name}>{s.name} ({s.totalChunks} chunks)</option>
-          ))}
-        </select>
-      </motion.div>
-
-      {/* Voice Input */}
-      <VoiceInput onProfileExtracted={setVoiceProfile} />
-
-      {/* Profile Form */}
-      <ProfileForm initialData={voiceProfile || location.state?.profile} onSubmit={handleCheck} loading={loading} />
-
-      {/* Result */}
-      <AnimatePresence>
-        {result && (Array.isArray(result) ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '32px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '16px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CheckCircle2 size={20} color="white" />
-              </div>
-              <div>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>{t('ec_scan_results')}</h2>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>{result.length} {t('ec_schemes_analyzed')}</p>
-              </div>
+        <div style={{ marginBottom: '28px', textAlign: user ? 'left' : 'center' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
+            <Search size={28} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-indigo)', verticalAlign: 'text-bottom' }} />
+            {t('ec_title')}
+          </h1>
+          <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)' }}>
+            {t('ec_subtitle')}
+          </p>
+          
+          {!user && (
+            <div style={{ marginTop: '16px', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(99, 102, 241, 0.1)', padding: '6px 16px', borderRadius: '20px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+              <Shield size={14} style={{ color: 'var(--accent-indigo)' }} />
+              <span style={{ fontSize: '0.85rem', color: 'var(--accent-indigo)', fontWeight: 600 }}>{t('guest_mode')} {1 - publicChecksUsed} {t('free_checks_remaining')}</span>
             </div>
-            {result.map((r, i) => (
-              <div key={i} style={{ 
-                background: 'var(--bg-glass)', 
-                border: '1px solid var(--border-glass)', 
-                borderRadius: '24px', 
-                padding: '32px',
-                position: 'relative',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
-              }}>
-                <div style={{ 
-                  position: 'absolute', top: '-16px', left: '32px', 
-                  background: 'var(--bg-primary)', padding: '4px 16px', 
-                  borderRadius: '20px', border: '1px solid var(--border-glass)',
-                  fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)',
-                  display: 'flex', alignItems: 'center', gap: '8px'
-                }}>
-                  <Shield size={14} style={{ color: r.eligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }} />
-                  {t('pc_scheme_x_of_y')} {i + 1} {t('pc_of')} {result.length}
-                </div>
-                <ProofCard result={r} />
-              </div>
+          )}
+        </div>
+
+        {/* Scheme Selector */}
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{ ...labelStyle, marginBottom: '10px' }}>
+            <FileText size={14} /> {t('ec_select_scheme')}
+          </label>
+          <select
+            value={selectedScheme}
+            onChange={(e) => setSelectedScheme(e.target.value)}
+            className="select-dark"
+            style={{ fontSize: '1rem', fontWeight: 500 }}
+          >
+            <option value="">{t('ec_choose_scheme')}</option>
+            <option value="all">🔍 {t('ec_all_schemes')}</option>
+            {schemes.map((s) => (
+              <option key={s._id} value={s.name}>{s.name} ({s.totalChunks} chunks)</option>
             ))}
-          </div>
-        ) : (
-          <div style={{ marginTop: '32px', background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', borderRadius: '24px', padding: '32px', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
-             <ProofCard result={result} />
-          </div>
-        ))}
-      </AnimatePresence>
+          </select>
+        </div>
+
+        {/* Voice Input */}
+        <VoiceInput onProfileExtracted={setVoiceProfile} />
+
+        {/* Profile Form */}
+        <ProfileForm initialData={voiceProfile || location.state?.profile} onSubmit={handleCheck} loading={loading} />
+
+        {/* Result */}
+        <AnimatePresence>
+          {result && (Array.isArray(result) ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '32px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '16px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <CheckCircle2 size={20} color="white" />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>{t('ec_scan_results')}</h2>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', margin: 0 }}>{result.length} {t('ec_schemes_analyzed')}</p>
+                </div>
+              </div>
+              {result.map((r, i) => (
+                <div key={i} style={{ 
+                  background: 'var(--bg-glass)', 
+                  border: '1px solid var(--border-glass)', 
+                  borderRadius: '24px', 
+                  padding: '32px',
+                  position: 'relative',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
+                }}>
+                  <div style={{ 
+                    position: 'absolute', top: '-16px', left: '32px', 
+                    background: 'var(--bg-primary)', padding: '4px 16px', 
+                    borderRadius: '20px', border: '1px solid var(--border-glass)',
+                    fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)',
+                    display: 'flex', alignItems: 'center', gap: '8px'
+                  }}>
+                    <Shield size={14} style={{ color: r.eligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }} />
+                    {t('pc_scheme_x_of_y')} {i + 1} {t('pc_of')} {result.length}
+                  </div>
+                  <ProofCard result={r} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ marginTop: '32px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '32px', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
+              <ProofCard result={result} />
+            </div>
+          ))}
+        </AnimatePresence>
+      </AgriCard>
     </div>
   );
 }

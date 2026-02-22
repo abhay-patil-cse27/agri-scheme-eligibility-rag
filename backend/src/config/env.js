@@ -26,4 +26,8 @@ module.exports = {
   rateLimitMaxRequests:
     parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 100,
   logLevel: process.env.LOG_LEVEL || "info",
+  neo4jUri: process.env.NEO4J_URI,
+  neo4jUser: process.env.NEO4J_USER,
+  neo4jPassword: process.env.NEO4J_PASSWORD,
+  neo4jDatabase: process.env.NEO4J_DATABASE || "neo4j",
 };

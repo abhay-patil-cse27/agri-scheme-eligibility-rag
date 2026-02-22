@@ -1,28 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Lock, KeyRound, Loader2, Save } from 'lucide-react';
+import { User, Mail, Lock, KeyRound, Loader2, Save, Plus, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { updateDetails, updatePassword } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
+import AgriCard from '../components/common/AgriCard';
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const { addToast } = useToast();
   const { t } = useTranslation();
 
-  const [details, setDetails] = useState({ name: user?.name || '', email: user?.email || '' });
+  const [details, setDetails] = useState({ 
+    name: user?.name || '', 
+    email: user?.email || '',
+    activeSchemes: user?.activeSchemes || [] 
+  });
+  const [allSchemes, setAllSchemes] = useState([]);
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customSchemeName, setCustomSchemeName] = useState('');
+  
+  useEffect(() => {
+    if (user) {
+      setDetails({
+        name: user.name || '',
+        email: user.email || '',
+        activeSchemes: user.activeSchemes || []
+      });
+    }
+  }, [user]);
+
+  useEffect(() => {
+    import('../services/api').then(m => m.getSchemes().then(r => setAllSchemes(r.data || [])));
+  }, []);
 
   const handleDetailsSubmit = async (e) => {
     e.preventDefault();
     setDetailsLoading(true);
     try {
-      await updateDetails(details);
-      addToast(t('toast_profile_update'), t('toast_profile_update'), 'success');
+      const res = await updateDetails(details);
+      if (res.success) {
+        // Refresh local user state if the API provides it
+        if (res.data) setUser(res.data);
+        addToast(t('toast_profile_update'), t('toast_profile_update'), 'success');
+      }
     } catch (err) {
       addToast(t('toast_analysis_failed'), err.response?.data?.error || t('toast_analysis_failed'), 'error');
     } finally {
@@ -50,25 +76,28 @@ export default function Settings() {
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '28px' }}>
+    <AgriCard
+      animate={true}
+      className="agri-card"
+      style={{ padding: '32px', marginBottom: '24px' }}
+      padding="32px"
+    >
+      <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
           <User size={24} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-indigo)' }} />
           {t('st_title')}
         </h1>
         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-          {t('st_subtitle')}
+          Update your profile information and manage your active scheme enrollments
         </p>
-      </motion.div>
+      </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {/* Update Details */}
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+        <form
           onSubmit={handleDetailsSubmit}
-          className="glass-card"
-          style={{ padding: '28px' }}
+          className="agri-card"
+          style={{ padding: '28px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
             <User size={20} style={{ color: 'var(--accent-violet)' }} />
@@ -90,20 +119,141 @@ export default function Settings() {
               </div>
             </div>
           </div>
+
+          <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
+            <label style={{ ...labelStyle, marginBottom: '12px' }}>
+              <KeyRound size={16} style={{ color: 'var(--accent-indigo)' }} /> 
+              Your Active Enrollments (This enables Graph-based Conflict detection)
+            </label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {allSchemes.map(scheme => {
+                const isEnrolled = details.activeSchemes?.includes(scheme.name);
+                return (
+                  <button
+                    key={scheme._id}
+                    type="button"
+                    onClick={() => {
+                      const current = details.activeSchemes || [];
+                      const next = isEnrolled 
+                        ? current.filter(s => s !== scheme.name)
+                        : [...current, scheme.name];
+                      setDetails({ ...details, activeSchemes: next });
+                    }}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '100px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      background: isEnrolled ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.05)',
+                      color: isEnrolled ? 'black' : 'var(--text-secondary)',
+                      border: `1px solid ${isEnrolled ? 'var(--accent-indigo)' : 'var(--border-glass)'}`
+                    }}
+                  >
+                    {scheme.name}
+                  </button>
+                );
+              })}
+
+              {/* Display custom schemes already in activeSchemes but not in allSchemes */}
+              {details.activeSchemes?.filter(s => !allSchemes.some(as => as.name === s)).map(customName => (
+                <button
+                  key={customName}
+                  type="button"
+                  onClick={() => {
+                    const next = details.activeSchemes.filter(s => s !== customName);
+                    setDetails({ ...details, activeSchemes: next });
+                  }}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '100px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background: 'var(--accent-indigo)',
+                    color: 'black',
+                    border: '1px solid var(--accent-indigo)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  {customName} <X size={12} />
+                </button>
+              ))}
+
+              {!showCustomInput && (
+                <button
+                  type="button"
+                  onClick={() => setShowCustomInput(true)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '100px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--accent-indigo)',
+                    border: '1px dashed var(--accent-indigo)',
+                  }}
+                >
+                  <Plus size={14} style={{ display: 'inline', marginRight: '4px' }} />
+                  {t('Not Listed?')}
+                </button>
+              )}
+            </div>
+
+            {showCustomInput && (
+              <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                <input 
+                  type="text" 
+                  value={customSchemeName}
+                  onChange={(e) => setCustomSchemeName(e.target.value)}
+                  placeholder="Enter scheme name..."
+                  className="input-dark"
+                  style={{ flex: 1, padding: '8px 12px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (customSchemeName.trim()) {
+                      const next = [...(details.activeSchemes || []), customSchemeName.trim()];
+                      setDetails({ ...details, activeSchemes: [...new Set(next)] });
+                      setCustomSchemeName('');
+                      setShowCustomInput(false);
+                    }
+                  }}
+                  className="btn-glow"
+                  style={{ padding: '8px 16px', fontSize: '0.8rem' }}
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCustomInput(false);
+                    setCustomSchemeName('');
+                  }}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+
           <motion.button type="submit" disabled={detailsLoading} className="btn-glow" style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             {detailsLoading ? <Loader2 size={16} className="spin" /> : <Save size={16} />}
             {detailsLoading ? t('st_saving') : t('st_save')}
           </motion.button>
-        </motion.form>
+        </form>
 
         {/* Update Password */}
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+        <form
           onSubmit={handlePasswordSubmit}
-          className="glass-card"
-          style={{ padding: '28px' }}
+          className="agri-card"
+          style={{ padding: '28px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
             <Lock size={20} style={{ color: 'var(--accent-amber)' }} />
@@ -136,8 +286,9 @@ export default function Settings() {
             {passwordLoading ? <Loader2 size={16} className="spin" /> : <Save size={16} />}
             {passwordLoading ? t('st_updating') : t('st_update_password')}
           </motion.button>
-        </motion.form>
+        </form>
       </div>
+    </AgriCard>
     </div>
   );
 }

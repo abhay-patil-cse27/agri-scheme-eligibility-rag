@@ -26,6 +26,7 @@ const sendTokenResponse = (user, statusCode, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      activeSchemes: user.activeSchemes,
     }
   });
 };
@@ -125,6 +126,7 @@ router.put(
     const fieldsToUpdate = {
       name: req.body.name,
       email: req.body.email,
+      activeSchemes: req.body.activeSchemes,
     };
 
     const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {

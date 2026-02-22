@@ -23,6 +23,7 @@ const voiceRoutes = require('./routes/voiceRoutes');
 const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const graphRoutes = require('./routes/graphRoutes');
 
 const app = express();
 
@@ -69,6 +70,7 @@ app.use('/api/eligibility', eligibilityRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/graph', graphRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────
 app.use((req, res) => {

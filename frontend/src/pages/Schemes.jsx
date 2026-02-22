@@ -7,6 +7,7 @@ import { getSchemes, uploadScheme, deleteScheme } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import AgriCard from '../components/common/AgriCard';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -59,17 +60,16 @@ function UploadModal({ onClose, onUpload }) {
       exit={{ opacity: 0 }}
       style={{
         position: 'fixed', inset: 0, zIndex: 100,
-        background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
+        background: 'rgba(0,0,0,0.4)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
       onClick={onClose}
     >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="glass-card"
+      <AgriCard
+        animate={true}
+        className="agri-card"
         style={{ width: '480px', maxWidth: '90vw', padding: '32px' }}
+        padding="32px"
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -105,8 +105,8 @@ function UploadModal({ onClose, onUpload }) {
             <div
               style={{
                 padding: '24px', borderRadius: '12px', textAlign: 'center',
-                border: '2px dashed var(--border-glass)', cursor: 'pointer',
-                background: file ? 'rgba(99,102,241,0.05)' : 'var(--bg-glass)',
+                border: '1px solid var(--border-color)', cursor: 'pointer',
+                background: file ? 'rgba(22,163,74,0.05)' : 'var(--bg-secondary)',
               }}
               onClick={() => fileRef.current?.click()}
             >
@@ -129,7 +129,7 @@ function UploadModal({ onClose, onUpload }) {
             {uploading ? <><Loader2 size={18} className="spin" /> {t('sh_btn_uploading')}</> : <><Upload size={18} /> {t('sh_btn_upload')}</>}
           </button>
         </form>
-      </motion.div>
+      </AgriCard>
     </motion.div>
   );
 }
@@ -177,11 +177,13 @@ export default function Schemes() {
 
   return (
     <div>
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}
-      >
+    <AgriCard
+      animate={true}
+      className="agri-card"
+      style={{ padding: '32px', marginBottom: '24px' }}
+      padding="32px"
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
         <div>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
             <FileText size={24} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-violet)' }} />
@@ -202,7 +204,7 @@ export default function Schemes() {
             <Plus size={18} /> {t('sh_add_new')}
           </motion.button>
         )}
-      </motion.div>
+      </div>
 
       {loading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
@@ -211,10 +213,8 @@ export default function Schemes() {
           ))}
         </div>
       ) : schemes.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="glass-card"
+        <div
+          className="agri-card"
           style={{ padding: '60px', textAlign: 'center' }}
         >
           <FileText size={48} style={{ color: 'var(--text-muted)', margin: '0 auto 16px' }} />
@@ -223,7 +223,7 @@ export default function Schemes() {
           <button className="btn-glow" onClick={() => setShowUpload(true)}>
             <Upload size={16} style={{ display: 'inline', marginRight: '8px' }} /> {t('sh_add_new')}
           </button>
-        </motion.div>
+        </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
           {schemes.map((scheme, i) => {
@@ -231,14 +231,19 @@ export default function Schemes() {
             return (
               <motion.div
                 key={scheme._id}
-                className="glass-card"
                 custom={i}
                 initial="hidden"
                 animate="visible"
                 variants={fadeUp}
-                style={{ padding: '24px' }}
+                style={{ height: "100%" }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
+                <AgriCard
+                  animate={true}
+                  className="agri-card relative z-10"
+                  style={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}
+                  padding="24px"
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px', position: 'relative', zIndex: 1 }}>
                   <div style={{ flex: 1 }}>
                     <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '4px' }}>{scheme.name}</h3>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
@@ -250,7 +255,7 @@ export default function Schemes() {
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: '20px', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', gap: '20px', marginBottom: '16px', position: 'relative', zIndex: 1, flex: 1 }}>
                   <div>
                     <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '2px' }}>{t('sh_tbl_chunks').toUpperCase()}</p>
                     <p style={{ fontSize: '1.2rem', fontWeight: 700 }}>{scheme.totalChunks}</p>
@@ -269,7 +274,7 @@ export default function Schemes() {
                 </div>
 
                 {isAdmin && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'relative', zIndex: 1 }}>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
@@ -287,11 +292,13 @@ export default function Schemes() {
                     </motion.button>
                   </div>
                 )}
+                </AgriCard>
               </motion.div>
             );
           })}
         </div>
       )}
+    </AgriCard>
 
       <AnimatePresence>
         {showUpload && <UploadModal onClose={() => setShowUpload(false)} onUpload={loadSchemes} />}

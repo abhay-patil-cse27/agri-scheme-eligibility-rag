@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Trash2, Edit2, Loader2, MapPin, Ruler, Search, User, Droplets, Wallet, Sprout, Shield, AlertCircle, CheckCircle2, X } from 'lucide-react';
-import { getProfiles, deleteProfile, updateProfile } from '../services/api';
+import { AnimatePresence } from 'framer-motion';
+import { Users, Trash2, Edit2, Loader2, MapPin, Ruler, Search, User, Droplets, Wallet, Sprout, Shield, AlertCircle, CheckCircle2, X, Plus } from 'lucide-react';
+import { getProfiles, deleteProfile, updateProfile, getSchemes } from '../services/api';
 import { useTranslation } from 'react-i18next';
+import AgriCard from '../components/common/AgriCard';
 
 const indianStates = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -15,24 +16,30 @@ const indianStates = [
 export default function Farmers() {
   const { t } = useTranslation();
   const [profiles, setProfiles] = useState([]);
+  const [allSchemes, setAllSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
   // Modal state
   const [editingProfile, setEditingProfile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customSchemeName, setCustomSchemeName] = useState('');
   
   const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchProfiles = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await getProfiles();
-      if (res.success) {
-        setProfiles(res.data);
-      } else {
-        setError(res.error || 'Failed to fetch profiles');
-      }
+      const [profileRes, schemeRes] = await Promise.all([
+        getProfiles(),
+        getSchemes()
+      ]);
+      
+      if (profileRes.success) setProfiles(profileRes.data);
+      if (schemeRes.success) setAllSchemes(schemeRes.data);
+      
+      if (!profileRes.success) setError(profileRes.error || 'Failed to fetch profiles');
     } catch (err) {
       setError(err.message || 'Error communicating with server');
     } finally {
@@ -41,7 +48,7 @@ export default function Farmers() {
   };
 
   useEffect(() => {
-    fetchProfiles();
+    fetchData();
   }, []);
 
   const handleDelete = async (id, name) => {
@@ -49,7 +56,7 @@ export default function Farmers() {
     try {
       setLoading(true);
       await deleteProfile(id);
-      await fetchProfiles();
+      await fetchData();
     } catch (err) {
       alert("Failed to delete: " + err.message);
       setLoading(false);
@@ -67,7 +74,7 @@ export default function Farmers() {
       
       await updateProfile(editingProfile._id, payload);
       setEditingProfile(null);
-      await fetchProfiles();
+      await fetchData();
     } catch (err) {
       alert("Failed to update profile: " + err.message);
     } finally {
@@ -91,7 +98,13 @@ export default function Farmers() {
 
   return (
     <div style={{ maxWidth: '1000px' }}>
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <AgriCard
+      animate={true}
+      className="agri-card"
+      style={{ padding: '32px', marginBottom: '24px' }}
+      padding="32px"
+    >
+      <div style={{ marginBottom: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
             <Users size={24} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-violet)' }} />
@@ -114,10 +127,10 @@ export default function Farmers() {
             style={{ paddingLeft: '44px', borderRadius: '20px' }}
           />
         </div>
-      </motion.div>
+      </div>
 
       {error ? (
-        <div style={{ padding: '20px', background: 'rgba(244,63,94,0.1)', color: 'var(--accent-rose)', borderRadius: '12px' }}>
+        <div style={{ padding: '20px', background: 'rgba(244,63,94,0.1)', color: 'var(--accent-rose)', borderRadius: '12px', marginBottom: '20px' }}>
           <AlertCircle size={20} style={{ display: 'inline', marginRight: '8px' }} />
           {error}
         </div>
@@ -126,20 +139,20 @@ export default function Farmers() {
           <Loader2 size={32} className="spin" style={{ color: 'var(--accent-indigo)' }} />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="glass-card" style={{ padding: '60px', textAlign: 'center' }}>
+        <div style={{ padding: '60px', textAlign: 'center' }}>
           <Users size={48} style={{ color: 'var(--text-muted)', margin: '0 auto 16px', opacity: 0.5 }} />
           <h3 style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>{t('fm_empty')}</h3>
         </div>
       ) : (
         <div style={{ display: 'grid', gap: '16px' }}>
           {filtered.map((profile, i) => (
-            <motion.div
+            <AgriCard
               key={profile._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              animate={true}
               transition={{ delay: i * 0.05 }}
-              className="glass-card"
+              className="agri-card"
               style={{ padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              padding="24px"
             >
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
@@ -196,10 +209,11 @@ export default function Farmers() {
                   <Trash2 size={16} />
                 </motion.button>
               </div>
-            </motion.div>
+            </AgriCard>
           ))}
         </div>
       )}
+    </AgriCard>
 
       {/* Edit Modal */}
       <AnimatePresence>
@@ -209,14 +223,15 @@ export default function Farmers() {
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => !saving && setEditingProfile(null)}
-              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }}
             />
             
             {/* Modal Dialog */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="glass-card"
+              className="agri-card"
               style={{ position: 'relative', width: '90%', maxWidth: '600px', padding: '32px', maxHeight: '90vh', overflowY: 'auto' }}
+              padding="32px"
             >
               <button
                 onClick={() => !saving && setEditingProfile(null)}
@@ -272,12 +287,173 @@ export default function Farmers() {
                     <label style={labelStyle}><Wallet size={14} /> {t('cm_income')}</label>
                     <input name="annualIncome" type="number" value={editingProfile.annualIncome || ''} onChange={handleChange} className="input-dark" />
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '12px' }}>
+                  <div>
+                    <label style={labelStyle}><User size={14} /> Gender</label>
+                    <select name="gender" value={editingProfile.gender || 'Male'} onChange={handleChange} className="select-dark">
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}><MapPin size={14} /> Ownership Type</label>
+                    <select name="ownershipType" value={editingProfile.ownershipType || 'Owner'} onChange={handleChange} className="select-dark">
+                      <option value="Owner">Owner</option>
+                      <option value="Tenant/Sharecropper">Tenant/Sharecropper</option>
+                      <option value="Co-owner">Co-owner</option>
+                    </select>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '12px' }}>
                     <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: 0 }}>
                       <input type="checkbox" name="hasIrrigationAccess" checked={editingProfile.hasIrrigationAccess || false} onChange={handleChange} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
                       <Droplets size={14} /> {t('cm_has_irrigation')}
                     </label>
+                    <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: 0 }}>
+                      <input type="checkbox" name="hasBPLCard" checked={editingProfile.hasBPLCard || false} onChange={handleChange} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
+                      <User size={14} /> BPL Card Holder
+                    </label>
+                    <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: 0 }}>
+                      <input type="checkbox" name="hasKcc" checked={editingProfile.hasKcc || false} onChange={handleChange} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
+                      <Wallet size={14} /> Kisan Credit Card
+                    </label>
                   </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '12px' }}>
+                    <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: 0 }}>
+                      <input type="checkbox" name="isDifferentlyAbled" checked={editingProfile.isDifferentlyAbled || false} onChange={handleChange} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
+                      <User size={14} /> Divyangjan
+                    </label>
+                    <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: 0 }}>
+                      <input type="checkbox" name="hasAadharSeededBank" checked={editingProfile.hasAadharSeededBank || false} onChange={handleChange} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
+                      <CheckCircle2 size={14} /> Aadhar Seeded Bank
+                    </label>
+                  </div>
+                </div>
+
+                {/* Active Schemes / Enrollments */}
+                <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
+                  <label style={{ ...labelStyle, marginBottom: '12px' }}>
+                    <Shield size={16} style={{ color: 'var(--accent-indigo)' }} /> 
+                    Currently Enrolled Schemes (Enables Conflict Detection)
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {allSchemes.map(scheme => {
+                      const isEnrolled = editingProfile.activeSchemes?.includes(scheme.name);
+                      return (
+                        <button
+                          key={scheme._id}
+                          type="button"
+                          onClick={() => {
+                            const current = editingProfile.activeSchemes || [];
+                            const next = isEnrolled 
+                              ? current.filter(s => s !== scheme.name)
+                              : [...current, scheme.name];
+                            setEditingProfile({ ...editingProfile, activeSchemes: next });
+                          }}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: '100px',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            background: isEnrolled ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.05)',
+                            color: isEnrolled ? 'black' : 'var(--text-secondary)',
+                            border: `1px solid ${isEnrolled ? 'var(--accent-indigo)' : 'var(--border-glass)'}`
+                          }}
+                        >
+                          {scheme.name}
+                        </button>
+                      );
+                    })}
+
+                    {/* Display custom schemes already in activeSchemes but not in allSchemes */}
+                    {editingProfile.activeSchemes?.filter(s => !allSchemes.some(as => as.name === s)).map(customName => (
+                      <button
+                        key={customName}
+                        type="button"
+                        onClick={() => {
+                          const next = editingProfile.activeSchemes.filter(s => s !== customName);
+                          setEditingProfile({ ...editingProfile, activeSchemes: next });
+                        }}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '100px',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          background: 'var(--accent-indigo)',
+                          color: 'black',
+                          border: '1px solid var(--accent-indigo)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        {customName} <X size={12} />
+                      </button>
+                    ))}
+
+                    {!showCustomInput && (
+                      <button
+                        type="button"
+                        onClick={() => setShowCustomInput(true)}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '100px',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          background: 'rgba(255,255,255,0.05)',
+                          color: 'var(--accent-indigo)',
+                          border: '1px dashed var(--accent-indigo)',
+                        }}
+                      >
+                        <Plus size={14} style={{ display: 'inline', marginRight: '4px' }} />
+                        Not Listed?
+                      </button>
+                    )}
+                  </div>
+
+                  {showCustomInput && (
+                    <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                      <input 
+                        type="text" 
+                        value={customSchemeName}
+                        onChange={(e) => setCustomSchemeName(e.target.value)}
+                        placeholder="Enter scheme name..."
+                        className="input-dark"
+                        style={{ flex: 1, padding: '8px 12px' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (customSchemeName.trim()) {
+                            const next = [...(editingProfile.activeSchemes || []), customSchemeName.trim()];
+                            setEditingProfile({ ...editingProfile, activeSchemes: [...new Set(next)] });
+                            setCustomSchemeName('');
+                            setShowCustomInput(false);
+                          }
+                        }}
+                        className="btn-glow"
+                        style={{ padding: '8px 16px', fontSize: '0.8rem' }}
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCustomInput(false);
+                          setCustomSchemeName('');
+                        }}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                  {allSchemes.length === 0 && !showCustomInput && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No schemes available to select.</p>}
                 </div>
                 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '32px' }}>

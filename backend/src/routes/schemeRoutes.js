@@ -11,11 +11,13 @@ const Scheme = require('../models/Scheme');
 const SchemeChunk = require('../models/SchemeChunk');
 const pdfProcessor = require('../services/pdfProcessor');
 const embeddingService = require('../services/embeddingService');
+const graphService = require('../services/graphService');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { uploadLimiter } = require('../middleware/rateLimiter');
 const { validateObjectId } = require('../middleware/validators');
 const { protect, authorize } = require('../middleware/auth');
 const logger = require('../config/logger');
+const { logAction } = require('../utils/auditLogger');
 
 // Multer config for PDF uploads
 const uploadsDir = path.join(__dirname, '..', '..', 'data', 'schemes');
@@ -61,61 +63,95 @@ router.post(
 
     const schemeName = req.body.schemeName || path.basename(req.file.originalname, '.pdf');
     const description = req.body.description || '';
-    // Normalize category to lowercase so enum validation never silently fails
+    const docType = req.body.docType || 'guidelines';
+    const state = req.body.state || 'All';
+    const language = req.body.language || 'en';
+
+    // Normalize category
     const rawCategory = (req.body.category || 'other').toLowerCase().trim().replace(/ /g, '_');
-    const validCategories = ['income_support', 'infrastructure', 'energy', 'insurance', 'credit', 'other'];
+    const validCategories = ['income_support', 'infrastructure', 'energy', 'insurance', 'credit', 'soil', 'horticulture', 'livestock', 'other'];
     const category = validCategories.includes(rawCategory) ? rawCategory : 'other';
 
-    // Check if scheme already exists to overwrite it
-    const existingScheme = await Scheme.findOne({ name: schemeName });
-    if (existingScheme) {
-      logger.info(`Overwriting existing scheme: ${schemeName}`);
-      await SchemeChunk.deleteMany({ schemeId: existingScheme._id });
-      try {
-        const oldPath = path.join(uploadsDir, existingScheme.sourceFile);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-      } catch (e) {
-        logger.error(`Failed to delete old PDF for ${schemeName}: ${e.message}`);
-      }
-      await Scheme.findByIdAndDelete(existingScheme._id);
-    }
+    logger.info(`Starting PDF ingestion for scheme: ${schemeName} (Type: ${docType})`);
 
-    logger.info(`Starting PDF ingestion: ${schemeName}`);
+    let scheme = await Scheme.findOne({ name: schemeName });
+
+    if (!scheme) {
+      // Create new scheme in MongoDB
+      scheme = await Scheme.create({
+        name: schemeName,
+        description,
+        category,
+        documents: [],
+        totalChunks: 0,
+      });
+      
+      // Ensure Scheme node exists in Neo4j
+      await graphService.ensureSchemeNode({
+        id: scheme._id,
+        name: schemeName,
+        description,
+        category
+      });
+    }
 
     // Step 1: Process PDF (extract + chunk)
     const { chunks, totalChunks, numPages } = await pdfProcessor.processPDF(
       req.file.path,
-      schemeName
+      schemeName,
+      { filename: req.file.filename, type: docType, state, language }
     );
 
     // Step 2: Generate embeddings for all chunks
     const texts = chunks.map((c) => c.text);
     const embeddings = await embeddingService.generateBatchEmbeddings(texts);
 
-    // Step 3: Create Scheme record
-    const scheme = await Scheme.create({
-      name: schemeName,
-      description,
-      category,
-      sourceFile: req.file.filename,
-      totalChunks,
-      processedAt: new Date(),
+    // Step 3: Update Scheme record (Add document)
+    scheme.documents.push({
+      path: req.file.filename,
+      type: docType,
+      state,
+      language,
+      uploadedAt: new Date()
+    });
+    scheme.totalChunks += totalChunks;
+    scheme.processedAt = new Date();
+    await scheme.save();
+
+    // Step 4: Add Document to Scheme in Neo4j
+    await graphService.addDocumentToScheme(schemeName, {
+      path: req.file.filename,
+      type: docType,
+      state,
+      language
     });
 
-    // Step 4: Store chunks with embeddings in MongoDB
+    // Step 5: Store chunks with embeddings in MongoDB
     const chunkDocs = chunks.map((chunk, i) => ({
       schemeId: scheme._id,
       schemeName: schemeName,
+      category: category,
       text: chunk.text,
       embedding: embeddings[i],
-      metadata: chunk.metadata,
+      metadata: {
+        ...chunk.metadata,
+        documentPath: req.file.filename,
+        documentType: docType
+      },
     }));
 
     await SchemeChunk.insertMany(chunkDocs);
 
-    logger.info(`PDF ingestion complete: ${schemeName} → ${totalChunks} chunks stored`);
+    logger.info(`PDF ingestion complete: ${schemeName} → ${totalChunks} new chunks stored`);
 
-    // Clear the cached scheme list so the new scheme appears immediately
+    // Audit Log
+    await logAction(req, 'UPLOAD_SCHEME', schemeName, scheme._id, {
+      documents: scheme.documents.length,
+      newChunks: totalChunks,
+      category
+    });
+
+    // Clear caches
     apicache.clear('/api/schemes');
 
     res.status(201).json({
@@ -124,8 +160,9 @@ router.post(
         schemeId: scheme._id,
         name: schemeName,
         numPages,
-        totalChunks,
-        message: `PDF processed and ${totalChunks} chunks stored with embeddings`,
+        newChunks: totalChunks,
+        totalChunks: scheme.totalChunks,
+        message: `Document "${req.file.originalname}" processed and linked to "${schemeName}"`,
       },
     });
   })
@@ -199,13 +236,32 @@ router.delete(
     // Delete the scheme itself
     await Scheme.findByIdAndDelete(req.params.id);
 
-    // Clean up the PDF file
-    const filePath = path.join(uploadsDir, scheme.sourceFile);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    // Clean up all PDF files
+    if (scheme.documents && scheme.documents.length > 0) {
+      for (const doc of scheme.documents) {
+        const filePath = path.join(uploadsDir, doc.path);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+    } else if (scheme.sourceFile) {
+      // Compatibility for old schemes
+      const filePath = path.join(uploadsDir, scheme.sourceFile);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
     }
 
+    // Neo4j cleanup (optional but recommended: delete Scheme node or its documents)
+    // For now, we'll just log it. A full graph cleanup can be added later.
+
     logger.info(`Scheme deleted: ${scheme.name} (${deletedChunks.deletedCount} chunks removed)`);
+
+    // Audit Log
+    await logAction(req, 'DELETE_SCHEME', scheme.name, scheme._id, {
+      chunksDeleted: deletedChunks.deletedCount,
+      documentsDeletedCount: scheme.documents?.length || 1
+    });
 
     // Clear the cached scheme list
     apicache.clear('/api/schemes');

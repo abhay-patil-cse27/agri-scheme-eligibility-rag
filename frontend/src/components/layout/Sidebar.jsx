@@ -18,7 +18,8 @@ import {
   Bell,
   Settings,
   Sun,
-  Moon
+  Moon,
+  Network
 } from 'lucide-react';
 
 const navItems = [
@@ -28,6 +29,7 @@ const navItems = [
   { to: '/dashboard/farmers', icon: Users, label: 'Farmers' },
   { to: '/dashboard/users', icon: Users, label: 'Users' },
   { to: '/dashboard/history', icon: History, label: 'History' },
+  { to: '/dashboard/graph', icon: Network, label: 'Knowledge Graph' },
   { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -41,7 +43,7 @@ export default function Sidebar() {
   // Filter navigation items based on role
   const filteredNavItems = navItems.filter(item => {
     // Only hide the Farmers and Users admin pages from farmer accounts
-    if (user?.role === 'farmer' && (item.label === 'Farmers' || item.label === 'Users')) {
+    if (user?.role === 'farmer' && (item.label === 'Farmers' || item.label === 'Users' || item.label === 'Knowledge Graph')) {
       return false;
     }
     return true;
@@ -54,7 +56,7 @@ export default function Sidebar() {
         minHeight: '100vh',
         maxHeight: '100vh',
         background: 'var(--bg-secondary)',
-        borderRight: '1px solid var(--border-glass)',
+        borderRight: '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
         padding: '24px 16px',
@@ -104,11 +106,11 @@ export default function Sidebar() {
           return (
             <NavLink
               key={item.to}
-              to={item.to}
+              to={item.label === 'Knowledge Graph' ? `${item.to}?ref=${Date.now()}` : item.to}
               style={{ textDecoration: 'none' }}
             >
               <motion.div
-                whileHover={{ x: 4 }}
+                whileHover={{ x: 4, background: 'rgba(99, 102, 241, 0.05)' }}
                 whileTap={{ scale: 0.98 }}
                 style={{
                   display: 'flex',
@@ -117,8 +119,8 @@ export default function Sidebar() {
                   padding: '12px 16px',
                   borderRadius: '12px',
                   cursor: 'pointer',
-                  background: isActive ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
-                  border: isActive ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid transparent',
+                  background: isActive ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                  border: isActive ? '1px solid rgba(99, 102, 241, 0.15)' : '1px solid transparent',
                   transition: 'all 0.2s ease',
                 }}
               >
@@ -155,8 +157,8 @@ export default function Sidebar() {
           style={{
             padding: '14px',
             borderRadius: '12px',
-            background: 'var(--bg-glass)',
-            border: '1px solid var(--border-glass)',
+            background: 'var(--bg-primary)',
+            border: '1px solid var(--border-color)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
@@ -178,9 +180,9 @@ export default function Sidebar() {
             </button>
             <button
               onClick={() => setIsNotifOpen(true)}
-              style={{ width: '36px', padding: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-indigo)', border: 'none', borderRadius: '8px', transition: 'all 0.2s' }}
-              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'}
-              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'}
+              style={{ width: '36px', padding: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: 'rgba(99, 102, 241, 0.08)', color: 'var(--accent-indigo)', border: 'none', borderRadius: '8px', transition: 'all 0.2s' }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.08)'}
               title="View Notifications"
             >
               <Bell size={15} />
@@ -193,8 +195,8 @@ export default function Sidebar() {
           style={{
             padding: '10px 12px',
             borderRadius: '12px',
-            background: 'var(--bg-glass)',
-            border: '1px solid var(--border-glass)',
+            background: 'var(--bg-primary)',
+            border: '1px solid var(--border-color)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -205,7 +207,7 @@ export default function Sidebar() {
           <LanguageSwitcher placement="up" />
 
           {/* Divider */}
-          <div style={{ width: '1px', height: '24px', background: 'var(--border-glass)', flexShrink: 0 }} />
+          <div style={{ width: '1px', height: '24px', background: 'var(--border-color)', flexShrink: 0 }} />
 
           {/* Theme Toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -258,8 +260,8 @@ export default function Sidebar() {
           style={{
             padding: '10px 14px',
             borderRadius: '12px',
-            background: 'var(--bg-glass)',
-            border: '1px solid var(--border-glass)',
+            background: 'var(--bg-primary)',
+            border: '1px solid var(--border-color)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

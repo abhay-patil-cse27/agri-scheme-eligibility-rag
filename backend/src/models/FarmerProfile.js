@@ -62,6 +62,42 @@ const farmerProfileSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
       index: true,
+    },
+    activeSchemes: {
+      type: [String],
+      default: [],
+    },
+    gender: {
+      type: String,
+      enum: {
+        values: ['Male', 'Female', 'Other'],
+        message: 'Gender must be Male, Female, or Other',
+      },
+      required: [true, 'Gender is required'],
+    },
+    hasBPLCard: {
+      type: Boolean,
+      default: false,
+    },
+    ownershipType: {
+      type: String,
+      enum: {
+        values: ['Owner', 'Tenant/Sharecropper', 'Co-owner'],
+        message: 'Ownership must be Owner, Tenant/Sharecropper, or Co-owner',
+      },
+      required: [true, 'Land ownership type is required'],
+    },
+    hasKcc: {
+      type: Boolean,
+      default: false,
+    },
+    isDifferentlyAbled: {
+      type: Boolean,
+      default: false,
+    },
+    hasAadharSeededBank: {
+      type: Boolean,
+      default: false,
     }
   },
   {

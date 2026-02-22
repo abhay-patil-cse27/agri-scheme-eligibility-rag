@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const EligibilityCheck = require('../models/EligibilityCheck');
 const FarmerProfile = require('../models/FarmerProfile');
 const Scheme = require('../models/Scheme');
+const AuditLog = require('../models/AuditLog');
 const { protect, authorize } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 
@@ -95,6 +96,57 @@ router.get(
         topSchemes,
         checksOverTime,
         profilesByState,
+      },
+    });
+  })
+);
+
+/**
+ * GET /api/analytics/logs
+ * Returns the latest 50 audit logs.
+ */
+router.get(
+  '/logs',
+  protect,
+  authorize('admin'),
+  asyncHandler(async (req, res) => {
+    const logs = await AuditLog.find()
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+
+    res.json({
+      success: true,
+      data: logs,
+    });
+  })
+);
+
+/**
+ * GET /api/analytics/system-health
+ * Returns metrics on system performance and caching.
+ */
+router.get(
+  '/system-health',
+  protect,
+  authorize('admin'),
+  asyncHandler(async (req, res) => {
+    // Calculate cache hit rate roughly from EligibilityCheck history
+    const totalChecks = await EligibilityCheck.countDocuments();
+    const cachedChecks = await EligibilityCheck.countDocuments({ isCached: true }); // We added this field earlier in eligibilityRoutes.js
+
+    // Average response time
+    const avgResponse = await EligibilityCheck.aggregate([
+      { $match: { responseTime: { $gt: 0 } } },
+      { $group: { _id: null, avg: { $avg: '$responseTime' } } }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        cacheHitRate: totalChecks > 0 ? (cachedChecks / totalChecks) * 100 : 0,
+        avgAiResponseTime: avgResponse.length > 0 ? avgResponse[0].avg : 0,
+        activeConnections: mongoose.connection.states[mongoose.connection.readyState]
       },
     });
   })

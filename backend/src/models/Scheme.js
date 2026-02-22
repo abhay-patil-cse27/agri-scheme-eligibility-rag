@@ -15,7 +15,7 @@ const schemeSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['income_support', 'infrastructure', 'energy', 'insurance', 'credit', 'other'],
+      enum: ['income_support', 'infrastructure', 'energy', 'insurance', 'credit', 'soil', 'horticulture', 'livestock', 'other'],
       default: 'other',
     },
     benefits: {
@@ -30,10 +30,17 @@ const schemeSchema = new mongoose.Schema(
       applicableCategories: { type: [String], default: ['All'] },
       applicableCrops: { type: [String], default: ['All'] },
     },
-    sourceFile: {
-      type: String,
-      required: true,
-    },
+    documents: [{
+      path: { type: String, required: true },
+      type: { 
+        type: String, 
+        enum: ['guidelines', 'amendment', 'faq', 'addendum', 'state_addendum'],
+        default: 'guidelines'
+      },
+      state: { type: String, default: 'All' },
+      language: { type: String, default: 'en' },
+      uploadedAt: { type: Date, default: Date.now }
+    }],
     officialWebsite: {
       type: String,
       default: '',

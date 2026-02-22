@@ -45,6 +45,28 @@ const validateProfile = [
     .optional()
     .isBoolean()
     .withMessage('hasIrrigationAccess must be true or false'),
+  body('gender')
+    .isIn(['Male', 'Female', 'Other'])
+    .withMessage('Gender must be Male, Female, or Other'),
+  body('hasBPLCard')
+    .optional()
+    .isBoolean()
+    .withMessage('hasBPLCard must be true or false'),
+  body('ownershipType')
+    .isIn(['Owner', 'Tenant/Sharecropper', 'Co-owner'])
+    .withMessage('Ownership must be Owner, Tenant/Sharecropper, or Co-owner'),
+  body('hasKcc')
+    .optional()
+    .isBoolean()
+    .withMessage('hasKcc must be true or false'),
+  body('isDifferentlyAbled')
+    .optional()
+    .isBoolean()
+    .withMessage('isDifferentlyAbled must be true or false'),
+  body('hasAadharSeededBank')
+    .optional()
+    .isBoolean()
+    .withMessage('hasAadharSeededBank must be true or false'),
   handleValidationErrors,
 ];
 

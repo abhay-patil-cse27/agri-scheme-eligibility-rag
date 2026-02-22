@@ -4,6 +4,7 @@ import { Users, Search, Loader2, Shield, Calendar, Mail, User } from 'lucide-rea
 import { getAllUsers } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
+import AgriCard from '../components/common/AgriCard';
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -37,7 +38,13 @@ export default function UsersPage() {
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '28px' }}>
+    <AgriCard
+      animate={true}
+      className="agri-card"
+      style={{ padding: '32px', marginBottom: '24px' }}
+      padding="32px"
+    >
+      <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
           <Users size={24} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-indigo)' }} />
           {t('us_title', 'User Management')}
@@ -45,9 +52,8 @@ export default function UsersPage() {
         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
           {t('us_subtitle', 'View all registered users and administrators across the platform')}
         </p>
-      </motion.div>
+      </div>
 
-      <div className="glass-card" style={{ padding: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
           <div style={{ position: 'relative', flex: '1', minWidth: '250px', maxWidth: '400px' }}>
             <Search size={18} style={{ position: 'absolute', top: '12px', left: '16px', color: 'var(--text-muted)' }} />
@@ -130,7 +136,7 @@ export default function UsersPage() {
             </table>
           </div>
         )}
-      </div>
+      </AgriCard>
     </div>
   );
 }
@@ -149,6 +155,5 @@ const tdStyle = {
   padding: '16px',
   borderTop: '1px solid var(--border-color)',
   borderBottom: '1px solid var(--border-color)',
-  background: 'var(--bg-glass)',
-  backdropFilter: 'blur(10px)',
+  background: 'var(--bg-secondary)',
 };

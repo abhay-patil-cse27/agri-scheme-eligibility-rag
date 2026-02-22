@@ -162,9 +162,10 @@ function detectSection(text) {
 
 /**
  * Full PDF processing pipeline.
- * Takes a file path and scheme name, returns array of chunks with metadata.
+ * Takes a file path, scheme name, and document metadata.
+ * Returns array of chunks with metadata.
  */
-async function processPDF(filePath, schemeName) {
+async function processPDF(filePath, schemeName, docMetadata = {}) {
   logger.info(`Processing PDF: ${filePath} for scheme: ${schemeName}`);
   const startTime = Date.now();
 
@@ -175,7 +176,14 @@ async function processPDF(filePath, schemeName) {
   const rawChunks = chunkText(fullText);
 
   // Step 3: Assign page numbers and metadata
-  const chunksWithMetadata = assignPageNumbers(rawChunks, pages);
+  const chunksWithMetadata = assignPageNumbers(rawChunks, pages).map(chunk => ({
+    ...chunk,
+    metadata: {
+      ...chunk.metadata,
+      documentPath: docMetadata.filename || path.basename(filePath),
+      documentType: docMetadata.type || 'guidelines'
+    }
+  }));
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
   logger.info(
@@ -187,6 +195,7 @@ async function processPDF(filePath, schemeName) {
     totalChunks: chunksWithMetadata.length,
     numPages,
     schemeName,
+    docMetadata
   };
 }
 

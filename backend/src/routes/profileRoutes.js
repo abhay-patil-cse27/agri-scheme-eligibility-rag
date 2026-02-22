@@ -26,6 +26,12 @@ router.post(
       category: req.body.category,
       annualIncome: req.body.annualIncome || null,
       hasIrrigationAccess: req.body.hasIrrigationAccess || false,
+      gender: req.body.gender,
+      hasBPLCard: req.body.hasBPLCard || false,
+      ownershipType: req.body.ownershipType,
+      hasKcc: req.body.hasKcc || false,
+      isDifferentlyAbled: req.body.isDifferentlyAbled || false,
+      hasAadharSeededBank: req.body.hasAadharSeededBank || false,
       userId: req.user.id,
     };
 
@@ -111,6 +117,7 @@ router.put(
     const allowedFields = [
       'name', 'age', 'state', 'district', 'landHolding',
       'cropType', 'category', 'annualIncome', 'hasIrrigationAccess',
+      'gender', 'hasBPLCard', 'ownershipType', 'hasKcc', 'isDifferentlyAbled', 'hasAadharSeededBank'
     ];
 
     const updateData = {};

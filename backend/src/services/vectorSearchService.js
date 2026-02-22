@@ -10,7 +10,7 @@ const logger = require('../config/logger');
  * @param {number} limit - Number of results to return (default 5)
  * @returns {Array} Matching chunks sorted by relevance score
  */
-async function searchSimilarChunks(queryEmbedding, schemeId = null, limit = 5) {
+async function searchSimilarChunks(queryEmbedding, schemeId = null, limit = 5, category = null) {
   const startTime = Date.now();
 
   // Build the $vectorSearch stage
@@ -24,11 +24,19 @@ async function searchSimilarChunks(queryEmbedding, schemeId = null, limit = 5) {
     },
   };
 
-  // Add filter for specific scheme if provided
+  // Build filter object
+  const searchFilter = {};
+  
   if (schemeId) {
-    vectorSearchStage.$vectorSearch.filter = {
-      schemeId: new mongoose.Types.ObjectId(schemeId),
-    };
+    searchFilter.schemeId = new mongoose.Types.ObjectId(schemeId);
+  }
+
+  // NOTE: 'category' was removed from the filter because it is not indexed in the MongoDB Atlas vector_index.
+  // The Atlas index currently only supports 'schemeId' as a filter path.
+  // If category filtering is required via $vectorSearch, the Atlas index JSON must be updated first.
+
+  if (Object.keys(searchFilter).length > 0) {
+    vectorSearchStage.$vectorSearch.filter = searchFilter;
   }
 
   const pipeline = [

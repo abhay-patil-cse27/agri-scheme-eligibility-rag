@@ -7,6 +7,7 @@ import {
 import { getProfiles, getEligibilityHistory, deleteEligibilityCheck, deleteProfile } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
+import AgriCard from '../components/common/AgriCard';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -20,13 +21,12 @@ function HistoryCard({ check, index, onDelete }) {
   const date = new Date(check.createdAt || check.checkedAt);
 
   return (
-    <motion.div
-      className="glass-card"
-      custom={index}
-      initial="hidden"
-      animate="visible"
-      variants={fadeUp}
+    <AgriCard
+      className="agri-card"
+      animate={true}
+      transition={{ delay: index * 0.08, duration: 0.4 }}
       style={{ padding: '24px', cursor: 'pointer' }}
+      padding="24px"
       onClick={() => setExpanded(!expanded)}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -75,9 +75,11 @@ function HistoryCard({ check, index, onDelete }) {
 
       {expanded && (
         <motion.div
+          className="agri-card"
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border-glass)' }}
+          style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border-color)'
+ }}
         >
           <div style={{ marginBottom: '16px' }}>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 500 }}>{t('hs_reason')}</p>
@@ -117,7 +119,7 @@ function HistoryCard({ check, index, onDelete }) {
           </div>
         </motion.div>
       )}
-    </motion.div>
+    </AgriCard>
   );
 }
 
@@ -197,8 +199,13 @@ export default function HistoryPage() {
   };
 
   return (
-    <div>
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '28px' }}>
+    <AgriCard
+      animate={true}
+      className="agri-card"
+      style={{ padding: '32px', marginBottom: '24px' }}
+      padding="32px"
+    >
+      <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
           <History size={24} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-cyan)' }} />
           {t('hs_title')}
@@ -206,15 +213,10 @@ export default function HistoryPage() {
         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
           {t('hs_subtitle')}
         </p>
-      </motion.div>
+      </div>
 
       {/* Profile Selector */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card"
-        style={{ padding: '20px', marginBottom: '24px' }}
-      >
+      <div style={{ padding: '0px', marginBottom: '24px' }}>
         <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <User size={14} /> {t('hs_tbl_farmer')}
         </label>
@@ -268,7 +270,7 @@ export default function HistoryPage() {
             </button>
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* History List */}
       {loading ? (
@@ -278,16 +280,16 @@ export default function HistoryPage() {
           ))}
         </div>
       ) : checks.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="glass-card"
+        <AgriCard
+          animate={true}
+          className="agri-card"
           style={{ padding: '60px', textAlign: 'center' }}
+          padding="60px"
         >
           <History size={48} style={{ color: 'var(--text-muted)', margin: '0 auto 16px' }} />
           <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '8px' }}>{t('hs_no_checks')}</h3>
           <p style={{ color: 'var(--text-secondary)' }}>{t('hs_no_checks_desc')}</p>
-        </motion.div>
+        </AgriCard>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {checks.map((check, i) => (
@@ -295,6 +297,6 @@ export default function HistoryPage() {
           ))}
         </div>
       )}
-    </div>
+    </AgriCard>
   );
 }

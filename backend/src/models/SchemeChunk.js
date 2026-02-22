@@ -12,6 +12,10 @@ const schemeChunkSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    category: {
+      type: String,
+      index: true,
+    },
     text: {
       type: String,
       required: [true, 'Chunk text is required'],
@@ -31,6 +35,8 @@ const schemeChunkSchema = new mongoose.Schema(
       section: { type: String, default: 'Unknown' },
       paragraph: { type: Number, default: 1 },
       chunkIndex: { type: Number, required: true },
+      documentPath: { type: String }, // Link to source document in Scheme.documents
+      documentType: { type: String },
     },
   },
   {

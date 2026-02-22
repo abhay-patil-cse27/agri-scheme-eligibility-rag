@@ -8,11 +8,25 @@ const embeddingService = require('../services/embeddingService');
 const vectorSearchService = require('../services/vectorSearchService');
 const llmService = require('../services/llmService');
 const suggestionEngine = require('../services/suggestionEngine');
+const graphService = require('../services/graphService');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { eligibilityLimiter, publicEligibilityLimiter } = require('../middleware/rateLimiter');
 const { validateEligibilityCheck, validateObjectId } = require('../middleware/validators');
 const { protect } = require('../middleware/auth');
 const logger = require('../config/logger');
+const crypto = require('crypto');
+const PublicCheckCache = require('../models/PublicCheckCache');
+
+/**
+ * Generate a deterministic hash for a profile object.
+ */
+function hashProfile(profile) {
+  const sortedKeys = ['age', 'annualIncome', 'category', 'cropType', 'district', 'hasIrrigationAccess', 'landHolding', 'name', 'state'];
+  const baseString = sortedKeys
+    .map(key => `${key}:${profile[key] || ''}`)
+    .join('|');
+  return crypto.createHash('sha256').update(baseString).digest('hex');
+}
 
 /**
  * POST /api/eligibility/check
@@ -48,6 +62,10 @@ router.post(
       return res.status(403).json({ success: false, error: 'Not authorized to check this profile' });
     }
 
+    // New: Get matching categories from Graph
+    const matchingCategories = await graphService.getRecommendedCategories(profile);
+    logger.info(`Matching categories for ${profile.name}: ${matchingCategories.join(', ')}`);
+
     // Step 2: Determine which schemes to check
     let schemesToCheck = [];
     if (schemeName && schemeName !== 'all') {
@@ -68,76 +86,113 @@ router.post(
 
     logger.info(`Eligibility check: ${profile.name} → ${schemeName === 'all' || !schemeName ? 'ALL SCHEMES' : schemeName}`);
 
-    // Process schemes sequentially to avoid overwhelming Groq LLM API with parallel 70b calls
-    const results = [];
-    for (const scheme of schemesToCheck) {
-      try {
-        // Use a generic search query aimed at retrieving the RULES, not matching the specific profile numbers
-        const searchQuery = `eligibility criteria, beneficiary conditions, who is eligible, age limit, land holding limit, income limit, exclusions, who is not eligible for ${scheme.name}`;
-        const queryEmbedding = await embeddingService.generateEmbedding(searchQuery);
-        // Increase retrieved chunks to 8 to ensure we capture both inclusive rules and exclusionary rules
-        const relevantChunks = await vectorSearchService.searchSimilarChunks(queryEmbedding, scheme._id.toString(), 8);
+    // Process schemes in parallel (subject to LLM service internal concurrency limit)
+    const results = await Promise.all(
+      schemesToCheck.map(async (scheme) => {
+        try {
+          // Caching Logic: Check for recent existing results (last 24h)
+          const recentCheck = await EligibilityCheck.findOne({
+            farmerId: profile._id,
+            schemeId: scheme._id,
+            createdAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+          })
+            .sort({ createdAt: -1 })
+            .lean();
 
-        if (relevantChunks.length === 0) {
-          results.push({ scheme: scheme.name, error: 'No relevant document sections found.' });
-          continue;
+          if (recentCheck) {
+            logger.info(`Cache HIT for ${profile.name} on scheme ${scheme.name} (ID: ${recentCheck._id})`);
+            return {
+              checkId: recentCheck._id,
+              scheme: scheme.name,
+              eligible: recentCheck.eligible,
+              confidence: recentCheck.confidence,
+              reason: recentCheck.reason,
+              citation: recentCheck.citation,
+              citationSource: recentCheck.citationSource,
+              officialWebsite: recentCheck.officialWebsite,
+              documentUrl: recentCheck.documentUrl,
+              benefitAmount: recentCheck.benefitAmount,
+              requiredDocuments: recentCheck.requiredDocuments,
+              suggestions: recentCheck.suggestions,
+              responseTime: 0,
+              chunksAnalyzed: 0,
+              isCached: true,
+            };
+          }
+
+          // Use a generic search query aimed at retrieving the RULES
+          const searchQuery = `eligibility criteria, beneficiary conditions, who is eligible, age limit, land holding limit, income limit, exclusions for ${scheme.name}`;
+          const queryEmbedding = await embeddingService.generateEmbedding(searchQuery);
+
+          // Pass scheme category for optimized filtering
+          const relevantChunks = await vectorSearchService.searchSimilarChunks(
+            queryEmbedding,
+            scheme._id.toString(),
+            8,
+            scheme.category
+          );
+
+          if (relevantChunks.length === 0) {
+            return { scheme: scheme.name, error: 'No relevant document sections found.' };
+          }
+
+          // New: Check for Graph Conflicts (Exclusive schemes)
+          const graphConflicts = await graphService.checkConflicts(profile.activeSchemes || [], scheme.name);
+          if (graphConflicts.length > 0) {
+            logger.info(`Graph CONFLICT detected for ${profile.name} on ${scheme.name}: ${graphConflicts.map(c => c.scheme).join(', ')}`);
+          }
+
+          const llmResult = await llmService.checkEligibility(profile, relevantChunks, scheme.name, language, graphConflicts);
+
+          let suggestions = [];
+          if (!llmResult.eligible && schemesToCheck.length === 1) {
+            suggestions = await suggestionEngine.findAlternatives(profile, scheme._id, language);
+          }
+
+          const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+
+          const officialWebsiteUrl = scheme.officialWebsite || llmResult.officialWebsite;
+          const documentUrl = `${req.protocol}://${req.get('host')}/api/schemes/docs/${scheme.sourceFile}`;
+
+          const eligibilityRecord = await EligibilityCheck.create({
+            farmerId: profile._id,
+            schemeId: scheme._id,
+            schemeName: scheme.name,
+            eligible: llmResult.eligible,
+            confidence: llmResult.confidence,
+            reason: llmResult.reason,
+            citation: llmResult.citation,
+            citationSource: llmResult.citationSource,
+            officialWebsite: officialWebsiteUrl,
+            documentUrl: documentUrl,
+            benefitAmount: llmResult.benefitAmount,
+            requiredDocuments: llmResult.requiredDocuments,
+            suggestions: suggestions,
+            responseTime: totalResponseTime,
+          });
+
+          return {
+            checkId: eligibilityRecord._id,
+            scheme: scheme.name,
+            eligible: llmResult.eligible,
+            confidence: llmResult.confidence,
+            reason: llmResult.reason,
+            citation: llmResult.citation,
+            citationSource: llmResult.citationSource,
+            officialWebsite: officialWebsiteUrl,
+            documentUrl: documentUrl,
+            benefitAmount: llmResult.benefitAmount,
+            requiredDocuments: llmResult.requiredDocuments,
+            suggestions: suggestions,
+            responseTime: totalResponseTime,
+            chunksAnalyzed: relevantChunks.length,
+          };
+        } catch (err) {
+          logger.error(`Error processing scheme ${scheme.name}:`, err.message);
+          return { scheme: scheme.name, error: err.message };
         }
-
-        const llmResult = await llmService.checkEligibility(profile, relevantChunks, scheme.name, language);
-
-        let suggestions = [];
-        if (!llmResult.eligible && schemesToCheck.length === 1) {
-          suggestions = await suggestionEngine.findAlternatives(profile, scheme._id, language);
-        }
-
-        const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
-
-        const officialWebsiteUrl = scheme.officialWebsite || llmResult.officialWebsite;
-        const documentUrl = `${req.protocol}://${req.get('host')}/api/schemes/docs/${scheme.sourceFile}`;
-
-        const eligibilityRecord = await EligibilityCheck.create({
-          farmerId: profile._id,
-          schemeId: scheme._id,
-          schemeName: scheme.name,
-          eligible: llmResult.eligible,
-          confidence: llmResult.confidence,
-          reason: llmResult.reason,
-          citation: llmResult.citation,
-          citationSource: llmResult.citationSource,
-          officialWebsite: officialWebsiteUrl,
-          documentUrl: documentUrl,
-          benefitAmount: llmResult.benefitAmount,
-          requiredDocuments: llmResult.requiredDocuments,
-          suggestions: suggestions,
-          responseTime: totalResponseTime,
-        });
-
-        results.push({
-          checkId: eligibilityRecord._id,
-          scheme: scheme.name,
-          eligible: llmResult.eligible,
-          confidence: llmResult.confidence,
-          reason: llmResult.reason,
-          citation: llmResult.citation,
-          citationSource: llmResult.citationSource,
-          officialWebsite: officialWebsiteUrl,
-          documentUrl: documentUrl,
-          benefitAmount: llmResult.benefitAmount,
-          requiredDocuments: llmResult.requiredDocuments,
-          suggestions: suggestions,
-          responseTime: totalResponseTime,
-          chunksAnalyzed: relevantChunks.length,
-        });
-
-        // Add a slight delay between sequential requests to let token buckets refill
-        if (schemesToCheck.length > 1) {
-          await new Promise(r => setTimeout(r, 1000));
-        }
-      } catch (err) {
-        logger.error(`Error processing scheme ${scheme.name}:`, err.message);
-        results.push({ scheme: scheme.name, error: err.message });
-      }
-    }
+      })
+    );
 
     // Return array if all, or single object if one scheme for backwards compatibility
     const responseData = (schemesToCheck.length === 1 && schemeName !== 'all') ? results[0] : results;
@@ -188,51 +243,77 @@ router.post(
 
     logger.info(`Public Eligibility check: ${profileData.name} → ${schemeName === 'all' || !schemeName ? 'ALL SCHEMES' : schemeName}`);
 
-    // Process schemes sequentially for public checks as well
-    const results = [];
-    for (const scheme of schemesToCheck) {
-      try {
-        const searchQuery = `eligibility criteria, beneficiary conditions, who is eligible, age limit, land holding limit, income limit, exclusions, who is not eligible for ${scheme.name}`;
-        const queryEmbedding = await embeddingService.generateEmbedding(searchQuery);
-        const relevantChunks = await vectorSearchService.searchSimilarChunks(queryEmbedding, scheme._id.toString(), 8);
+    const profileHash = hashProfile(profileData);
 
-        if (relevantChunks.length === 0) {
-          results.push({ scheme: scheme.name, error: 'No relevant document sections found.' });
-          continue;
+    // Process schemes in parallel (subject to LLM service internal concurrency limit)
+    const results = await Promise.all(
+      schemesToCheck.map(async (scheme) => {
+        try {
+          // Public Caching Logic: Check for identical profile + scheme
+          const cachedResult = await PublicCheckCache.findOne({
+            profileHash,
+            schemeName: scheme.name,
+          }).lean();
+
+          if (cachedResult) {
+            logger.info(`Public Cache HIT for ${profileData.name} on scheme ${scheme.name}`);
+            return {
+              ...cachedResult.result,
+              isCached: true,
+            };
+          }
+
+          const searchQuery = `eligibility criteria, beneficiary conditions, who is eligible, age limit, land holding limit, income limit, exclusions for ${scheme.name}`;
+          const queryEmbedding = await embeddingService.generateEmbedding(searchQuery);
+          const relevantChunks = await vectorSearchService.searchSimilarChunks(
+            queryEmbedding,
+            scheme._id.toString(),
+            8,
+            scheme.category
+          );
+
+          if (relevantChunks.length === 0) {
+            return { scheme: scheme.name, error: 'No relevant document sections found.' };
+          }
+
+          const llmResult = await llmService.checkEligibility(profileData, relevantChunks, scheme.name, language);
+
+          let suggestions = [];
+          if (!llmResult.eligible && schemesToCheck.length === 1) {
+            suggestions = await suggestionEngine.findAlternatives(profileData, scheme._id, language);
+          }
+
+          const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+
+          const officialWebsiteUrl = scheme.officialWebsite || llmResult.officialWebsite;
+          const documentUrl = `${req.protocol}://${req.get('host')}/api/schemes/docs/${scheme.sourceFile}`;
+
+          const result = {
+            checkId: 'public-' + Date.now(),
+            scheme: scheme.name,
+            ...llmResult,
+            officialWebsite: officialWebsiteUrl,
+            documentUrl: documentUrl,
+            suggestions: suggestions,
+            responseTime: totalResponseTime,
+            chunksAnalyzed: relevantChunks.length,
+            isPublicCheck: true,
+          };
+
+          // Save to Public Cache
+          await PublicCheckCache.create({
+            profileHash,
+            schemeName: scheme.name,
+            result: result,
+          });
+
+          return result;
+        } catch (err) {
+          logger.error(`Error processing public scheme check ${scheme.name}:`, err.message);
+          return { scheme: scheme.name, error: err.message };
         }
-
-        const llmResult = await llmService.checkEligibility(profileData, relevantChunks, scheme.name, language);
-        
-        let suggestions = [];
-        if (!llmResult.eligible && schemesToCheck.length === 1) {
-          suggestions = await suggestionEngine.findAlternatives(profileData, scheme._id, language);
-        }
-        
-        const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
-        
-        const officialWebsiteUrl = scheme.officialWebsite || llmResult.officialWebsite;
-        const documentUrl = `${req.protocol}://${req.get('host')}/api/schemes/docs/${scheme.sourceFile}`;
-
-        results.push({
-          checkId: 'public-' + Date.now(),
-          scheme: scheme.name,
-          ...llmResult,
-          officialWebsite: officialWebsiteUrl,
-          documentUrl: documentUrl,
-          suggestions: suggestions,
-          responseTime: totalResponseTime,
-          chunksAnalyzed: relevantChunks.length,
-          isPublicCheck: true
-        });
-
-        if (schemesToCheck.length > 1) {
-          await new Promise(r => setTimeout(r, 1000));
-        }
-      } catch (err) {
-        logger.error(`Error processing public scheme check ${scheme.name}:`, err.message);
-        results.push({ scheme: scheme.name, error: err.message });
-      }
-    }
+      })
+    );
 
     const responseData = (schemesToCheck.length === 1 && schemeName !== 'all') ? results[0] : results;
     res.json({ success: true, data: responseData });

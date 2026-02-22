@@ -32,6 +32,9 @@ const userSchema = new mongoose.Schema(
       },
       select: false, // Don't return password by default
     },
+    activeSchemes: [{
+      type: String
+    }],
     role: {
       type: String,
       enum: ['farmer', 'admin'],
@@ -39,11 +42,6 @@ const userSchema = new mongoose.Schema(
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
-    role: {
-      type: String,
-      enum: ['farmer', 'admin'],
-      default: 'farmer',
-    },
   },
   {
     timestamps: true,

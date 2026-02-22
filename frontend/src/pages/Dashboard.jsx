@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import AgriCard from "../components/common/AgriCard";
+import ShinyText from "../components/ShinyText";
 import { getSchemes, getProfiles, getHealth, getAnalytics } from "../services/api";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -36,53 +38,62 @@ const fadeUp = {
 function StatCard({ icon: Icon, label, value, color, index }) {
   return (
     <motion.div
-      className="glass-card"
       custom={index}
       initial="hidden"
       animate="visible"
       variants={fadeUp}
-      style={{
-        padding: "24px",
-        display: "flex",
-        alignItems: "center",
-        gap: "16px",
-      }}
+      style={{ height: "100%" }}
     >
-      <div
+      <AgriCard
+        animate={true}
+        className="agri-card"
         style={{
-          width: "48px",
-          height: "48px",
-          borderRadius: "14px",
-          background: `${color}15`,
+          padding: "24px",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          border: `1px solid ${color}25`,
+          gap: "16px",
+          height: "100%",
         }}
+        padding="24px"
       >
-        <Icon size={22} style={{ color }} />
-      </div>
-      <div>
-        <p
+        <div
           style={{
-            fontSize: "0.8rem",
-            color: "var(--text-muted)",
-            fontWeight: 500,
-            marginBottom: "4px",
+            width: "48px",
+            height: "48px",
+            borderRadius: "14px",
+            background: `${color}15`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: `1px solid ${color}25`,
+            zIndex: 1,
           }}
         >
-          {label}
-        </p>
-        <p
-          style={{
-            fontSize: "1.6rem",
-            fontWeight: 700,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          {value}
-        </p>
-      </div>
+          <Icon size={22} style={{ color }} />
+        </div>
+        <div style={{ zIndex: 1 }}>
+          <p
+            style={{
+              fontSize: "0.8rem",
+              color: "var(--text-muted)",
+              fontWeight: 500,
+              marginBottom: "4px",
+            }}
+          >
+            {label}
+          </p>
+          <p
+            style={{
+              fontSize: "1.6rem",
+              fontWeight: 700,
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
+          >
+            {value}
+          </p>
+        </div>
+      </AgriCard>
     </motion.div>
   );
 }
@@ -99,78 +110,86 @@ function SchemeCard({ scheme, index }) {
 
   return (
     <motion.div
-      className="glass-card"
       custom={index + 4}
       initial="hidden"
       animate="visible"
       variants={fadeUp}
-      style={{ padding: "24px" }}
+      style={{ height: '100%' }}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "start",
-          marginBottom: "16px",
-        }}
+      <AgriCard
+        animate={true}
+        className="agri-card relative z-10"
+        style={{ padding: "24px", height: '100%' }}
+        padding="24px"
       >
-        <div>
-          <h3
-            style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "4px" }}
-          >
-            {scheme.name}
-          </h3>
-          <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-            {scheme.description || "Government scheme"}
-          </p>
-        </div>
-        <span
-          className="badge"
+        <div
           style={{
-            background: `${color}15`,
-            color,
-            border: `1px solid ${color}25`,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "start",
+            marginBottom: "16px",
+            position: 'relative',
+            zIndex: 1,
           }}
         >
-          {scheme.category?.replace("_", " ") || "Other"}
-        </span>
-      </div>
-      <div style={{ display: "flex", gap: "24px" }}>
-        <div>
-          <p
+          <div>
+            <h3
+              style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "4px" }}
+            >
+              {scheme.name}
+            </h3>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              {scheme.description || "Government scheme"}
+            </p>
+          </div>
+          <span
+            className="badge"
             style={{
-              fontSize: "0.7rem",
-              color: "var(--text-muted)",
-              marginBottom: "2px",
+              background: `${color}15`,
+              color,
+              border: `1px solid ${color}25`,
             }}
           >
-            {t('db_chunks')}
-          </p>
-          <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>
-            {scheme.totalChunks}
-          </p>
+            {scheme.category?.replace("_", " ") || "Other"}
+          </span>
         </div>
-        <div>
-          <p
-            style={{
-              fontSize: "0.7rem",
-              color: "var(--text-muted)",
-              marginBottom: "2px",
-            }}
-          >
-            {t('db_processed')}
-          </p>
-          <p
-            style={{
-              fontSize: "0.85rem",
-              fontWeight: 500,
-              color: "var(--accent-emerald)",
-            }}
-          >
-            {t('db_active')}
-          </p>
+        <div style={{ display: "flex", gap: "24px", position: 'relative', zIndex: 1, paddingBottom: "24px" }}>
+          <div>
+            <p
+              style={{
+                fontSize: "0.7rem",
+                color: "var(--text-muted)",
+                marginBottom: "2px",
+              }}
+            >
+              {t('db_chunks')}
+            </p>
+            <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>
+              {scheme.totalChunks}
+            </p>
+          </div>
+          <div>
+            <p
+              style={{
+                fontSize: "0.7rem",
+                color: "var(--text-muted)",
+                marginBottom: "2px",
+              }}
+            >
+              {t('db_processed')}
+            </p>
+            <p
+              style={{
+                fontSize: "0.85rem",
+                fontWeight: 500,
+                color: "var(--accent-emerald)",
+              }}
+            >
+              {t('db_active')}
+            </p>
+          </div>
         </div>
-      </div>
+      </AgriCard>
     </motion.div>
   );
 }
@@ -210,25 +229,31 @@ export default function Dashboard() {
   return (
     <div>
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{ marginBottom: "32px" }}
-      >
+    <AgriCard
+      animate={true}
+      className="agri-card"
+      style={{ padding: '32px', marginBottom: '32px' }}
+      padding="32px"
+    >
+      <div style={{ marginBottom: '32px' }}>
         <h1
           style={{
             fontSize: "1.8rem",
             fontWeight: 800,
             letterSpacing: "-0.03em",
             marginBottom: "8px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px"
           }}
         >
-          {t('db_welcome')} <span className="gradient-text">{t('app_name')}</span>
+          {t('db_welcome')} 
+          <ShinyText text={t('app_name')} disabled={false} speed={3} className="gradient-text !inline" />
         </h1>
         <p style={{ fontSize: "0.95rem", color: "var(--text-secondary)" }}>
           {t('db_subtitle')}
         </p>
-      </motion.div>
+      </div>
 
       {/* Stats Grid */}
       <div
@@ -236,7 +261,7 @@ export default function Dashboard() {
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
           gap: "16px",
-          marginBottom: "32px",
+          marginBottom: "0px",
         }}
       >
         <StatCard
@@ -268,6 +293,7 @@ export default function Dashboard() {
           index={3}
         />
       </div>
+    </AgriCard>
 
       {/* ── Analytics Visualizations ── */}
       {analytics && (
@@ -277,7 +303,7 @@ export default function Dashboard() {
         >
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
             {/* Checks Over Time */}
-            <div className="glass-card" style={{ padding: '24px' }}>
+            <div style={{ padding: '0px' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <TrendingUp size={18} color="var(--accent-indigo)" />
                 {t('db_checks_chart')}
@@ -290,7 +316,7 @@ export default function Dashboard() {
                       <XAxis dataKey="_id" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                       <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                       <Tooltip 
-                        contentStyle={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', borderRadius: '12px', backdropFilter: 'blur(10px)', color: 'var(--text-primary)' }}
+                        contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px', color: 'var(--text-primary)' }}
                         itemStyle={{ color: 'var(--accent-indigo)' }}
                       />
                       <Bar dataKey="count" name="Total Checks" fill="var(--accent-indigo)" radius={[4, 4, 0, 0]} barSize={32} />
@@ -303,7 +329,7 @@ export default function Dashboard() {
             </div>
 
             {/* Eligibility Split */}
-            <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '0px', display: 'flex', flexDirection: 'column' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <PieChartIcon size={18} color="var(--accent-emerald)" />
                 {t('db_eligibility_split')}
@@ -323,7 +349,7 @@ export default function Dashboard() {
                         <Cell fill="var(--accent-rose)" />
                       </Pie>
                       <Tooltip 
-                        contentStyle={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', borderRadius: '12px' }}
+                        contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -340,7 +366,7 @@ export default function Dashboard() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             {/* Top schemes */}
-            <div className="glass-card" style={{ padding: '24px' }}>
+            <div style={{ padding: '0px' }}>
                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Users size={18} color="var(--accent-sky)" />
                 {t('db_top_schemes')}
@@ -349,12 +375,12 @@ export default function Dashboard() {
                 {analytics.topSchemes.length > 0 ? (
                    <ResponsiveContainer>
                     <BarChart layout="vertical" data={analytics.topSchemes} margin={{ top: 5, right: 20, bottom: 5, left: 100 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border-glass)" horizontal={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" horizontal={false} />
                       <XAxis type="number" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                       <YAxis dataKey="_id" type="category" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} width={150} tickFormatter={(v) => v.length > 20 ? v.substring(0, 20) + '...' : v} />
                       <Tooltip 
-                        contentStyle={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', borderRadius: '12px' }}
-                         cursor={{fill: 'var(--border-glass)', opacity: 0.4}}
+                        contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}
+                         cursor={{fill: 'var(--border-color)', opacity: 0.1}}
                       />
                       <Bar dataKey="count" name="Matches" fill="var(--accent-sky)" radius={[0, 4, 4, 0]} barSize={24}>
                         {analytics.topSchemes.map((entry, index) => (
@@ -370,7 +396,7 @@ export default function Dashboard() {
             </div>
 
             {/* Demographics by State */}
-            <div className="glass-card" style={{ padding: '24px' }}>
+            <div style={{ padding: '0px' }}>
                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <BarChart3 size={18} color="#f59e0b" />
                 {t('db_farmer_by_state')}
@@ -379,11 +405,11 @@ export default function Dashboard() {
                 {analytics.profilesByState.length > 0 ? (
                    <ResponsiveContainer>
                     <BarChart data={analytics.profilesByState} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border-glass)" vertical={false} />
+                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                       <XAxis dataKey="_id" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => v.length > 10 ? v.substring(0, 10) + '...' : v} />
                       <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                       <Tooltip 
-                        contentStyle={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', borderRadius: '12px' }}
+                        contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}
                         cursor={{fill: 'var(--border-glass)', opacity: 0.4}}
                       />
                       <Bar dataKey="count" name="Farmers" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={36}>
@@ -410,68 +436,82 @@ export default function Dashboard() {
         transition={{ delay: 0.4 }}
         className="gradient-border"
         style={{
-          padding: "32px",
           marginBottom: "32px",
           background: "var(--bg-card)",
+          borderRadius: "16px",
         }}
       >
+        <AgriCard
+          animate={true}
+          className="relative z-10"
+          style={{ padding: "32px" }}
+          padding="32px"
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            <div>
+              <h2
+                style={{
+                  fontSize: "1.2rem",
+                  fontWeight: 700,
+                  marginBottom: "8px",
+                }}
+              >
+                <Zap
+                  size={20}
+                  style={{
+                    display: "inline",
+                    marginRight: "8px",
+                    color: "var(--accent-indigo)",
+                  }}
+                />
+                {t('db_check_title')}
+              </h2>
+              <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+                {t('db_check_desc')}
+              </p>
+            </div>
+            <Link to="/dashboard/check" style={{ textDecoration: "none" }}>
+              <motion.button
+                className="btn-glow"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {t('db_start_check')} <ArrowRight size={18} />
+              </motion.button>
+            </Link>
+          </div>
+        </AgriCard>
+      </motion.div>
+
+    <AgriCard
+      animate={true}
+      className="agri-card"
+      style={{ padding: '32px', marginBottom: '32px' }}
+      padding="32px"
+    >
         <div
           style={{
+            marginBottom: "24px",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
           }}
         >
-          <div>
-            <h2
-              style={{
-                fontSize: "1.2rem",
-                fontWeight: 700,
-                marginBottom: "8px",
-              }}
-            >
-              <Zap
-                size={20}
-                style={{
-                  display: "inline",
-                  marginRight: "8px",
-                  color: "var(--accent-indigo)",
-                }}
-              />
-              {t('db_check_title')}
-            </h2>
-            <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-              {t('db_check_desc')}
-            </p>
-          </div>
-          <Link to="/dashboard/check" style={{ textDecoration: "none" }}>
-            <motion.button
-              className="btn-glow"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {t('db_start_check')} <ArrowRight size={18} />
-            </motion.button>
-          </Link>
-        </div>
-      </motion.div>
-
-      {/* Schemes Grid */}
-      <div
-        style={{
-          marginBottom: "16px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h2 style={{ fontSize: "1.1rem", fontWeight: 700 }}>{t('db_loaded_schemes')}</h2>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 700 }}>{t('db_loaded_schemes')}</h2>
         <Link
           to="/dashboard/schemes"
           style={{
@@ -514,7 +554,7 @@ export default function Dashboard() {
           ))}
           {schemes.length === 0 && (
             <div
-              className="glass-card"
+              className="agri-card"
               style={{
                 padding: "40px",
                 textAlign: "center",
@@ -532,6 +572,7 @@ export default function Dashboard() {
           )}
         </div>
       )}
+    </AgriCard>
     </div>
   );
 }

@@ -15,8 +15,8 @@ export default function LandingNav() {
   const [open, setOpen] = useState(false);
   const isDark = theme === 'dark';
 
-  const bg      = isDark ? 'rgba(6,13,6,0.94)'        : 'rgba(246,250,242,0.96)';
-  const border  = isDark ? 'rgba(34,197,94,0.12)'     : 'rgba(22,101,52,0.12)';
+  const bg      = isDark ? 'rgba(6,13,6,0.3)'         : 'rgba(250,247,238,0.35)';
+  const border  = isDark ? 'rgba(34,197,94,0.15)'     : 'rgba(22,101,52,0.15)';
   const text    = isDark ? '#e8f5e0'                  : '#0f2010';
   const textSec = isDark ? '#6b9a60'                  : '#3a5e30';
   const glass   = isDark ? 'rgba(34,197,94,0.05)'    : 'rgba(22,101,52,0.05)';
@@ -36,10 +36,11 @@ export default function LandingNav() {
   return (
     <nav style={{
       position: 'sticky', top: 0, zIndex: 200,
-      background: scrolled ? bg : (isDark ? 'rgba(6,13,6,0.98)' : 'rgba(246,250,242,0.98)'),
-      backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-      borderBottom: `1px solid ${border}`,
-      transition: 'all 0.3s ease',
+      background: scrolled ? bg : (isDark ? 'rgba(6,13,6,0.0)' : 'rgba(250,247,238,0.0)'),
+      backdropFilter: scrolled ? 'blur(24px)' : 'none',
+      WebkitBackdropFilter: scrolled ? 'blur(24px)' : 'none',
+      borderBottom: scrolled ? `1px solid ${border}` : '1px solid transparent',
+      transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
     }}>
       <div style={{ maxWidth: '1180px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '62px', padding: '0 28px' }}>
 

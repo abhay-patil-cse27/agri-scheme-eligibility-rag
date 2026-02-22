@@ -8,6 +8,41 @@ const groqInstances = [
 let currentGroqIndex = 0;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// ── Global Concurrency Management ────────────────────────
+const queue = [];
+let activeCount = 0;
+const MAX_CONCURRENT = 3;
+
+/**
+ * Limit the number of concurrent LLM requests globally.
+ */
+async function runQueued(fn) {
+  return new Promise((resolve, reject) => {
+    const task = async () => {
+      activeCount++;
+      try {
+        const result = await fn();
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      } finally {
+        activeCount--;
+        if (queue.length > 0) {
+          const next = queue.shift();
+          // Use setImmediate to avoid stack overflow for very large queues
+          setImmediate(next);
+        }
+      }
+    };
+
+    if (activeCount < MAX_CONCURRENT) {
+      task();
+    } else {
+      queue.push(task);
+    }
+  });
+}
+
 
 
 /**
@@ -72,6 +107,26 @@ STRICT RULES:
     - Be objective. If the Farmer meets the conditions mentioned in the excerpts (e.g. they are a farmer, age matches, land matches), mark them ELIGIBLE. Do not invent reasons to reject them.
     - If a scheme is meant for farmers/agri-entrepreneurs (e.g. Agri-Infrastructure-Fund) and the farmer is an individual, assume they ARE ELIGIBLE unless the excerpts explicitly ban individuals.
     - If crucial eligibility parameters (like income limits) are missing from the excerpts, DO NOT automatically reject the farmer. Instead, assume they ARE ELIGIBLE but set confidence to 'medium' or 'low', and mention the missing confirmation in your reasoning.
+8. SOURCE WEIGHTING RULES:
+    - You will receive excerpts with metadata: Type (e.g., guidelines, amendment, faq, state_addendum) and Language.
+    - ALWAYS prioritize 'guidelines' and 'amendment' over 'faq' or 'addendum'.
+    - If an 'amendment' contradicts earlier 'guidelines', the 'amendment' wins.
+    - If a State Addendum exists for the farmer's state, it takes precedence over general guidelines for state-specific rules.
+    - FAQs are for clarification only and should never override official policy documents.
+9. GRAPH-BASED EXCLUSION RULES (CRITICAL):
+    - If you are provided with "GRAPH CONFLICTS", these are absolute business rules from the graph database.
+    - If a conflict exists with a scheme the farmer is ALREADY part of, you MUST mark them NOT ELIGIBLE for the target scheme.
+    - Use the provided conflict reason in your explanation.
+    - This rule overrides everything else.
+
+10. ENHANCED ANALYSIS RULES (STRICT DEMOGRAPHICS):
+    - CROSS-VERIFY: Check if the farmer's Annual Income exceeds the document's poverty line/limit.
+    - LAND AUDIT: Check if the farmer's Land Holding exceeds the small/marginal farmer definition in the text (typically 2 hectares or 5 acres).
+    - CATEGORY MATCH: Ensure specific benefits for women, SC, ST, or Minority groups are highlighted if the farmer belongs to those groups.
+    - DEMOGRAPHIC CHECK: If a scheme explicitly isolates women farmers, and the farmer's gender is Male, you MUST reject immediately.
+    - BPL CHECK: If the scheme explicitly requires BPL (Below Poverty Line) status, and the farmer's 'hasBPLCard' is false, YOU MUST REJECT, regardless of stated income.
+    - OWNERSHIP CHECK: If the scheme prohibits tenant/sharecropper farmers and requires ownership, check 'ownershipType'. If 'Tenant/Sharecropper', YOU MUST REJECT.
+    - QUESTION REASONING: In the 'reason', proactively explain 'why' they passed/failed. Don't just say 'You are eligible'. Say: 'You are eligible because your land holding of 2 acres is below the 5-acre limit defined in section 3.2'.
 
 Your task:
 - Compare the farmer's profile against the scheme's eligibility criteria found in the document excerpts.
@@ -127,15 +182,16 @@ const languageMap = {
 };
 
 /**
- * Check eligibility by sending farmer profile + retrieved document chunks to Groq LLM.
+ * Check eligibility by sending farmer profile + retrieved document chunks + graph conflicts to Groq LLM.
  *
  * @param {Object} profile - Farmer profile data
  * @param {Array} relevantChunks - Document chunks from vector search
  * @param {string} schemeName - Name of the scheme being checked
- * @param {string} [language='en'] - The target language to translate output strings to (e.g. 'en', 'hi', 'mr')
+ * @param {string} [language='en'] - The target language
+ * @param {Array} [graphConflicts=[]] - List of conflicts from Neo4j
  * @returns {Object} Structured eligibility result
  */
-async function checkEligibility(profile, relevantChunks, schemeName, language = 'en') {
+async function checkEligibility(profile, relevantChunks, schemeName, language = 'en', graphConflicts = []) {
   const startTime = Date.now();
   const targetLangString = languageMap[language] || 'English';
 
@@ -143,7 +199,7 @@ async function checkEligibility(profile, relevantChunks, schemeName, language = 
   const documentContext = relevantChunks
     .map(
       (chunk, i) =>
-        `--- Document Excerpt ${i + 1} (Page ${chunk.metadata?.page || 'N/A'}, Section: ${chunk.metadata?.section || 'N/A'}) ---\n${chunk.text}`
+        `--- Document Excerpt ${i + 1} (Type: ${chunk.metadata?.documentType || 'guidelines'}, Language: ${chunk.metadata?.language || 'en'}, Page: ${chunk.metadata?.page || 'N/A'}, Section: ${chunk.metadata?.section || 'N/A'}) ---\n${chunk.text}`
     )
     .join('\n\n');
 
@@ -159,6 +215,12 @@ FARMER PROFILE:
 - Social Category: ${profile.category}
 - Annual Income: ${profile.annualIncome ? '₹' + profile.annualIncome : 'Not specified'}
 - Irrigation Access: ${profile.hasIrrigationAccess ? 'Yes' : 'No'}
+- Currently Enrolled In: ${profile.activeSchemes?.join(', ') || 'None'}
+
+GRAPH CONFLICTS (EXCLUSION RULES):
+${graphConflicts && graphConflicts.length > 0
+  ? graphConflicts.map(c => `- CONFLICT: Already enrolled in ${c.scheme}. Rule: ${c.reason}`).join('\n')
+  : 'None identified.'}
 
 OFFICIAL DOCUMENT EXCERPTS:
 ${documentContext}
@@ -171,7 +233,7 @@ You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'b
   let rawResponse;
 
   try {
-    const completion = await withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
+    const completion = await runQueued(() => withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
       model: config.groqModel,
       messages: [
         { role: 'system', content: ELIGIBILITY_SYSTEM_PROMPT },
@@ -180,7 +242,7 @@ You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'b
       temperature: 0.1,
       max_tokens: 2048,
       response_format: { type: 'json_object' },
-    }));
+    })));
 
     rawResponse = completion.choices[0]?.message?.content;
   } catch (error) {
@@ -274,6 +336,7 @@ STRICT TRANSLATION & STANDARDIZATION RULES:
 3. Social Category: If the user says "मागासवर्गीय", "पिछड़ा वर्ग", "OBC", map it to "OBC". If they say "SC/ST", "दलित", map to "SC" or "ST". If they don't explicitly mention it, set it to null.
 4. Land Units: If they say "एकर" or "Bigha" or "Gunta", attempt to roughly convert to Acres if possible, or just extract the raw number.
 5. Irrigation: If they mention well, canal, river, pump ("विहीर", "नदी", "कालवा", "सिंचाई"), set hasIrrigationAccess to true.
+6. Demographics: Look for keywords indicating BPL/Ration card ("रेशन कार्ड", "दारिद्र्य"), tenancy/rental vs ownership ("भाडेतत्त्वावर", "मालकी"), Kisan Credit Card ("KCC", "किसान क्रेडिट"), Divyangjan ("दिव्यांग", "अपंग"), and bank accounts linked to Aadhar ("आधार बँक"). Infer gender naturally from the name or spoken grammar (e.g. "मी महिला आहे").
 
 RESPOND ONLY WITH THIS EXACT JSON STRUCTURE (No markdown, no explanation):
 {
@@ -285,11 +348,17 @@ RESPOND ONLY WITH THIS EXACT JSON STRUCTURE (No markdown, no explanation):
   "cropType": "English crop type or null",
   "category": "General or SC or ST or OBC or null",
   "annualIncome": number_or_null,
-  "hasIrrigationAccess": true_or_false_or_null
+  "hasIrrigationAccess": true_or_false_or_null,
+  "gender": "Male or Female or Other or null",
+  "hasBPLCard": true_or_false_or_null,
+  "ownershipType": "Owner or Tenant/Sharecropper or Co-owner or null",
+  "hasKcc": true_or_false_or_null,
+  "isDifferentlyAbled": true_or_false_or_null,
+  "hasAadharSeededBank": true_or_false_or_null
 }
 
 EXAMPLE TRANSCRIPT (Marathi):
-"नमस्ते, माझं नाव रमेश पाटील आहे, मी ४५ वर्षांचा आहे. मी महाराष्ट्र राज्यातील पुणे जिल्ह्यात राहतो. माझ्याकडे २ एकर जमीन आहे आणि मी गहू पिकवतो. माझ्याकडे विहीर आहे."
+"नमस्ते, माझं नाव रमेश पाटील आहे, मी ४५ वर्षांचा आहे. मी महाराष्ट्र राज्यातील पुणे जिल्ह्यात राहतो. माझ्याकडे २ एकर जमीन आहे आणि मी गहू पिकवतो. माझ्याकडे रेशन कार्ड आहे."
 EXPECTED OUTPUT:
 {
   "name": "Ramesh Patil",
@@ -300,13 +369,19 @@ EXPECTED OUTPUT:
   "cropType": "Wheat",
   "category": null,
   "annualIncome": null,
-  "hasIrrigationAccess": true
+  "hasIrrigationAccess": null,
+  "gender": "Male",
+  "hasBPLCard": true,
+  "ownershipType": "Owner",
+  "hasKcc": null,
+  "isDifferentlyAbled": null,
+  "hasAadharSeededBank": null
 }
 
 Extract whatever information is available from the actual provided transcript. Set null for completely missing fields.`;
 
   try {
-    const completion = await withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
+    const completion = await runQueued(() => withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
       model: config.groqModel,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -315,7 +390,7 @@ Extract whatever information is available from the actual provided transcript. S
       temperature: 0.1,
       max_tokens: 512,
       response_format: { type: 'json_object' },
-    }));
+    })));
 
     const result = JSON.parse(completion.choices[0]?.message?.content || '{}');
     logger.info('Profile extracted from transcript successfully');
@@ -336,7 +411,7 @@ async function transcribeAudio(filePath, language = 'en') {
   const fs = require('fs');
   try {
     const whisperLanguage = language ? language.substring(0, 2).toLowerCase() : 'en';
-    const transcription = await withRetry(() => groqInstances[currentGroqIndex].audio.transcriptions.create({
+    const transcription = await runQueued(() => withRetry(() => groqInstances[currentGroqIndex].audio.transcriptions.create({
       file: fs.createReadStream(filePath),
       model: "whisper-large-v3", // upgraded from turbo for much better Indian language accuracy
       prompt: `Agricultural scheme eligibility app. Farmers speak in regional Indian languages.
@@ -355,7 +430,7 @@ RULES:
 - Example: "माझ्याकडे दोन एकर जमीन आहे" → transcribe exactly as said.`,
       response_format: "json",
       language: whisperLanguage
-    }));
+    })));
     
     logger.info('Audio transcribed successfully');
     return transcription.text;
@@ -394,7 +469,7 @@ Output benefitAmount: "₹६,००० प्रति वर्ष"`;
 
 
   try {
-    const completion = await withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
+    const completion = await runQueued(() => withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
       model: config.groqModel,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -402,7 +477,7 @@ Output benefitAmount: "₹६,००० प्रति वर्ष"`;
       ],
       temperature: 0.1,
       response_format: { type: 'json_object' },
-    }));
+    })));
 
     const translated = JSON.parse(completion.choices[0]?.message?.content || '{}');
     

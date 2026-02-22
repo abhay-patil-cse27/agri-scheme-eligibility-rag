@@ -11,7 +11,10 @@ import {
   Github, Sprout, TrendingUp, Clock, CheckCircle2, Search, Info, Check, Quote
 } from 'lucide-react';
 import LanguageSwitcher from '../components/common/LanguageSwitcher';
-
+import Plasma from '../components/Plasma';
+import Silk from '../components/Silk';
+import CircularText from '../components/CircularText';
+import FluidGlass from '../components/FluidGlass';
 /* ─── Agricultural color system ─────────────────────────── */
 const C = (isDark) => ({
   bg:         isDark ? '#060d06'                      : '#faf7ee',
@@ -23,7 +26,7 @@ const C = (isDark) => ({
   text:       isDark ? '#e8f5e0'                      : '#1a2a0e',
   textSec:    isDark ? '#6b9a60'                      : '#3d5c28',
   textMute:   isDark ? '#3d5e38'                      : '#8a7750',
-  navBg:      isDark ? 'rgba(6,13,6,0.94)'            : 'rgba(250,247,238,0.97)',
+  navBg:      isDark ? 'rgba(6,13,6,0.3)'             : 'rgba(250,247,238,0.35)',
   sectionAlt: isDark ? 'rgba(255,255,255,0.025)'      : 'rgba(101,67,33,0.055)',
 });
 
@@ -127,10 +130,10 @@ export default function Landing() {
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
         background: scrolled ? c.navBg : 'transparent',
-        backdropFilter: scrolled ? 'blur(18px)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(18px)' : 'none',
-        borderBottom: `1px solid ${scrolled ? c.border : 'transparent'}`,
-        transition: 'all 0.35s ease',
+        backdropFilter: scrolled ? 'blur(24px)' : 'none',
+        WebkitBackdropFilter: scrolled ? 'blur(24px)' : 'none',
+        borderBottom: scrolled ? `1px solid ${c.border}` : '1px solid transparent',
+        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
       }}>
         <div style={{ maxWidth: '1180px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '64px', padding: '0 28px' }}>
 
@@ -216,10 +219,27 @@ export default function Landing() {
 
       {/* ══ Hero ══ */}
       <div ref={heroRef} style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', alignItems: 'center' }}>
-        <motion.div style={{ y: heroY, position: 'absolute', inset: 0, background: HERO_GRAD(isDark), zIndex: 0 }} />
+        <motion.div style={{ y: heroY, position: 'absolute', inset: 0, zIndex: 0 }}>
+          <Plasma 
+            color={isDark ? '#16a34a' : '#b47828'} 
+            speed={1.2} 
+            direction="forward" 
+            scale={1.5} 
+            opacity={isDark ? 0.35 : 0.15} 
+            mouseInteractive={true} 
+          />
+        </motion.div>
+
+        <div style={{ position: 'absolute', top: '15%', right: '8%', zIndex: 0, opacity: isDark ? 0.2 : 0.3 }}>
+          <CircularText 
+            text="NITI*SETU*SMART*SCHEMES*" 
+            onHover="goBonkers" 
+            spinDuration={15} 
+          />
+        </div>
 
         {/* decorative grain dots */}
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: `radial-gradient(circle, ${isDark ? 'rgba(34,197,94,0.06)' : 'rgba(22,101,52,0.05)'} 1px, transparent 1px)`, backgroundSize: '36px 36px', zIndex: 0 }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `radial-gradient(circle, ${isDark ? 'rgba(34,197,94,0.06)' : 'rgba(22,101,52,0.05)'} 1px, transparent 1px)`, backgroundSize: '36px 36px', zIndex: 0, pointerEvents: 'none' }} />
 
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }} style={{ position: 'relative', zIndex: 1, maxWidth: '820px', margin: '0 auto', padding: '160px 28px 100px', textAlign: 'center' }}>
 
@@ -323,6 +343,25 @@ export default function Landing() {
         </div>
       </InView>
 
+      <Wave fill={isDark ? '#000000' : '#111827'} />
+
+      {/* ══ Interactive Fluid Glass Section ══ */}
+      <InView id="interactive" style={{ padding: '0', background: isDark ? '#000000' : '#111827', position: 'relative' }}>
+        <div style={{ textAlign: 'center', paddingTop: '80px', position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, pointerEvents: 'none' }}>
+          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#4ade80' }}>
+            {t('lp_interactive_explore', 'Interactive Exploration')}
+          </span>
+          <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3.5rem)', fontWeight: 800, color: 'white', marginTop: '16px', letterSpacing: '-0.03em' }}>
+            {t('lp_fluid_title', 'Experience the Engine')}
+          </h2>
+        </div>
+        
+        {/* The glass component container (Large Vertical Area) */}
+        <div style={{ height: '100vh', width: '100%', position: 'relative' }}>
+          <FluidGlass />
+        </div>
+      </InView>
+
       <Wave fill={c.bg2} />
 
       {/* ══ Technology ══ */}
@@ -365,14 +404,23 @@ export default function Landing() {
       {/* ══ CTA / Contact ══ */}
       <InView id="contact" style={{ ...sec({ padding: '80px max(28px, calc((100vw - 820px)/2))' }), background: c.bg }}>
         <motion.div variants={FU} style={{
+          position: 'relative',
           borderRadius: '24px', padding: '60px 40px', textAlign: 'center',
-          background: isDark
-            ? 'linear-gradient(160deg, rgba(22,101,52,0.18) 0%, rgba(12,24,12,0.6) 60%)'
-            : 'linear-gradient(160deg, rgba(22,163,74,0.08) 0%, rgba(246,250,242,0.8) 60%)',
           border: `1px solid ${c.borderGlow}`,
           boxShadow: isDark ? '0 0 60px rgba(22,163,74,0.06)' : '0 0 60px rgba(22,163,74,0.04)',
+          overflow: 'hidden'
         }}>
-          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534', display: 'block', marginBottom: '12px' }}>{t('lp_cta_tag')}</span>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+             <Silk 
+                speed={2.5} 
+                scale={isDark ? 1.5 : 2} 
+                color={isDark ? '#166534' : '#b47828'} 
+                noiseIntensity={1.2} 
+                style={{ opacity: isDark ? 0.4 : 0.15 }}
+             />
+          </div>
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534', display: 'block', marginBottom: '12px' }}>{t('lp_cta_tag')}</span>
           <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em', color: c.text, lineHeight: 1.12, marginBottom: '16px' }}>
             {t('lp_cta_title1')}<br />{t('lp_cta_title2')}
           </h2>
@@ -403,11 +451,12 @@ export default function Landing() {
           </div>
 
           {/* Contact info — legitimate & minimal */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: c.bgGlass, border: `1px solid ${c.border}`, borderRadius: '100px', padding: '10px 20px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: c.bgGlass, border: `1px solid ${c.border}`, borderRadius: '100px', padding: '10px 20px', backdropFilter: 'blur(4px)' }}>
             <MapPin size={15} color={isDark ? '#4ade80' : '#166534'} />
             <span style={{ fontSize: '0.88rem', color: c.textSec, fontWeight: 500 }}>{t('lp_cta_location')}</span>
             <span style={{ color: c.textMute }}>·</span>
             <span style={{ fontSize: '0.83rem', color: c.textMute }}>{t('lp_cta_student')}</span>
+          </div>
           </div>
         </motion.div>
       </InView>
