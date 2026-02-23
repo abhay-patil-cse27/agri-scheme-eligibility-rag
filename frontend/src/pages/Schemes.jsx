@@ -18,6 +18,11 @@ const categoryColors = {
   income_support: { bg: 'rgba(16,185,129,0.1)', text: '#10b981', border: 'rgba(16,185,129,0.2)' },
   infrastructure: { bg: 'rgba(99,102,241,0.1)', text: '#6366f1', border: 'rgba(99,102,241,0.2)' },
   energy: { bg: 'rgba(245,158,11,0.1)', text: '#f59e0b', border: 'rgba(245,158,11,0.2)' },
+  insurance: { bg: 'rgba(56,189,248,0.1)', text: '#38bdf8', border: 'rgba(56,189,248,0.2)' },
+  credit: { bg: 'rgba(236,72,153,0.1)', text: '#ec4899', border: 'rgba(236,72,153,0.2)' },
+  soil: { bg: 'rgba(217,119,6,0.1)', text: '#d97706', border: 'rgba(217,119,6,0.2)' },
+  horticulture: { bg: 'rgba(132,204,22,0.1)', text: '#84cc16', border: 'rgba(132,204,22,0.2)' },
+  livestock: { bg: 'rgba(244,63,94,0.1)', text: '#f43f5e', border: 'rgba(244,63,94,0.2)' },
   other: { bg: 'rgba(139,92,246,0.1)', text: '#8b5cf6', border: 'rgba(139,92,246,0.2)' },
 };
 
@@ -94,10 +99,15 @@ function UploadModal({ onClose, onUpload }) {
           <div style={{ marginBottom: '16px' }}>
             <label style={labelStyle}>{t('sh_tbl_category')}</label>
             <select value={category} onChange={(e) => setCategory(e.target.value)} className="select-dark">
-              <option value="income_support">{t('sh_cat_income')}</option>
-              <option value="infrastructure">{t('sh_cat_infra')}</option>
-              <option value="energy">{t('sh_cat_energy')}</option>
-              <option value="other">{t('sh_cat_other')}</option>
+              <option value="income_support">Income Support</option>
+              <option value="infrastructure">Infrastructure</option>
+              <option value="energy">Energy</option>
+              <option value="insurance">Insurance</option>
+              <option value="credit">Credit</option>
+              <option value="soil">Soil</option>
+              <option value="horticulture">Horticulture</option>
+              <option value="livestock">Livestock</option>
+              <option value="other">Other</option>
             </select>
           </div>
           <div style={{ marginBottom: '24px' }}>
@@ -159,6 +169,13 @@ export default function Schemes() {
   };
 
   useEffect(() => { loadSchemes(); }, []);
+
+  const categorizedSchemes = schemes.reduce((acc, scheme) => {
+    const cat = scheme.category || 'other';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(scheme);
+    return acc;
+  }, {});
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this scheme and all its chunks?')) return;
@@ -225,77 +242,88 @@ export default function Schemes() {
           </button>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-          {schemes.map((scheme, i) => {
-            const cat = categoryColors[scheme.category] || categoryColors.other;
-            return (
-              <motion.div
-                key={scheme._id}
-                custom={i}
-                initial="hidden"
-                animate="visible"
-                variants={fadeUp}
-                style={{ height: "100%" }}
-              >
-                <AgriCard
-                  animate={true}
-                  className="agri-card relative z-10"
-                  style={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}
-                  padding="24px"
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px', position: 'relative', zIndex: 1 }}>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '4px' }}>{scheme.name}</h3>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                      {scheme.description || t('sh_govt_scheme_doc')}
-                    </p>
-                  </div>
-                  <span className="badge" style={{ background: cat.bg, color: cat.text, border: `1px solid ${cat.border}`, marginLeft: '12px' }}>
-                    {scheme.category?.replace('_', ' ') || 'other'}
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', gap: '20px', marginBottom: '16px', position: 'relative', zIndex: 1, flex: 1 }}>
-                  <div>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '2px' }}>{t('sh_tbl_chunks').toUpperCase()}</p>
-                    <p style={{ fontSize: '1.2rem', fontWeight: 700 }}>{scheme.totalChunks}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '2px' }}>{t('sh_tbl_version')}</p>
-                    <p style={{ fontSize: '1.2rem', fontWeight: 700 }}>{scheme.version || 1}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '2px' }}>{t('sh_tbl_status').toUpperCase()}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                      <CheckCircle2 size={14} style={{ color: 'var(--accent-emerald)' }} />
-                      <span style={{ fontSize: '0.85rem', color: 'var(--accent-emerald)', fontWeight: 500 }}>{t('sh_active')}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {isAdmin && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'relative', zIndex: 1 }}>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleDelete(scheme._id)}
-                      disabled={deleting === scheme._id}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '6px',
-                        padding: '8px 16px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                        background: 'rgba(244,63,94,0.1)', color: 'var(--accent-rose)',
-                        fontSize: '0.8rem', fontWeight: 500, fontFamily: 'Inter, sans-serif',
-                      }}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          {Object.entries(categorizedSchemes)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([catName, catSchemes]) => (
+            <div key={catName}>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '16px', color: categoryColors[catName]?.text || 'var(--accent-indigo)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {catName.replace(/_/g, ' ')} ({catSchemes.length})
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+                {catSchemes.map((scheme, i) => {
+                  const cat = categoryColors[scheme.category] || categoryColors.other;
+                  return (
+                    <motion.div
+                      key={scheme._id}
+                      custom={i}
+                      initial="hidden"
+                      animate="visible"
+                      variants={fadeUp}
+                      style={{ height: "100%" }}
                     >
-                      {deleting === scheme._id ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
-                      {t('sh_delete')}
-                    </motion.button>
-                  </div>
-                )}
-                </AgriCard>
-              </motion.div>
-            );
-          })}
+                      <AgriCard
+                        animate={true}
+                        className="agri-card relative z-10"
+                        style={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}
+                        padding="24px"
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px', position: 'relative', zIndex: 1, gap: '12px' }}>
+                          <div style={{ flex: 1 }}>
+                            <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '4px', wordBreak: 'break-word' }}>{scheme.name}</h3>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                              {scheme.description || t('sh_govt_scheme_doc')}
+                            </p>
+                          </div>
+                          <span className="badge" style={{ whiteSpace: 'nowrap', background: cat.bg, color: cat.text, border: `1px solid ${cat.border}`, flexShrink: 0 }}>
+                            {scheme.category?.replace(/_/g, ' ') || 'other'}
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '20px', marginBottom: '16px', position: 'relative', zIndex: 1, flex: 1, alignItems: 'center' }}>
+                          <div>
+                            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '2px' }}>{t('sh_tbl_chunks').toUpperCase()}</p>
+                            <p style={{ fontSize: '1.2rem', fontWeight: 700 }}>{scheme.totalChunks || 0}</p>
+                          </div>
+                          <div>
+                            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '2px' }}>{t('sh_tbl_version')}</p>
+                            <p style={{ fontSize: '1.2rem', fontWeight: 700 }}>{scheme.version || '1.0'}</p>
+                          </div>
+                          <div>
+                            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '2px' }}>{t('sh_tbl_status').toUpperCase()}</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                              <CheckCircle2 size={14} style={{ color: 'var(--accent-emerald)' }} />
+                              <span style={{ fontSize: '0.85rem', color: 'var(--accent-emerald)', fontWeight: 500 }}>{t('sh_active')}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {isAdmin && (
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'relative', zIndex: 1, marginTop: 'auto' }}>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleDelete(scheme._id)}
+                              disabled={deleting === scheme._id}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: '6px',
+                                padding: '8px 16px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                                background: 'rgba(244,63,94,0.1)', color: 'var(--accent-rose)',
+                                fontSize: '0.8rem', fontWeight: 500, fontFamily: 'Inter, sans-serif',
+                              }}
+                            >
+                              {deleting === scheme._id ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
+                              {t('sh_delete')}
+                            </motion.button>
+                          </div>
+                        )}
+                      </AgriCard>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </AgriCard>

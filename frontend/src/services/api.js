@@ -53,11 +53,11 @@ export const updateProfile = (id, data) => api.put(`/profiles/${id}`, data).then
 export const deleteProfile = (id) => api.delete(`/profiles/${id}`).then((r) => r.data);
 
 // ── Eligibility ───────────────────────────
-export const checkEligibility = (profileId, schemeName, language = 'en') =>
-  api.post('/eligibility/check', { profileId, schemeName, language }).then((r) => r.data);
+export const checkEligibility = (profileId, schemeName, language = 'en', category = '') =>
+  api.post('/eligibility/check', { profileId, schemeName, language, category }).then((r) => r.data);
 
-export const checkEligibilityPublic = (profileData, schemeName, language = 'en') =>
-  api.post('/eligibility/public-check', { profileData, schemeName, language }).then((r) => r.data);
+export const checkEligibilityPublic = (profileData, schemeName, language = 'en', category = '') =>
+  api.post('/eligibility/public-check', { profileData, schemeName, language, category }).then((r) => r.data);
 
 export const translateResult = (result, language) =>
   api.post('/eligibility/translate-result', { result, language }).then((r) => r.data);

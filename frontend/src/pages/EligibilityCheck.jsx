@@ -185,7 +185,7 @@ function VoiceInput({ onProfileExtracted }) {
 }
 
 /* ── Profile Form ───────────────────────── */
-function ProfileForm({ initialData, onSubmit, loading }) {
+function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selectedScheme = '' }) {
   const { t } = useTranslation();
   const [form, setForm] = useState({
     name: '', age: '', state: '', district: '', landHolding: '',
@@ -194,25 +194,15 @@ function ProfileForm({ initialData, onSubmit, loading }) {
     activeSchemes: []
   });
 
-  const [schemes, setSchemes] = useState([]);
-  const [schemesLoading, setSchemesLoading] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customSchemeName, setCustomSchemeName] = useState('');
 
-  useEffect(() => {
-    const fetchSchemes = async () => {
-      setSchemesLoading(true);
-      try {
-        const res = await getSchemes();
-        if (res.success) setSchemes(res.data);
-      } catch (err) {
-        console.error('Failed to fetch schemes for selection:', err);
-      } finally {
-        setSchemesLoading(false);
-      }
-    };
-    fetchSchemes();
-  }, []);
+  const displaySchemes = allSchemes.filter(s => {
+    if (!selectedScheme || selectedScheme === 'all') return true;
+    const selectedObj = allSchemes.find(as => as.name === selectedScheme);
+    if (!selectedObj) return true;
+    return s.category === selectedObj.category && s.name !== selectedScheme;
+  });
 
   useEffect(() => {
     if (initialData) {
@@ -377,14 +367,11 @@ function ProfileForm({ initialData, onSubmit, loading }) {
           <Shield size={16} style={{ color: 'var(--accent-indigo)' }} /> 
           Are you already enrolled in any of these? (Enables Conflict Detection)
         </label>
-        {schemesLoading ? (
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', opacity: 0.6 }}>
-            <Loader2 size={14} className="spin" />
-            <span style={{ fontSize: '0.8rem' }}>Loading schemes...</span>
-          </div>
+        {displaySchemes.length === 0 ? (
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No related schemes found based on selection.</p>
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {schemes.map(s => {
+            {displaySchemes.map(s => {
               const isSelected = form.activeSchemes?.includes(s.name);
               return (
                 <button
@@ -408,8 +395,8 @@ function ProfileForm({ initialData, onSubmit, loading }) {
               );
             })}
             
-            {/* Display custom schemes already in form.activeSchemes but not in schemes */}
-            {form.activeSchemes?.filter(s => !schemes.some(as => as.name === s)).map(customName => (
+            {/* Display custom schemes already in form.activeSchemes but not in displaySchemes */}
+            {form.activeSchemes?.filter(s => !displaySchemes.some(as => as.name === s)).map(customName => (
               <button
                 key={customName}
                 type="button"
@@ -493,9 +480,6 @@ function ProfileForm({ initialData, onSubmit, loading }) {
               Cancel
             </button>
           </div>
-        )}
-        {!schemesLoading && schemes.length === 0 && (
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No schemes uploaded yet.</p>
         )}
       </div>
 
@@ -968,6 +952,7 @@ export default function EligibilityCheck() {
   const location = useLocation();
   const { user } = useAuth();
   const [schemes, setSchemes] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedScheme, setSelectedScheme] = useState('');
   const [voiceProfile, setVoiceProfile] = useState(null);
   const [result, setResult] = useState(null);
@@ -1018,7 +1003,7 @@ export default function EligibilityCheck() {
         if (!profile.success) throw new Error(profile.error || 'Failed to save profile');
 
         addToast('AI Scanning', 'Analyzing documents via RAG...', 'info');
-        const eligibility = await checkEligibility(profile.data._id, selectedScheme, i18n.language);
+        const eligibility = await checkEligibility(profile.data._id, selectedScheme, i18n.language, selectedCategory);
         if (eligibility.success) {
           setResult(eligibility.data);
           addToast('Check Complete', 'AI analysis finished successfully', 'success');
@@ -1027,7 +1012,7 @@ export default function EligibilityCheck() {
         }
       } else {
         addToast('Fast AI Scan', 'Analyzing criteria...', 'info');
-        const eligibility = await checkEligibilityPublic(profileData, selectedScheme, i18n.language);
+        const eligibility = await checkEligibilityPublic(profileData, selectedScheme, i18n.language, selectedCategory);
         if (eligibility.success) {
           setResult(eligibility.data);
           const newCount = publicChecksUsed + 1;
@@ -1083,29 +1068,59 @@ export default function EligibilityCheck() {
         </div>
 
         {/* Scheme Selector */}
-        <div style={{ marginBottom: '24px' }}>
-          <label style={{ ...labelStyle, marginBottom: '10px' }}>
-            <FileText size={14} /> {t('ec_select_scheme')}
-          </label>
-          <select
-            value={selectedScheme}
-            onChange={(e) => setSelectedScheme(e.target.value)}
-            className="select-dark"
-            style={{ fontSize: '1rem', fontWeight: 500 }}
-          >
-            <option value="">{t('ec_choose_scheme')}</option>
-            <option value="all">🔍 {t('ec_all_schemes')}</option>
-            {schemes.map((s) => (
-              <option key={s._id} value={s.name}>{s.name} ({s.totalChunks} chunks)</option>
-            ))}
-          </select>
+        <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ ...labelStyle, marginBottom: '10px' }}>
+              <FileText size={14} /> Select Category
+            </label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => { setSelectedCategory(e.target.value); setSelectedScheme(''); }}
+              className="select-dark"
+              style={{ fontSize: '1rem', fontWeight: 500 }}
+            >
+              <option value="">-- All Categories --</option>
+              {Array.from(new Set(schemes.map(s => s.category)))
+                .filter(c => c && c !== 'other')
+                .sort()
+                .map(c => (
+                <option key={c} value={c}>{c.replace(/_/g, ' ').toUpperCase()}</option>
+              ))}
+              {Array.from(new Set(schemes.map(s => s.category))).includes('other') && (
+                <option value="other">OTHER</option>
+              )}
+            </select>
+          </div>
+          <div>
+            <label style={{ ...labelStyle, marginBottom: '10px' }}>
+              <FileText size={14} /> {t('ec_select_scheme')}
+            </label>
+            <select
+              value={selectedScheme}
+              onChange={(e) => setSelectedScheme(e.target.value)}
+              className="select-dark"
+              style={{ fontSize: '1rem', fontWeight: 500 }}
+              disabled={!selectedCategory && schemes.length > 0}
+            >
+              <option value="">{t('ec_choose_scheme')}</option>
+              <option value="all">
+                🔍 I don&apos;t know the exact scheme (Scan {selectedCategory ? 'Category' : 'All'})
+              </option>
+              {schemes
+                .filter(s => !selectedCategory || s.category === selectedCategory)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((s) => (
+                <option key={s._id} value={s.name}>{s.name} ({s.totalChunks || 0} chunks)</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Voice Input */}
         <VoiceInput onProfileExtracted={setVoiceProfile} />
 
         {/* Profile Form */}
-        <ProfileForm initialData={voiceProfile || location.state?.profile} onSubmit={handleCheck} loading={loading} />
+        <ProfileForm initialData={voiceProfile || location.state?.profile} onSubmit={handleCheck} loading={loading} allSchemes={schemes} selectedScheme={selectedScheme} />
 
         {/* Result */}
         <AnimatePresence>

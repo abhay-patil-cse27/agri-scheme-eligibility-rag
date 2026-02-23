@@ -78,9 +78,28 @@ router.post(
       }
       schemesToCheck.push(scheme);
     } else {
-      schemesToCheck = await Scheme.find({ isActive: true }).lean();
+      let query = { isActive: true };
+      if (req.body.category) {
+        query.category = req.body.category;
+      }
+      schemesToCheck = await Scheme.find(query).lean();
       if (schemesToCheck.length === 0) {
         return res.status(404).json({ success: false, error: 'No active schemes found in database.' });
+      }
+
+      // PRE-FILTERING FOR "SCAN ALL": Limit to top 3 schemes via semantic routing
+      if (schemesToCheck.length > 3) {
+        logger.info(`Pre-filtering category from ${schemesToCheck.length} down to Top 3 to save LLM tokens.`);
+        const userQuery = `farmer from ${profile.state || ''} ${profile.district || ''} with ${profile.landHolding || 0} acres land, income ${profile.annualIncome || 0}, crop ${profile.cropType || ''}`;
+        const queryEmbedding = await embeddingService.generateEmbedding(userQuery);
+        const topChunks = await vectorSearchService.searchSimilarChunks(userQuery, queryEmbedding, null, 30, req.body.category);
+        
+        const topSchemeIds = [...new Set(topChunks.map(c => c.schemeId.toString()))];
+        const rankedSchemes = topSchemeIds
+          .map(id => schemesToCheck.find(s => s._id.toString() === id))
+          .filter(Boolean);
+        
+        schemesToCheck = rankedSchemes.length > 0 ? rankedSchemes.slice(0, 3) : schemesToCheck.slice(0, 3);
       }
     }
 
@@ -236,9 +255,28 @@ router.post(
       }
       schemesToCheck.push(scheme);
     } else {
-      schemesToCheck = await Scheme.find({ isActive: true }).lean();
+      let query = { isActive: true };
+      if (req.body.category) {
+        query.category = req.body.category;
+      }
+      schemesToCheck = await Scheme.find(query).lean();
       if (schemesToCheck.length === 0) {
         return res.status(404).json({ success: false, error: 'No active schemes found in database.' });
+      }
+
+      // PRE-FILTERING FOR "SCAN ALL" (Public check)
+      if (schemesToCheck.length > 3) {
+        logger.info(`Public Check: Pre-filtering category from ${schemesToCheck.length} down to Top 3 to save LLM tokens.`);
+        const userQuery = `farmer from ${profileData.state || ''} ${profileData.district || ''} with ${profileData.landHolding || 0} acres land, income ${profileData.annualIncome || 0}, crop ${profileData.cropType || ''}`;
+        const queryEmbedding = await embeddingService.generateEmbedding(userQuery);
+        const topChunks = await vectorSearchService.searchSimilarChunks(userQuery, queryEmbedding, null, 30, req.body.category);
+        
+        const topSchemeIds = [...new Set(topChunks.map(c => c.schemeId.toString()))];
+        const rankedSchemes = topSchemeIds
+          .map(id => schemesToCheck.find(s => s._id.toString() === id))
+          .filter(Boolean);
+        
+        schemesToCheck = rankedSchemes.length > 0 ? rankedSchemes.slice(0, 3) : schemesToCheck.slice(0, 3);
       }
     }
 
