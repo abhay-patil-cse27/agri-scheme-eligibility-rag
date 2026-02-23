@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Users, Trash2, Edit2, Loader2, MapPin, Ruler, Search, User, Droplets, Wallet, Sprout, Shield, AlertCircle, CheckCircle2, X, Plus } from 'lucide-react';
 import { getProfiles, deleteProfile, updateProfile, getSchemes } from '../services/api';
 import { useTranslation } from 'react-i18next';
