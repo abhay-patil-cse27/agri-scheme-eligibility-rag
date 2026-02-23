@@ -414,20 +414,7 @@ async function transcribeAudio(filePath, language = 'en') {
     const transcription = await runQueued(() => withRetry(() => groqInstances[currentGroqIndex].audio.transcriptions.create({
       file: fs.createReadStream(filePath),
       model: "whisper-large-v3", // upgraded from turbo for much better Indian language accuracy
-      prompt: `Agricultural scheme eligibility app. Farmers speak in regional Indian languages.
-RULES:
-- Transcribe EXACTLY as spoken. Do NOT translate to English, do NOT paraphrase.
-- Preserve regional number words faithfully. Key number words per language:
-  Hindi: एक दो तीन चार पाँच छह सात आठ नौ दस बीस पचास सौ हजार लाख
-  Marathi: एक दोन तीन चार पाच सहा सात आठ नऊ दहा वीस पन्नास शंभर हजार लाख
-  Bengali: এক দুই তিন চার পাঁচ ছয় সাত আট নয় দশ বিশ পঞ্চাশ একশো হাজার লক্ষ
-  Telugu: ఒకటి రెండు మూడు నాలుగు అయిదు ఆరు ఏడు ఎనిమిది తొమ్మిది పది ఇరవై యాభై వంద వేయి
-  Tamil: ஒன்று இரண்டு மூன்று நான்கு ஐந்து ஆறு ஏழு எட்டு ஒன்பது பத்து இருபது ஐம்பது நூறு ஆயிரம்
-  Gujarati: એક બે ત્રણ ચાર પાંચ છ સાત આઠ નવ દસ
-  Kannada: ಒಂದು ಎರಡು ಮೂರು ನಾಲ್ಕು ಐದು ಆರು ಏಳು ಎಂಟು ಒಂಬತ್ತು ಹತ್ತು
-  Malayalam: ഒന്ന് രണ്ട് മൂന്ന് നാല് അഞ്ച് ആറ് ഏഴ് എട്ട് ഒൻപത് പത്ത്
-- Also preserve land unit words: एकर एकड़ एकरे हेक्टर बीघा गुंठा (acre/hectare/bigha/gunta)
-- Example: "माझ्याकडे दोन एकर जमीन आहे" → transcribe exactly as said.`,
+      prompt: "Agricultural scheme app. Transcribe exactly as spoken in regional language. Do NOT translate. Preserve regional number words and land unit words (e.g., एकर, हेक्टर, bigha, acre, hectare).",
       response_format: "json",
       language: whisperLanguage
     })));

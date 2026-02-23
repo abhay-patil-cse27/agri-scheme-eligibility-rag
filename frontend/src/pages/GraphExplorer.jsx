@@ -47,7 +47,7 @@ const GraphExplorer = () => {
         elements: elements,
         boxSelectionEnabled: false,
         autounselectify: false,
-        wheelSensitivity: 0.15,
+        autoungrabify: false,
         style: [
           {
             selector: 'node',
@@ -73,11 +73,7 @@ const GraphExplorer = () => {
               'background-gradient-stop-colors': (ele) => `rgba(255,255,255,0.4) ${ele.data('color')}`,
               'background-gradient-stop-positions': '0% 100%',
               'border-width': 3,
-              'border-color': 'rgba(255,255,255,0.2)',
-              'shadow-blur': 15,
-              'shadow-color': 'rgba(0,0,0,0.4)',
-              'shadow-offset-y': 4,
-              'shadow-opacity': 0.6
+              'border-color': 'rgba(255,255,255,0.2)'
             }
           },
           {
