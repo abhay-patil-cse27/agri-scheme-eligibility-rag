@@ -42,9 +42,8 @@ async function findAlternatives(profile, excludeSchemeId, language = 'en') {
     }
 
     const suggestions = [];
-    const queryEmbedding = await embeddingService.generateEmbedding(
-      `eligibility criteria for farmer from ${profile.state} with ${profile.landHolding} acres`
-    );
+    const searchQuery = `eligibility criteria for farmer from ${profile.state} with ${profile.landHolding} acres`;
+    const queryEmbedding = await embeddingService.generateEmbedding(searchQuery);
 
     // Step 3: Validate suggestions with LLM to ensure accuracy
     for (const suggested of graphSuggestions) {
@@ -53,6 +52,7 @@ async function findAlternatives(profile, excludeSchemeId, language = 'en') {
         if (!scheme) continue;
 
         const chunks = await vectorSearchService.searchSimilarChunks(
+          searchQuery,
           queryEmbedding,
           scheme._id.toString(),
           3,
@@ -99,11 +99,12 @@ async function fallbackCategorySearch(profile, category, excludeId, language) {
 
   if (otherSchemes.length === 0) return [];
 
-  const queryEmbedding = await embeddingService.generateEmbedding(`eligibility for ${category}`);
+  const searchQuery = `eligibility for ${category}`;
+  const queryEmbedding = await embeddingService.generateEmbedding(searchQuery);
   const suggestions = [];
 
   for (const scheme of otherSchemes) {
-    const chunks = await vectorSearchService.searchSimilarChunks(queryEmbedding, scheme._id.toString(), 3, category);
+    const chunks = await vectorSearchService.searchSimilarChunks(searchQuery, queryEmbedding, scheme._id.toString(), 3, category);
     if (chunks.length === 0) continue;
     
     const result = await llmService.checkEligibility(profile, chunks, scheme.name, language);

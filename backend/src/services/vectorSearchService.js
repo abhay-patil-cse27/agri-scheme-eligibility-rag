@@ -65,12 +65,13 @@ function applyMMR(chunks, targetLimit = 8, lambda = 0.5) {
  * Perform vector search on the scheme_chunks collection.
  * Uses MongoDB Atlas $vectorSearch aggregation stage.
  *
+ * @param {string} searchQuery - The raw text query for keyword matching (BM25 fallback)
  * @param {number[]} queryEmbedding - 384-dim embedding of the query
  * @param {string|null} schemeId - Optional: filter to a specific scheme
  * @param {number} limit - Number of results to return (default 8)
  * @returns {Array} Matching chunks sorted by relevance and diversity
  */
-async function searchSimilarChunks(queryEmbedding, schemeId = null, limit = 8, category = null) {
+async function searchSimilarChunks(searchQuery, queryEmbedding, schemeId = null, limit = 8, category = null) {
   const startTime = Date.now();
   const fetchLimit = limit > 0 ? Math.max(limit * 3, 30) : 30; // Over-fetch for MMR
 
@@ -118,10 +119,42 @@ async function searchSimilarChunks(queryEmbedding, schemeId = null, limit = 8, c
   try {
     const db = mongoose.connection.db;
     const collection = db.collection('scheme_chunks');
-    const rawResults = await collection.aggregate(pipeline).toArray();
+    
+    // 1. Semantic Vector Search
+    const vectorResults = await collection.aggregate(pipeline).toArray();
+
+    // 2. Exact Keyword / BM25 Search (Fallback)
+    let keywordResults = [];
+    if (searchQuery) {
+      const keywordFilter = { ...searchFilter, $text: { $search: searchQuery } };
+      keywordResults = await collection
+        .find(keywordFilter)
+        .project({ _id: 1, schemeId: 1, schemeName: 1, text: 1, metadata: 1, embedding: 1, score: { $meta: 'textScore' } })
+        .sort({ score: { $meta: 'textScore' } })
+        .limit(fetchLimit)
+        .toArray();
+      
+      // Artificially boost keyword score so MMR prioritizes exact matches (e.g. acronyms)
+      keywordResults.forEach(r => { r.score = (r.score || 0) + 1.0; });
+    }
+
+    // 3. RECIPROCAL RANK FUSION (Merge and deduplicate)
+    const combinedMap = new Map();
+    [...keywordResults, ...vectorResults].forEach(chunk => {
+      const idStr = chunk._id.toString();
+      if (!combinedMap.has(idStr)) {
+        combinedMap.set(idStr, chunk);
+      } else {
+        // If chunk found in both, give it the highest score
+        const existing = combinedMap.get(idStr);
+        existing.score = Math.max(existing.score || 0, chunk.score || 0);
+      }
+    });
+
+    const combinedResults = Array.from(combinedMap.values()).sort((a, b) => (b.score || 0) - (a.score || 0));
 
     // Apply MMR to diversify the results down to the requested limit
-    const diversifiedResults = applyMMR(rawResults, limit, 0.5);
+    const diversifiedResults = applyMMR(combinedResults, limit, 0.5);
 
     // Memory Cleanup: explicitly delete chunk.embedding before returning
     const finalResults = diversifiedResults.map(chunk => {
@@ -131,7 +164,7 @@ async function searchSimilarChunks(queryEmbedding, schemeId = null, limit = 8, c
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     logger.info(
-      `Vector search completed: fetched ${rawResults.length}, returned ${finalResults.length} diverse results in ${duration}s` +
+      `Hybrid search completed: Vector(${vectorResults.length}) + Keyword(${keywordResults.length}). MMR returned ${finalResults.length} diverse results in ${duration}s` +
         (schemeId ? ` (filtered to scheme ${schemeId})` : '')
     );
 
@@ -152,8 +185,8 @@ async function searchSimilarChunks(queryEmbedding, schemeId = null, limit = 8, c
  * Search across all schemes (no scheme filter).
  * Useful for the suggestion engine when finding alternatives.
  */
-async function searchAllSchemes(queryEmbedding, limit = 10) {
-  return searchSimilarChunks(queryEmbedding, null, limit);
+async function searchAllSchemes(searchQuery, queryEmbedding, limit = 10) {
+  return searchSimilarChunks(searchQuery, queryEmbedding, null, limit);
 }
 
 module.exports = {

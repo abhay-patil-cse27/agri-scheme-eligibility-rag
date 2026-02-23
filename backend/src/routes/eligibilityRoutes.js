@@ -126,6 +126,7 @@ router.post(
 
           // Pass scheme category for optimized filtering
           const relevantChunks = await vectorSearchService.searchSimilarChunks(
+            searchQuery,
             queryEmbedding,
             scheme._id.toString(),
             8,
@@ -266,6 +267,7 @@ router.post(
           const searchQuery = `eligibility criteria, beneficiary conditions, who is eligible, age limit, land holding limit, income limit, exclusions for ${scheme.name}`;
           const queryEmbedding = await embeddingService.generateEmbedding(searchQuery);
           const relevantChunks = await vectorSearchService.searchSimilarChunks(
+            searchQuery,
             queryEmbedding,
             scheme._id.toString(),
             8,

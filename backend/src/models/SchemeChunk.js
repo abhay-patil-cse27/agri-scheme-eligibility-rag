@@ -47,4 +47,7 @@ const schemeChunkSchema = new mongoose.Schema(
 // Compound index for efficient filtering during vector search
 schemeChunkSchema.index({ schemeId: 1, 'metadata.chunkIndex': 1 });
 
+// Full-text index for BM25 hybrid keyword search fallback
+schemeChunkSchema.index({ text: 'text' });
+
 module.exports = mongoose.model('SchemeChunk', schemeChunkSchema, 'scheme_chunks');

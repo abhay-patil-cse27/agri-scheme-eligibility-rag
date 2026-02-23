@@ -27,14 +27,20 @@ async function seedGraph() {
     // 2. Seed Categories
     logger.info('Seeding categories...');
     for (const cat of categories) {
+      console.log('Seeding ', cat.id, '...');
       await session.run(
         'MERGE (c:Category {id: $id}) SET c.name = $name RETURN c',
         cat
       );
+      console.log('Finished seeding ', cat.id);
     }
+    console.log('Loop finished');
+
+    logger.info('Graph seeding completed successfully.');
 
     logger.info('Graph seeding completed successfully.');
   } catch (error) {
+    console.error('Error seeding graph:', error);
     logger.error('Error seeding graph:', error);
   } finally {
     await session.close();
