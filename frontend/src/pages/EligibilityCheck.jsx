@@ -283,6 +283,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
             onChange={handleChange} 
             className="select-dark" 
             disabled={!form.state}
+            required
           >
             <option value="">{t('cm_district_ph')}</option>
             {form.state && indianStates[form.state] && indianStates[form.state].map((d) => (
@@ -296,7 +297,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
         </div>
         <div>
           <label style={labelStyle}><Sprout size={14} /> {t('cm_crop')}</label>
-          <input name="cropType" value={form.cropType} onChange={handleChange} placeholder="e.g. Wheat, Rice" className="input-dark" />
+          <input name="cropType" value={form.cropType} onChange={handleChange} placeholder="e.g. Wheat, Rice" className="input-dark" required />
         </div>
         <div>
           <label style={labelStyle}><Shield size={14} /> {t('cm_category')}</label>

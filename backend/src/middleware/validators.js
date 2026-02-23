@@ -6,6 +6,7 @@ const { body, param, validationResult } = require('express-validator');
 function handleValidationErrors(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.error('Validation Error Details:', errors.array());
     return res.status(400).json({
       success: false,
       error: 'Validation Error',
@@ -38,33 +39,33 @@ const validateProfile = [
     .isIn(['General', 'SC', 'ST', 'OBC', 'EWS', 'Minority'])
     .withMessage('Category must be General, SC, ST, OBC, EWS, or Minority'),
   body('annualIncome')
-    .optional()
+    .optional({ nullable: true })
     .isFloat({ min: 0 })
     .withMessage('Annual income must be a positive number'),
   body('hasIrrigationAccess')
-    .optional()
+    .optional({ nullable: true })
     .isBoolean()
     .withMessage('hasIrrigationAccess must be true or false'),
   body('gender')
     .isIn(['Male', 'Female', 'Other'])
     .withMessage('Gender must be Male, Female, or Other'),
   body('hasBPLCard')
-    .optional()
+    .optional({ nullable: true })
     .isBoolean()
     .withMessage('hasBPLCard must be true or false'),
   body('ownershipType')
     .isIn(['Owner', 'Tenant/Sharecropper', 'Co-owner'])
     .withMessage('Ownership must be Owner, Tenant/Sharecropper, or Co-owner'),
   body('hasKcc')
-    .optional()
+    .optional({ nullable: true })
     .isBoolean()
     .withMessage('hasKcc must be true or false'),
   body('isDifferentlyAbled')
-    .optional()
+    .optional({ nullable: true })
     .isBoolean()
     .withMessage('isDifferentlyAbled must be true or false'),
   body('hasAadharSeededBank')
-    .optional()
+    .optional({ nullable: true })
     .isBoolean()
     .withMessage('hasAadharSeededBank must be true or false'),
   handleValidationErrors,
