@@ -4,11 +4,13 @@ const logger = require('../src/config/logger');
 const categories = [
   { name: 'Income Support', id: 'income_support' },
   { name: 'Crop Insurance', id: 'insurance' },
-  { name: 'Irrigation & Energy', id: 'irrigation' },
+  { name: 'Agriculture Infrastructure', id: 'infrastructure' },
+  { name: 'Irrigation & Energy', id: 'energy' },
   { name: 'Soil & Productivity', id: 'soil' },
   { name: 'Horticulture', id: 'horticulture' },
   { name: 'Agricultural Credit', id: 'credit' },
   { name: 'Livestock & Dairy', id: 'livestock' },
+  { name: 'Miscellaneous schemes', id: 'other' }
 ];
 
 async function seedGraph() {
