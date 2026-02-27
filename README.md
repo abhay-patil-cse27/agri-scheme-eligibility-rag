@@ -62,15 +62,15 @@ graph TD
 
 ### Core Logic USPs
 
-*   **Custom Native RAG:** Direct implementation of retrieval logic without 
+*   **Custom Native RAG:** Direct implementation of retrieval logic without
     third-party black-box wrappers.
-*   **Recursive Chunking:** Policies are split into 1000-character blocks with 
+*   **Recursive Chunking:** Policies are split into 1000-character blocks with
     200-character overlap to preserve semantic context.
-*   **Unique Chunk Sovereignty:** Every chunk is SHA-256 hashed to ensure 
+*   **Unique Chunk Sovereignty:** Every chunk is SHA-256 hashed to ensure
     uniqueness and prevent duplicate reasoning.
-*   **MMR Diversity Filter:** Prevents redundant criteria from overwhelming the 
+*   **MMR Diversity Filter:** Prevents redundant criteria from overwhelming the
     LLM context window.
-*   **Privacy Data Flow:** Optimized for DPDP compliance with a memory-only 
+*   **Privacy Data Flow:** Optimized for DPDP compliance with a memory-only
     buffer strategy for sensitive document scans.
 
 ---
@@ -78,6 +78,7 @@ graph TD
 ## Installation and Setup
 
 ### 1. Clone & Install
+
 ```bash
 git clone https://github.com/abhay-patil-cse27/agri-scheme-eligibility-rag.git
 cd agri-scheme-eligibility-rag
@@ -85,10 +86,24 @@ npm install
 ```
 
 ### 2. Configure Environment
-Create a `.env` file in the `backend/` directory based on the architecture
-requirements provided in `backend/.env.example`.
+
+Create a `.env` file in the `backend/` directory. You will need to obtain and
+configure the following API keys to enable the full intelligence pipeline:
+
+*   **MONGODB_URI**: Your MongoDB Atlas connection string (ensure Vector Search
+    is enabled on the collection).
+*   **GROQ_API_KEY**: Your API key from [Groq Cloud](https://console.groq.com/)
+    (used for Llama 3.3 70B and Llama 3.2 Vision).
+*   **NEO4J_URI / NEO4J_PASSWORD**: Connection details for your
+    [Neo4j Aura](https://neo4j.com/cloud/aura/) instance (used for the
+    Knowledge Graph).
+*   **ELEVENLABS_API_KEY**: (Optional) For high-fidelity neural voice
+    responses.
+
+Refer to `backend/.env.example` for the complete template.
 
 ### 3. Run Locally
+
 ```bash
 # Start Backend
 cd backend && npm run dev
@@ -103,16 +118,16 @@ cd frontend && npm run dev
 
 Explore our deep-dive technical documents:
 
-*   **[Technical Architecture](docs/ARCHITECTURE.md)**: Details on HLD, LLD, 
+*   **[Technical Architecture](docs/ARCHITECTURE.md)**: Details on HLD, LLD,
     and Data Flow diagrams.
-*   **[Frontend Guide](docs/FRONTEND_GUIDE.md)**: Deep dive into the React 
+*   **[Frontend Guide](docs/FRONTEND_GUIDE.md)**: Deep dive into the React
     Design System and Glassmorphic components.
-*   **[Backend Guide](docs/BACKEND_GUIDE.md)**: Implementation details of 
+*   **[Backend Guide](docs/BACKEND_GUIDE.md)**: Implementation details of
     databases, security, and the AI service layer.
-*   **[Developer Guide](docs/DEVELOPER_GUIDE.md)**: Implementation details of 
+*   **[Developer Guide](docs/DEVELOPER_GUIDE.md)**: Implementation details of
     MMR, chunking, and search algorithms.
 *   **[API Specification](docs/API_SPEC.md)**: Complete REST API documentation.
-*   **[Privacy Policy](docs/PRIVACY_POLICY.md)**: Zero-storage protocol 
+*   **[Privacy Policy](docs/PRIVACY_POLICY.md)**: Zero-storage protocol
     details.
 
 ---
