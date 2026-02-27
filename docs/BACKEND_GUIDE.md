@@ -14,6 +14,8 @@ The core value of the backend lies in its **Custom Native RAG Engine**.
 3.  **Vision Analysis:** Uses Llama 3.2 Vision to extract text from user-uploaded
     documents (Aadhaar/7-12) as an ephemeral stream.
 
+![Vector Search Logic](architecture/vector-search-logic.png)
+
 ## 📊 Database Architecture
 
 *   **MongoDB Atlas:** 
@@ -43,3 +45,5 @@ The core value of the backend lies in its **Custom Native RAG Engine**.
 *   `/src/services`: Business logic (RAG engine, graph traversal, AI calls)
 *   `/src/models`: Mongoose schemas for MongoDB
 *   `/src/middleware`: Auth, rate-limiting, and error-handling logic
+
+![Backend Component Map](architecture/backend-component-map.png)
