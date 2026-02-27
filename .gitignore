@@ -13,7 +13,8 @@ node_modules/
 .env.*.local
 **/.env
 **/.env.*
-!**/.env.example
+.env.example
+**/.env.example
 
 # Build Outputs
 dist/
@@ -33,6 +34,7 @@ yarn-error.log*
 # Project Specific (Sensitive Data)
 backend/uploads/*
 !backend/uploads/.gitkeep
+backend/data/schemes/
 docs/client_secret_*.json
 docs/Neo4j-*.txt
 docs/schemes.zip
