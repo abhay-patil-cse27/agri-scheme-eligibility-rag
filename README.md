@@ -105,6 +105,10 @@ Explore our deep-dive technical documents:
 
 *   **[Technical Architecture](docs/ARCHITECTURE.md)**: Details on HLD, LLD, 
     and Data Flow diagrams.
+*   **[Frontend Guide](docs/FRONTEND_GUIDE.md)**: Deep dive into the React 
+    Design System and Glassmorphic components.
+*   **[Backend Guide](docs/BACKEND_GUIDE.md)**: Implementation details of 
+    databases, security, and the AI service layer.
 *   **[Developer Guide](docs/DEVELOPER_GUIDE.md)**: Implementation details of 
     MMR, chunking, and search algorithms.
 *   **[API Specification](docs/API_SPEC.md)**: Complete REST API documentation.
