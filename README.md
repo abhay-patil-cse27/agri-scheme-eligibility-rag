@@ -3,7 +3,7 @@
 AI-Powered Multilingual RAG Ecosystem for Indian Agricultural Schemes.
 
 [![GitHub Release](https://img.shields.io/badge/Release-v1.0--Production-green)](#key-features)
-[![Stack](https://img.shields.io/badge/Stack-MERN%20%7C%20RAG%20%7C%20Groq-blue)](#technology-stack)
+[![Stack](https://img.shields.io/badge/Stack-MERN%20%7C%20RAG%20%7C%20Groq-blue)](#technical-architecture)
 [![License](https://img.shields.io/badge/License-MIT-orange)](#license)
 
 Niti Setu is a professional-grade "last-mile" delivery engine for government
@@ -23,9 +23,7 @@ decisions in their native language.
     documents in-memory without permanent storage.
 *   **Advanced RAG Engine:** Hybrid search (Vector + BM25) with **MMR** for
     diversity and **Reciprocal Rank Fusion (RRF)** for precision.
-*   **Professional Analytics:** Dashboard featuring **Recharts** for
-    eligibility trends and system health monitoring.
-*   **Massive Knowledge Base:** 35+ official PDFs across 9 sectors.
+*   **Massive Knowledge Base:** 35+ official PDFs across 9 priority sectors.
 *   **Citation-Backed Decisions:** Every result includes verbatim quotes and
     page references for 100% verifiability.
 
@@ -44,21 +42,36 @@ performance and strict data privacy.
 | **Storage** | MongoDB Atlas, Neo4j Aura | Vector Data & Knowledge Graph |
 | **Voice** | Web Speech API, ElevenLabs | Multilingual STT/TTS |
 
-### RAG Sequence Flow
+### Hybrid RAG Intelligence Pipeline
+
+The system utilizes a custom-built, native RAG implementation that prioritizes
+factual density and retrieval diversity.
 
 ```mermaid
-graph LR
-    User([Farmer Query]) --> Trans[Translation]
-    Trans --> Hybrid{Hybrid Search}
-    Hybrid --> Vector[Vector Search]
-    Hybrid --> Keyword[Keyword Match]
-    Vector --> RRF[RRF Fusion]
+graph TD
+    User([User Query]) --> Trans[Multilingual Translation]
+    Trans --> Vector[Vector Similarity Path]
+    Trans --> Keyword[Keyword Match Path]
+    Vector --> RRF[Reciprocal Rank Fusion]
     Keyword --> RRF
-    RRF --> MMR[MMR Diversity]
-    MMR --> Graph[Graph Conflict Check]
+    RRF --> MMR[Maximal Marginal Relevance]
+    MMR --> Graph[Graph-Based Conflict Detection]
     Graph --> LLM[Llama 3.3 Reasoning]
-    LLM --> Verdict([Eligibility Verdict])
+    LLM --> Citation[Citation-Backed Verdict]
 ```
+
+### Core Logic USPs
+
+*   **Custom Native RAG:** Direct implementation of retrieval logic without 
+    third-party black-box wrappers.
+*   **Recursive Chunking:** Policies are split into 1000-character blocks with 
+    200-character overlap to preserve semantic context.
+*   **Unique Chunk Sovereignty:** Every chunk is SHA-256 hashed to ensure 
+    uniqueness and prevent duplicate reasoning.
+*   **MMR Diversity Filter:** Prevents redundant criteria from overwhelming the 
+    LLM context window.
+*   **Privacy Data Flow:** Optimized for DPDP compliance with a memory-only 
+    buffer strategy for sensitive document scans.
 
 ---
 
@@ -73,10 +86,7 @@ npm install
 
 ### 2. Configure Environment
 Create a `.env` file in the `backend/` directory based on the architecture
-requirements:
-*   `MONGODB_URI`: Atlas Vector Search URI.
-*   `GROQ_API_KEY`: Groq Cloud API Key.
-*   `NEO4J_URI`: Neo4j Aura Instance.
+requirements provided in `backend/.env.example`.
 
 ### 3. Run Locally
 ```bash
@@ -89,27 +99,17 @@ cd frontend && npm run dev
 
 ---
 
-## Detailed Documentation
+## Documentation
 
 Explore our deep-dive technical documents:
 
-*   **[Technical Architecture](docs/ARCHITECTURE.md)**: Details on HLD, LLD, and
-    Data Flow.
-*   **[Developer Guide](docs/DEVELOPER_GUIDE.md)**: Deep dive into MMR,
-    recursive chunking, and search algorithms.
+*   **[Technical Architecture](docs/ARCHITECTURE.md)**: Details on HLD, LLD, 
+    and Data Flow diagrams.
+*   **[Developer Guide](docs/DEVELOPER_GUIDE.md)**: Implementation details of 
+    MMR, chunking, and search algorithms.
 *   **[API Specification](docs/API_SPEC.md)**: Complete REST API documentation.
-*   **[Privacy Policy](docs/PRIVACY_POLICY.md)**: Zero-storage protocol and
-    DPDP compliance.
-
----
-
-## Contributing
-
-1.  Fork the repo.
-2.  Create your branch (`git checkout -b feature/AmazingFeature`).
-3.  Commit changes (`git commit -m 'Add AmazingFeature'`).
-4.  Push to branch (`git push origin feature/AmazingFeature`).
-5.  Open a Pull Request.
+*   **[Privacy Policy](docs/PRIVACY_POLICY.md)**: Zero-storage protocol 
+    details.
 
 ---
 
