@@ -2,10 +2,10 @@
 
 **AI-Powered Multilingual RAG Ecosystem for Indian Agricultural Schemes.**
 
-[![GitHub Release](https://img.shields.io/badge/Release-v1.0--Production-green)](#release)
-[![Stack](https://img.shields.io/badge/Stack-MERN%20%7C%20RAG%20%7C%20Groq-blue)](#stack)
-[![License](https://img.shields.io/badge/License-MIT-orange)](#license)
-[![DPDP Compliant](https://img.shields.io/badge/Security-DPDP%20Compliant-shield)](#security)
+[![GitHub Release](https://img.shields.io/badge/Release-v1.0--Production-green)](#🚀-key-features)
+[![Stack](https://img.shields.io/badge/Stack-MERN%20%7C%20RAG%20%7C%20Groq-blue)](#🛠️-technology-stack)
+[![License](https://img.shields.io/badge/License-MIT-orange)](#🛡️-license)
+[![DPDP Compliant](https://img.shields.io/badge/Security-DPDP%20Compliant-shield)](#🛡️-license)
 
 Niti Setu is a professional-grade "last-mile" delivery engine for government
 schemes. It uses **Retrieval-Augmented Generation (RAG)** to decode complex
@@ -27,6 +27,8 @@ decisions in their native language.
   **Reciprocal Rank Fusion (RRF)** for relevance.
 * **📊 Professional Analytics:** Admin dashboard featuring **Recharts**
   visualizations for eligibility trends, demographic splits, and system health.
+* **📂 Massive Knowledge Base:** Curated dataset of **35+ official PDFs**
+  categorized into **9 priority agricultural sectors**.
 * **📄 Citation-Backed:** Every "Yes/No" result includes an exact verbatim
   quote and page reference from the official government PDF.
 * **💰 Freemium Access:** Integrated **1-free-check policy** for public users

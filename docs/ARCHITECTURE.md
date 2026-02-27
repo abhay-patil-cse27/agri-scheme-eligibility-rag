@@ -1,13 +1,9 @@
 # Niti Setu: System Architecture
 
-<a name="status"></a>
-[![Status](https://img.shields.io/badge/Status-Architecture%20Design-yellow)](#status)
-<a name="stack"></a>
-[![Stack](https://img.shields.io/badge/Stack-RAG%20%7C%20Groq%20%7C%20MongoDB-blue)](#stack)
-<a name="license"></a>
-[![License](https://img.shields.io/badge/License-MIT-orange)](#license)
-<a name="security"></a>
-[![Security](https://img.shields.io/badge/Security-DPDP%20Compliant-shield)](#security)
+[![Status](https://img.shields.io/badge/Status-Architecture%20Design-yellow)](#🏗️-high-level-system-architecture-hld)
+[![Stack](https://img.shields.io/badge/Stack-RAG%20%7C%20Groq%20%7C%20MongoDB-blue)](#🛠️-technology-stack)
+[![License](https://img.shields.io/badge/License-MIT-orange)](#🛡️-ephemeral-privacy-first-data-flow)
+[![DPDP Compliant](https://img.shields.io/badge/Security-DPDP%20Compliant-shield)](#🛡️-ephemeral-privacy-first-data-flow)
 
 Niti Setu is a high-performance, multilingual RAG (Retrieval-Augmented
 Generation) ecosystem designed to bridge the accessibility gap in Indian
@@ -53,9 +49,9 @@ transform static government policies into actionable intelligence.
 
 ### 1. Ground Truth (The PDF Layer)
 
-The KB is seeded with a curated collection of **100+ official Indian Government
-Policy PDFs**. These documents serve as the absolute "Ground Truth." To ensure
-maximum factual integrity:
+The KB is seeded with a curated collection of **35+ official Indian Government
+Policy PDFs** spanning **9 priority categories**. These documents serve as the
+absolute "Ground Truth." To ensure maximum factual integrity:
 
 * **Direct Ingestion:** Documents are parsed directly from source PDFs to
   prevent manual transcription errors.
