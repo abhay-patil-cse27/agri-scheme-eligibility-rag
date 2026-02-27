@@ -75,11 +75,14 @@ function HistoryCard({ check, index, onDelete }) {
 
       {expanded && (
         <motion.div
-          className="agri-card"
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border-color)'
- }}
+          style={{ 
+            marginTop: '20px', 
+            paddingTop: '20px', 
+            borderTop: '1px solid var(--border-color)',
+            overflow: 'hidden'
+          }}
         >
           <div style={{ marginBottom: '16px' }}>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 500 }}>{t('hs_reason')}</p>

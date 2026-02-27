@@ -172,7 +172,8 @@ router.post(
           const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
 
           const officialWebsiteUrl = scheme.officialWebsite || llmResult.officialWebsite;
-          const documentUrl = `${req.protocol}://${req.get('host')}/api/schemes/docs/${scheme.sourceFile}`;
+          const citedDoc = llmResult.citationSource?.documentName || scheme.sourceFile || (scheme.documents && scheme.documents[0]?.path);
+          const documentUrl = citedDoc ? `${req.protocol}://${req.get('host')}/api/schemes/docs/${citedDoc}` : null;
 
           const eligibilityRecord = await EligibilityCheck.create({
             farmerId: profile._id,
@@ -326,7 +327,8 @@ router.post(
           const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
 
           const officialWebsiteUrl = scheme.officialWebsite || llmResult.officialWebsite;
-          const documentUrl = `${req.protocol}://${req.get('host')}/api/schemes/docs/${scheme.sourceFile}`;
+          const citedDoc = llmResult.citationSource?.documentName || scheme.sourceFile || (scheme.documents && scheme.documents[0]?.path);
+          const documentUrl = citedDoc ? `${req.protocol}://${req.get('host')}/api/schemes/docs/${citedDoc}` : null;
 
           const result = {
             checkId: 'public-' + Date.now(),

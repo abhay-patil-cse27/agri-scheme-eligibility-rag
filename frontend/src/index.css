@@ -139,6 +139,22 @@ body {
   background: var(--text-secondary);
 }
 
+/* ── Agri Card (Used across Dashboard & Forms) ── */
+.agri-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.agri-card:hover {
+  border-color: var(--border-glow);
+  box-shadow: var(--shadow-glow);
+}
+
 /* ── Glass Card ────────────────────────── */
 .glass-card {
   background: var(--bg-card);

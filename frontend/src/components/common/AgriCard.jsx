@@ -8,7 +8,8 @@ const AgriCard = ({
   animate = true,
   hover = true,
   padding = '24px',
-  borderRadius = '24px'
+  borderRadius = '24px',
+  ...props
 }) => {
   const content = (
     <div 
@@ -18,6 +19,7 @@ const AgriCard = ({
         borderRadius,
         ...style
       }}
+      {...props}
     >
       {children}
     </div>

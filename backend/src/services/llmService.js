@@ -1,10 +1,8 @@
-const Groq = require('groq-sdk');
-const config = require('../config/env');
-const logger = require('../config/logger');
+const Groq = require("groq-sdk");
+const config = require("../config/env");
+const logger = require("../config/logger");
 
-const groqInstances = [
-  new Groq({ apiKey: config.groqApiKey })
-];
+const groqInstances = [new Groq({ apiKey: config.groqApiKey })];
 let currentGroqIndex = 0;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -43,8 +41,6 @@ async function runQueued(fn) {
   });
 }
 
-
-
 /**
  * Execute a function with exponential backoff retries (useful for 429 Too Many Requests)
  */
@@ -54,28 +50,37 @@ async function withRetry(fn, maxRetries = 8, baseDelay = 2000) {
     try {
       return await fn();
     } catch (error) {
-      if ((error.status === 429 || error.status >= 500) && attempt < maxRetries - 1) {
+      if (
+        (error.status === 429 || error.status >= 500) &&
+        attempt < maxRetries - 1
+      ) {
         attempt++;
         let delay = baseDelay * Math.pow(2, attempt - 1);
-        
+
         // Key rotation fallback logic completely commented out per user request:
         // if (error.status === 429 && groqInstances.length > 1) {
         //   currentGroqIndex = (currentGroqIndex + 1) % groqInstances.length;
         //   logger.warn(`API Rate Limit hit (429). Rotating to backup API Key (index ${currentGroqIndex})...`);
-        //   delay = 1000; 
+        //   delay = 1000;
         // } else {
-        logger.warn(`API Rate Limit hit (${error.status}). Retrying attempt ${attempt}/${maxRetries} in ${delay}ms...`);
+        logger.warn(
+          `API Rate Limit hit (${error.status}). Retrying attempt ${attempt}/${maxRetries} in ${delay}ms...`,
+        );
         // }
-        
+
         // Add random jitter between 200ms and 800ms
         const jitter = Math.floor(Math.random() * 600) + 200;
         await sleep(delay + jitter);
       } else {
         if (error.status === 429) {
-          throw new Error('API Rate Limit Exceeded. The service is currently handling too many requests. Please try again in a few moments.');
+          throw new Error(
+            "API Rate Limit Exceeded. The service is currently handling too many requests. Please try again in a few moments.",
+          );
         }
         if (error.status >= 500) {
-          throw new Error('AI Service is temporarily unavailable. Please try again later.');
+          throw new Error(
+            "AI Service is temporarily unavailable. Please try again later.",
+          );
         }
         throw error;
       }
@@ -157,6 +162,7 @@ RESPOND ONLY WITH THIS EXACT JSON STRUCTURE:
   } or null,
   "citation": "Exact verbatim text quoted from the document excerpts that supports your decision. Must be a direct quote, not a paraphrase.",
   "citationSource": {
+    "documentName": "The filename of the source document (e.g., 'PM-KISAN_Guidelines.pdf')",
     "page": 12,
     "section": "Eligibility Criteria",
     "paragraph": 3
@@ -164,21 +170,20 @@ RESPOND ONLY WITH THIS EXACT JSON STRUCTURE:
   "officialWebsite": "URL or null"
 }`;
 
-
 const languageMap = {
-  en: 'English',
-  hi: 'Hindi (हिंदी)',
-  mr: 'Marathi (मराठी)',
-  bn: 'Bengali (বাংলা)',
-  te: 'Telugu (తెలుగు)',
-  ta: 'Tamil (தமிழ்)',
-  gu: 'Gujarati (ગુજરાતી)',
-  kn: 'Kannada (ಕನ್ನಡ)',
-  ml: 'Malayalam (മലയാളം)',
-  pa: 'Punjabi (ਪੰਜਾਬੀ)',
-  or: 'Odia (ଓଡିଆ)',
-  as: 'Assamese (অসমীয়া)',
-  ur: 'Urdu (اردو)',
+  en: "English",
+  hi: "Hindi (हिंदी)",
+  mr: "Marathi (मराठी)",
+  bn: "Bengali (বাংলা)",
+  te: "Telugu (తెలుగు)",
+  ta: "Tamil (தமிழ்)",
+  gu: "Gujarati (ગુજરાતી)",
+  kn: "Kannada (ಕನ್ನಡ)",
+  ml: "Malayalam (മലയാളം)",
+  pa: "Punjabi (ਪੰਜਾਬੀ)",
+  or: "Odia (ଓଡିଆ)",
+  as: "Assamese (অসমীয়া)",
+  ur: "Urdu (اردو)",
 };
 
 /**
@@ -191,36 +196,49 @@ const languageMap = {
  * @param {Array} [graphConflicts=[]] - List of conflicts from Neo4j
  * @returns {Object} Structured eligibility result
  */
-async function checkEligibility(profile, relevantChunks, schemeName, language = 'en', graphConflicts = []) {
+async function checkEligibility(
+  profile,
+  relevantChunks,
+  schemeName,
+  language = "en",
+  graphConflicts = [],
+) {
   const startTime = Date.now();
-  const targetLangString = languageMap[language] || 'English';
+  const targetLangString = languageMap[language] || "English";
 
   // Build the user prompt with profile and document context
   const documentContext = relevantChunks
     .map(
       (chunk, i) =>
-        `--- Document Excerpt ${i + 1} (Type: ${chunk.metadata?.documentType || 'guidelines'}, Language: ${chunk.metadata?.language || 'en'}, Page: ${chunk.metadata?.page || 'N/A'}, Section: ${chunk.metadata?.section || 'N/A'}) ---\n${chunk.text}`
+        `--- Document Excerpt ${i + 1} (Type: ${chunk.metadata?.documentType || "guidelines"}, Language: ${chunk.metadata?.language || "en"}, Page: ${chunk.metadata?.page || "N/A"}, Section: ${chunk.metadata?.section || "N/A"}) ---\n${chunk.text}`,
     )
-    .join('\n\n');
+    .join("\n\n");
 
   const userPrompt = `SCHEME: ${schemeName}
 
 FARMER PROFILE:
-- Name: ${profile.name || 'N/A'}
-- Age: ${profile.age || 'Not specified'} (Evaluate carefully against age limits)
+- Name: ${profile.name || "N/A"}
+- Age: ${profile.age || "Not specified"} (Evaluate carefully against age limits)
 - State: ${profile.state}
 - District: ${profile.district}
 - Land Holding: ${profile.landHolding} acres (${profile.landHoldingHectares || (profile.landHolding * 0.404686).toFixed(3)} hectares) (IMPORTANT: 1 acre = 0.404686 hectares. Check limits accurately)
 - Crop Type: ${profile.cropType}
 - Social Category: ${profile.category}
-- Annual Income: ${profile.annualIncome ? '₹' + profile.annualIncome : 'Not specified'}
-- Irrigation Access: ${profile.hasIrrigationAccess ? 'Yes' : 'No'}
-- Currently Enrolled In: ${profile.activeSchemes?.join(', ') || 'None'}
+- Annual Income: ${profile.annualIncome ? "₹" + profile.annualIncome : "Not specified"}
+- Irrigation Access: ${profile.hasIrrigationAccess ? "Yes" : "No"}
+- Currently Enrolled In: ${profile.activeSchemes?.join(", ") || "None"}
 
 GRAPH CONFLICTS (EXCLUSION RULES):
-${graphConflicts && graphConflicts.length > 0
-  ? graphConflicts.map(c => `- CONFLICT: Already enrolled in ${c.scheme}. Rule: ${c.reason}`).join('\n')
-  : 'None identified.'}
+${
+  graphConflicts && graphConflicts.length > 0
+    ? graphConflicts
+        .map(
+          (c) =>
+            `- CONFLICT: Already enrolled in ${c.scheme}. Rule: ${c.reason}`,
+        )
+        .join("\n")
+    : "None identified."
+}
 
 OFFICIAL DOCUMENT EXCERPTS:
 ${documentContext}
@@ -233,16 +251,20 @@ You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'b
   let rawResponse;
 
   try {
-    const completion = await runQueued(() => withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
-      model: config.groqModel,
-      messages: [
-        { role: 'system', content: ELIGIBILITY_SYSTEM_PROMPT },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.1,
-      max_tokens: 2048,
-      response_format: { type: 'json_object' },
-    })));
+    const completion = await runQueued(() =>
+      withRetry(() =>
+        groqInstances[currentGroqIndex].chat.completions.create({
+          model: config.groqModel,
+          messages: [
+            { role: "system", content: ELIGIBILITY_SYSTEM_PROMPT },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.1,
+          max_tokens: 2048,
+          response_format: { type: "json_object" },
+        }),
+      ),
+    );
 
     rawResponse = completion.choices[0]?.message?.content;
   } catch (error) {
@@ -251,20 +273,25 @@ You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'b
   }
 
   if (!rawResponse) {
-    throw new Error('Empty response from Groq LLM');
+    throw new Error("Empty response from Groq LLM");
   }
 
   try {
     const result = parseResponse(rawResponse);
-    result.responseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+    result.responseTime = parseFloat(
+      ((Date.now() - startTime) / 1000).toFixed(2),
+    );
 
     logger.info(
-      `Eligibility check completed: ${schemeName} → ${result.eligible ? 'ELIGIBLE' : 'NOT ELIGIBLE'} (${result.responseTime}s)`
+      `Eligibility check completed: ${schemeName} → ${result.eligible ? "ELIGIBLE" : "NOT ELIGIBLE"} (${result.responseTime}s)`,
     );
 
     return result;
   } catch (error) {
-    logger.error(`Failed to parse LLM response for ${schemeName}:`, error.message);
+    logger.error(
+      `Failed to parse LLM response for ${schemeName}:`,
+      error.message,
+    );
     throw new Error(`LLM parsing failed: ${error.message}`);
   }
 }
@@ -277,8 +304,8 @@ function parseResponse(rawResponse) {
   let cleaned = rawResponse.trim();
 
   // Strip markdown code fences if present
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
   }
 
   try {
@@ -290,36 +317,39 @@ function parseResponse(rawResponse) {
       const num = Number(pageVal);
       pageVal = isNaN(num) ? String(pageVal) : String(num);
     } else {
-      pageVal = '';
+      pageVal = "";
     }
 
     let paragraphVal = parsed.citationSource?.paragraph;
     if (paragraphVal !== null && paragraphVal !== undefined) {
       paragraphVal = String(paragraphVal);
     } else {
-      paragraphVal = '';
+      paragraphVal = "";
     }
 
     return {
       eligible: Boolean(parsed.eligible),
-      confidence: parsed.confidence || 'medium',
-      reason: parsed.reason || 'No reason provided',
-      citation: parsed.citation || '',
+      confidence: parsed.confidence || "medium",
+      reason: parsed.reason || "No reason provided",
+      citation: parsed.citation || "",
       citationSource: {
+        documentName: parsed.citationSource?.documentName || "",
         page: pageVal,
-        section: parsed.citationSource?.section || '',
-        subsection: parsed.citationSource?.subsection || '',
+        section: parsed.citationSource?.section || "",
+        subsection: parsed.citationSource?.subsection || "",
         paragraph: paragraphVal,
       },
-      officialWebsite: parsed.officialWebsite || '',
+      officialWebsite: parsed.officialWebsite || "",
       benefitAmount: parsed.benefitAmount || null,
-      requiredDocuments: Array.isArray(parsed.requiredDocuments) ? parsed.requiredDocuments : [],
-      additionalNotes: parsed.additionalNotes || '',
+      requiredDocuments: Array.isArray(parsed.requiredDocuments)
+        ? parsed.requiredDocuments
+        : [],
+      additionalNotes: parsed.additionalNotes || "",
     };
   } catch (parseError) {
-    logger.error('Failed to parse LLM response:', parseError.message);
-    logger.error('Raw response:', cleaned);
-    throw new Error('LLM returned invalid JSON response');
+    logger.error("Failed to parse LLM response:", parseError.message);
+    logger.error("Raw response:", cleaned);
+    throw new Error("LLM returned invalid JSON response");
   }
 }
 
@@ -381,22 +411,26 @@ EXPECTED OUTPUT:
 Extract whatever information is available from the actual provided transcript. Set null for completely missing fields.`;
 
   try {
-    const completion = await runQueued(() => withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
-      model: config.groqModel,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Voice transcript: "${transcript}"` },
-      ],
-      temperature: 0.1,
-      max_tokens: 512,
-      response_format: { type: 'json_object' },
-    })));
+    const completion = await runQueued(() =>
+      withRetry(() =>
+        groqInstances[currentGroqIndex].chat.completions.create({
+          model: config.groqModel,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Voice transcript: "${transcript}"` },
+          ],
+          temperature: 0.1,
+          max_tokens: 512,
+          response_format: { type: "json_object" },
+        }),
+      ),
+    );
 
-    const result = JSON.parse(completion.choices[0]?.message?.content || '{}');
-    logger.info('Profile extracted from transcript successfully');
+    const result = JSON.parse(completion.choices[0]?.message?.content || "{}");
+    logger.info("Profile extracted from transcript successfully");
     return result;
   } catch (error) {
-    logger.error('Profile extraction from transcript failed:', error.message);
+    logger.error("Profile extraction from transcript failed:", error.message);
     throw new Error(`Voice profile extraction failed: ${error.message}`);
   }
 }
@@ -407,22 +441,29 @@ Extract whatever information is available from the actual provided transcript. S
  * @param {string} [language='en'] - Regional language code (e.g. 'hi', 'mr')
  * @returns {string} Trancribed text
  */
-async function transcribeAudio(filePath, language = 'en') {
-  const fs = require('fs');
+async function transcribeAudio(filePath, language = "en") {
+  const fs = require("fs");
   try {
-    const whisperLanguage = language ? language.substring(0, 2).toLowerCase() : 'en';
-    const transcription = await runQueued(() => withRetry(() => groqInstances[currentGroqIndex].audio.transcriptions.create({
-      file: fs.createReadStream(filePath),
-      model: "whisper-large-v3", // upgraded from turbo for much better Indian language accuracy
-      prompt: "Agricultural scheme app. Transcribe exactly as spoken in regional language. Do NOT translate. Preserve regional number words and land unit words (e.g., एकर, हेक्टर, bigha, acre, hectare).",
-      response_format: "json",
-      language: whisperLanguage
-    })));
-    
-    logger.info('Audio transcribed successfully');
+    const whisperLanguage = language
+      ? language.substring(0, 2).toLowerCase()
+      : "en";
+    const transcription = await runQueued(() =>
+      withRetry(() =>
+        groqInstances[currentGroqIndex].audio.transcriptions.create({
+          file: fs.createReadStream(filePath),
+          model: "whisper-large-v3", // upgraded from turbo for much better Indian language accuracy
+          prompt:
+            "Agricultural scheme app. Transcribe exactly as spoken in regional language. Do NOT translate. Preserve regional number words and land unit words (e.g., एकर, हेक्टर, bigha, acre, hectare).",
+          response_format: "json",
+          language: whisperLanguage,
+        }),
+      ),
+    );
+
+    logger.info("Audio transcribed successfully");
     return transcription.text;
   } catch (error) {
-    logger.error('Audio transcription failed:', error.message);
+    logger.error("Audio transcription failed:", error.message);
     throw new Error(`Voice transcription failed: ${error.message}`);
   }
 }
@@ -430,9 +471,9 @@ async function transcribeAudio(filePath, language = 'en') {
 /**
  * Translate an eligibility result JSON natively into the target language.
  */
-async function translateEligibilityResult(resultObj, targetLanguage = 'hi') {
+async function translateEligibilityResult(resultObj, targetLanguage = "hi") {
   const targetLangString = languageMap[targetLanguage] || targetLanguage;
-  
+
   const systemPrompt = `You are a strict, expert translator for an Indian government agricultural scheme platform.
 
 Translate only the specified JSON fields into ${targetLangString}. Follow every rule below WITHOUT EXCEPTION.
@@ -454,31 +495,39 @@ EXAMPLE (English → Hindi):
 Input benefitAmount: "₹6,000 per year"
 Output benefitAmount: "₹६,००० प्रति वर्ष"`;
 
-
   try {
-    const completion = await runQueued(() => withRetry(() => groqInstances[currentGroqIndex].chat.completions.create({
-      model: config.groqModel,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: JSON.stringify(resultObj) },
-      ],
-      temperature: 0.1,
-      response_format: { type: 'json_object' },
-    })));
+    const completion = await runQueued(() =>
+      withRetry(() =>
+        groqInstances[currentGroqIndex].chat.completions.create({
+          model: config.groqModel,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: JSON.stringify(resultObj) },
+          ],
+          temperature: 0.1,
+          response_format: { type: "json_object" },
+        }),
+      ),
+    );
 
-    const translated = JSON.parse(completion.choices[0]?.message?.content || '{}');
-    
+    const translated = JSON.parse(
+      completion.choices[0]?.message?.content || "{}",
+    );
+
     return {
       ...resultObj,
       reason: translated.reason || resultObj.reason,
       actionSteps: translated.actionSteps || resultObj.actionSteps,
       benefitAmount: translated.benefitAmount || resultObj.benefitAmount,
-      paymentFrequency: translated.paymentFrequency || resultObj.paymentFrequency,
-      requiredDocuments: translated.requiredDocuments || resultObj.requiredDocuments,
-      rejectionExplanation: translated.rejectionExplanation || resultObj.rejectionExplanation,
+      paymentFrequency:
+        translated.paymentFrequency || resultObj.paymentFrequency,
+      requiredDocuments:
+        translated.requiredDocuments || resultObj.requiredDocuments,
+      rejectionExplanation:
+        translated.rejectionExplanation || resultObj.rejectionExplanation,
     };
   } catch (error) {
-    logger.error('Translation failed:', error.message);
+    logger.error("Translation failed:", error.message);
     throw new Error(`LLM translation failed: ${error.message}`);
   }
 }
@@ -487,5 +536,5 @@ module.exports = {
   checkEligibility,
   extractProfileFromTranscript,
   transcribeAudio,
-  translateEligibilityResult
+  translateEligibilityResult,
 };
