@@ -38,6 +38,8 @@ backend/data/schemes/
 docs/client_secret_*.json
 docs/Neo4j-*.txt
 docs/schemes.zip
+docs/Phase1_MMR_Architecture.md
+docs/Phase2_Farmer_Profile_Enrichment.md
 *.zip
 *.pdf
 
