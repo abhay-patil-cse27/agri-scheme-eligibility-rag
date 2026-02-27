@@ -1,9 +1,13 @@
 # Niti Setu: System Architecture
 
+<a name="status"></a>
 [![Status](https://img.shields.io/badge/Status-Architecture%20Design-yellow)](#status)
+<a name="stack"></a>
 [![Stack](https://img.shields.io/badge/Stack-RAG%20%7C%20Groq%20%7C%20MongoDB-blue)](#stack)
+<a name="license"></a>
 [![License](https://img.shields.io/badge/License-MIT-orange)](#license)
-[![DPDP Compliant](https://img.shields.io/badge/Security-DPDP%20Compliant-shield)](#security)
+<a name="security"></a>
+[![Security](https://img.shields.io/badge/Security-DPDP%20Compliant-shield)](#security)
 
 Niti Setu is a high-performance, multilingual RAG (Retrieval-Augmented
 Generation) ecosystem designed to bridge the accessibility gap in Indian
@@ -39,6 +43,48 @@ scalability and security.
    * **Neo4j Aura:** Knowledge graph for taxonomic relationships and
      multi-scheme complementary modeling.
    * **Groq Cloud:** Ultra-fast Llama 3.3 70B inference for core reasoning.
+
+---
+
+## 📚 The Knowledge Base: Source of Truth
+
+The "Brain" of Niti Setu is a multi-layered Knowledge Base (KB) designed to
+transform static government policies into actionable intelligence.
+
+### 1. Ground Truth (The PDF Layer)
+
+The KB is seeded with a curated collection of **100+ official Indian Government
+Policy PDFs**. These documents serve as the absolute "Ground Truth." To ensure
+maximum factual integrity:
+
+* **Direct Ingestion:** Documents are parsed directly from source PDFs to
+  prevent manual transcription errors.
+* **Version Control:** The system tracks `uploadDates` to ensure farmers are
+  checked against the most recent policy revisions.
+
+### 2. Semantic Atomization (MongoDB)
+
+Raw documents are "atomized" into 1000-character **recursive chunks**. This
+allows the RAG engine to find the exact needle (e.g., a specific age
+requirement) in the haystack of a 50-page policy document.
+
+### 3. Knowledge Graph (Neo4j Taxonomy)
+
+While MongoDB handles the *text*, Neo4j handles the *logic*. It maps the
+relationships between schemes, such as:
+
+* **Categorization:** Linking "PM-Kisan" to the "Income Support" node.
+* **Taxonomy:** Maintaining hierarchies (Central vs. State schemes).
+* **Cross-Linkage:** Identifying which schemes allow joint enrollment.
+
+### 4. Factuality & Verifiability
+
+Unlike standard chatbots, Niti Setu follows a **"No Citation, No Answer"** rule.
+Every eligibility response is backed by:
+
+* **Verbatim Quotes:** Snippets directly from the KB.
+* **Page References:** Exact page numbers from the source PDF.
+* **Official Mirrors:** Links to the `gov.in` source file for verification.
 
 ---
 
