@@ -119,74 +119,86 @@ function SchemeCard({ scheme, index }) {
       <AgriCard
         animate={true}
         className="agri-card relative z-10"
-        style={{ padding: "24px", height: '100%' }}
+        style={{ 
+          padding: "24px", 
+          height: '180px', // Fixed height for absolute uniformity
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%'
+        }}
         padding="24px"
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "start",
-            marginBottom: "16px",
-            position: 'relative',
-            zIndex: 1,
-          }}
-        >
-          <div>
-            <h3
-              style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "4px" }}
-            >
-              {scheme.name}
-            </h3>
-            <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-              {scheme.description || "Government scheme"}
-            </p>
-          </div>
-          <span
-            className="badge"
+        <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
+          {/* Header Area */}
+          <div
             style={{
-              background: `${color}15`,
-              color,
-              border: `1px solid ${color}25`,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "start",
+              marginBottom: "16px",
             }}
           >
-            {scheme.category?.replace("_", " ") || "Other"}
-          </span>
-        </div>
-        <div style={{ display: "flex", gap: "24px", position: 'relative', zIndex: 1, paddingBottom: "24px" }}>
-          <div>
-            <p
+            <div style={{ flex: 1, paddingRight: '12px', minWidth: 0 }}>
+              <h3
+                style={{ 
+                  fontSize: "0.95rem", 
+                  fontWeight: 700, 
+                  marginBottom: "4px",
+                  display: '-webkit-box',
+                  WebkitLineClamp: 1,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  color: 'var(--text-primary)'
+                }}
+              >
+                {scheme.name}
+              </h3>
+              <p style={{ 
+                fontSize: "0.75rem", 
+                color: "var(--text-secondary)", 
+                lineHeight: 1.4,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden'
+              }}>
+                {scheme.description || "Government scheme document"}
+              </p>
+            </div>
+            <span
+              className="badge"
               style={{
-                fontSize: "0.7rem",
-                color: "var(--text-muted)",
-                marginBottom: "2px",
+                background: `${color}12`,
+                color,
+                border: `1px solid ${color}20`,
+                whiteSpace: 'nowrap',
+                fontSize: '0.6rem',
+                flexShrink: 0
               }}
             >
-              {t('db_chunks')}
-            </p>
-            <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>
-              {scheme.totalChunks}
-            </p>
+              {scheme.category?.replace("_", " ").toUpperCase() || t('sh_other')}
+            </span>
           </div>
-          <div>
-            <p
-              style={{
-                fontSize: "0.7rem",
-                color: "var(--text-muted)",
-                marginBottom: "2px",
-              }}
-            >
-              {t('db_processed')}
-            </p>
-            <p
-              style={{
-                fontSize: "0.85rem",
-                fontWeight: 500,
-                color: "var(--accent-emerald)",
-              }}
-            >
-              {t('db_active')}
-            </p>
+          
+          {/* Stats Bar - Forced to bottom */}
+          <div style={{ marginTop: 'auto', display: "flex", gap: "32px", paddingTop: '12px', borderTop: '1px solid var(--border-glass)' }}>
+            <div style={{ minWidth: '60px' }}>
+              <p style={{ fontSize: "0.6rem", color: "var(--text-muted)", marginBottom: "2px", textTransform: 'uppercase', fontWeight: 600 }}>
+                {t('db_chunks')}
+              </p>
+              <p style={{ fontSize: "1.1rem", fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>
+                {scheme.totalChunks}
+              </p>
+            </div>
+            <div>
+              <p style={{ fontSize: "0.6rem", color: "var(--text-muted)", marginBottom: "2px", textTransform: 'uppercase', fontWeight: 600 }}>
+                {t('db_processed')}
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: "0.8rem", fontWeight: 600, color: "var(--accent-emerald)" }}>
+                <div className="pulse-dot" style={{ width: '5px', height: '5px' }} />
+                {t('db_active')}
+              </div>
+            </div>
           </div>
         </div>
       </AgriCard>
@@ -303,7 +315,7 @@ export default function Dashboard() {
         >
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
             {/* Checks Over Time */}
-            <div style={{ padding: '0px' }}>
+            <AgriCard index={4} padding="24px" className="agri-card">
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <TrendingUp size={18} color="var(--accent-indigo)" />
                 {t('db_checks_chart')}
@@ -316,57 +328,79 @@ export default function Dashboard() {
                       <XAxis dataKey="_id" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                       <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                       <Tooltip 
-                        contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px', color: 'var(--text-primary)' }}
-                        itemStyle={{ color: 'var(--accent-indigo)' }}
+                        contentStyle={{ 
+                          background: 'var(--bg-secondary)', 
+                          border: '1px solid var(--border-agri)', 
+                          borderRadius: '12px',
+                          boxShadow: 'var(--shadow-card)'
+                        }}
+                        itemStyle={{ color: 'var(--accent-indigo)', fontSize: '13px', fontWeight: 600 }}
+                        labelStyle={{ color: 'var(--text-secondary)', marginBottom: '4px', fontSize: '12px' }}
+                        cursor={{fill: 'var(--bg-glass)', opacity: 0.4}}
                       />
-                      <Bar dataKey="count" name="Total Checks" fill="var(--accent-indigo)" radius={[4, 4, 0, 0]} barSize={32} />
+                      <Bar dataKey="count" name={t('db_total_checks')} fill="var(--accent-indigo)" radius={[4, 4, 0, 0]} barSize={32} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>{t('db_no_data')}</div>
                 )}
               </div>
-            </div>
+            </AgriCard>
 
             {/* Eligibility Split */}
-            <div style={{ padding: '0px', display: 'flex', flexDirection: 'column' }}>
+            <AgriCard index={5} padding="24px" className="agri-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <PieChartIcon size={18} color="var(--accent-emerald)" />
                 {t('db_eligibility_split')}
               </h3>
-              <div style={{ flex: 1, width: '100%', minHeight: 250 }}>
+              <div style={{ flex: 1, width: '100%', minHeight: '220px', position: 'relative' }}>
                 {(analytics.eligibilitySplit.eligible > 0 || analytics.eligibilitySplit.notEligible > 0) ? (
-                  <ResponsiveContainer>
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: 'Eligible', value: analytics.eligibilitySplit.eligible },
-                          { name: 'Not Eligible', value: analytics.eligibilitySplit.notEligible }
-                        ]}
-                        cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value"
-                      >
-                        <Cell fill="var(--accent-emerald)" />
-                        <Cell fill="var(--accent-rose)" />
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <div style={{ position: 'absolute', inset: 0 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Eligible', value: analytics.eligibilitySplit.eligible || 0 },
+                            { name: 'Not Eligible', value: analytics.eligibilitySplit.notEligible || 0 }
+                          ].filter(d => d.value > 0)}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          <Cell fill="var(--accent-emerald)" />
+                          <Cell fill="var(--accent-rose)" />
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            background: 'var(--bg-secondary)', 
+                            border: '1px solid var(--border-agri)', 
+                            borderRadius: '12px',
+                            boxShadow: 'var(--shadow-card)'
+                          }}
+                          itemStyle={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: 600 }}
+                          labelStyle={{ display: 'none' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>{t('db_no_data')}</div>
                 )}
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--accent-emerald)' }} /><span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t('db_eligible')} ({analytics.eligibilitySplit.eligible})</span></div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--accent-rose)' }} /><span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t('db_not_eligible')} ({analytics.eligibilitySplit.notEligible})</span></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--accent-emerald)' }} /><span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{t('db_eligible')} ({analytics.eligibilitySplit.eligible})</span></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--accent-rose)' }} /><span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{t('db_not_eligible')} ({analytics.eligibilitySplit.notEligible})</span></div>
               </div>
-            </div>
+            </AgriCard>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             {/* Top schemes */}
-            <div style={{ padding: '0px' }}>
+            <AgriCard index={6} padding="24px" className="agri-card">
                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Users size={18} color="var(--accent-sky)" />
                 {t('db_top_schemes')}
@@ -379,8 +413,15 @@ export default function Dashboard() {
                       <XAxis type="number" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                       <YAxis dataKey="_id" type="category" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} width={150} tickFormatter={(v) => v.length > 20 ? v.substring(0, 20) + '...' : v} />
                       <Tooltip 
-                        contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}
-                         cursor={{fill: 'var(--border-color)', opacity: 0.1}}
+                        contentStyle={{ 
+                          background: 'var(--bg-secondary)', 
+                          border: '1px solid var(--border-agri)', 
+                          borderRadius: '12px',
+                          boxShadow: 'var(--shadow-card)'
+                        }}
+                        itemStyle={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: 600 }}
+                        labelStyle={{ color: 'var(--text-secondary)', marginBottom: '4px', fontSize: '12px' }}
+                        cursor={{fill: 'var(--bg-glass)', opacity: 0.4}}
                       />
                       <Bar dataKey="count" name="Matches" fill="var(--accent-sky)" radius={[0, 4, 4, 0]} barSize={24}>
                         {analytics.topSchemes.map((entry, index) => (
@@ -393,10 +434,10 @@ export default function Dashboard() {
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>{t('db_no_data')}</div>
                 )}
               </div>
-            </div>
+            </AgriCard>
 
             {/* Demographics by State */}
-            <div style={{ padding: '0px' }}>
+            <AgriCard index={7} padding="24px" className="agri-card">
                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <BarChart3 size={18} color="#f59e0b" />
                 {t('db_farmer_by_state')}
@@ -409,8 +450,15 @@ export default function Dashboard() {
                       <XAxis dataKey="_id" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => v.length > 10 ? v.substring(0, 10) + '...' : v} />
                       <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                       <Tooltip 
-                        contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}
-                        cursor={{fill: 'var(--border-glass)', opacity: 0.4}}
+                        contentStyle={{ 
+                          background: 'var(--bg-secondary)', 
+                          border: '1px solid var(--border-agri)', 
+                          borderRadius: '12px',
+                          boxShadow: 'var(--shadow-card)'
+                        }}
+                        itemStyle={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: 600 }}
+                        labelStyle={{ color: 'var(--text-secondary)', marginBottom: '4px', fontSize: '12px' }}
+                        cursor={{fill: 'var(--bg-glass)', opacity: 0.4}}
                       />
                       <Bar dataKey="count" name="Farmers" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={36}>
                         {analytics.profilesByState.map((entry, index) => (
@@ -423,79 +471,76 @@ export default function Dashboard() {
                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>{t('db_no_data')}</div>
                 )}
               </div>
-            </div>
+            </AgriCard>
 
           </div>
         </motion.div>
       )}
 
       {/* Quick Action */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="gradient-border"
-        style={{
+      <AgriCard
+        animate={true}
+        className="agri-card gradient-border"
+        style={{ 
+          padding: "32px", 
           marginBottom: "32px",
-          background: "var(--bg-card)",
-          borderRadius: "16px",
+          border: 'none'
         }}
+        padding="32px"
       >
-        <AgriCard
-          animate={true}
-          className="relative z-10"
-          style={{ padding: "32px" }}
-          padding="32px"
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            position: "relative",
+            zIndex: 1,
+          }}
         >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              position: "relative",
-              zIndex: 1,
-            }}
-          >
-            <div>
-              <h2
-                style={{
-                  fontSize: "1.2rem",
-                  fontWeight: 700,
-                  marginBottom: "8px",
-                }}
-              >
-                <Zap
-                  size={20}
-                  style={{
-                    display: "inline",
-                    marginRight: "8px",
-                    color: "var(--accent-indigo)",
-                  }}
-                />
-                {t('db_check_title')}
-              </h2>
-              <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-                {t('db_check_desc')}
-              </p>
-            </div>
-            <Link to="/dashboard/check" style={{ textDecoration: "none" }}>
-              <motion.button
-                className="btn-glow"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {t('db_start_check')} <ArrowRight size={18} />
-              </motion.button>
-            </Link>
+          <div>
+            <h2
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: 700,
+                marginBottom: "8px",
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}
+            >
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                background: 'rgba(99, 102, 241, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Zap size={20} style={{ color: "var(--accent-indigo)" }} />
+              </div>
+              {t('db_check_title')}
+            </h2>
+            <p style={{ fontSize: "0.95rem", color: "var(--text-secondary)", maxWidth: '500px' }}>
+              {t('db_check_desc')}
+            </p>
           </div>
-        </AgriCard>
-      </motion.div>
+          <Link to="/dashboard/check" style={{ textDecoration: "none" }}>
+            <button
+              className="btn-glow"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                whiteSpace: "nowrap",
+                padding: '14px 28px'
+              }}
+            >
+              {t('db_start_check')} <ArrowRight size={20} />
+            </button>
+          </Link>
+        </div>
+      </AgriCard>
 
     <AgriCard
       animate={true}
@@ -545,11 +590,12 @@ export default function Dashboard() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: "16px",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gap: "24px",
+            width: "100%",
           }}
         >
-          {schemes.map((scheme, i) => (
+          {schemes.slice(0, 6).map((scheme, i) => (
             <SchemeCard key={scheme._id} scheme={scheme} index={i} />
           ))}
           {schemes.length === 0 && (

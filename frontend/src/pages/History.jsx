@@ -15,7 +15,7 @@ const fadeUp = {
 };
 
 function HistoryCard({ check, index, onDelete }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const isEligible = check.eligible;
   const date = new Date(check.createdAt || check.checkedAt);
@@ -44,7 +44,7 @@ function HistoryCard({ check, index, onDelete }) {
           </div>
           <div>
             <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '4px' }}>
-              {check.schemeName || 'Scheme'}
+              {check.schemeName || t('hs_scheme_fallback')}
             </h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span className={`badge ${isEligible ? 'badge-success' : 'badge-danger'}`}>
@@ -61,7 +61,7 @@ function HistoryCard({ check, index, onDelete }) {
           <div style={{ textAlign: 'right' }}>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
               <Calendar size={12} style={{ display: 'inline', marginRight: '4px' }} />
-              {date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+              {date.toLocaleDateString(i18n.language === 'en' ? 'en-IN' : i18n.language, { day: '2-digit', month: 'short', year: 'numeric' })}
             </p>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               <Clock size={12} style={{ display: 'inline', marginRight: '4px' }} />
@@ -127,7 +127,7 @@ function HistoryCard({ check, index, onDelete }) {
 }
 
 export default function HistoryPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState([]);
   const [selectedProfile, setSelectedProfile] = useState('');
@@ -159,10 +159,10 @@ export default function HistoryPage() {
     try {
       await deleteEligibilityCheck(id);
       setChecks(checks.filter((c) => c._id !== id));
-      addToast('Record Deleted', 'Eligibility check removed from history', 'info');
+      addToast(t('us_error_title'), t('toast_record_deleted_desc'), 'info');
     } catch (e) {
       console.error('Failed to delete check', e);
-      addToast('Deletion Failed', 'Could not delete the record', 'error');
+      addToast(t('us_error_title'), t('us_error_fetch'), 'error');
     }
   };
 
@@ -174,7 +174,7 @@ export default function HistoryPage() {
   };
 
   const handleDeleteProfile = async () => {
-    if (!window.confirm('Are you sure you want to delete this profile and all its eligibility check history? This cannot be undone.')) {
+    if (!window.confirm(t('toast_confirm_profile_delete'))) {
       return;
     }
     
@@ -192,7 +192,7 @@ export default function HistoryPage() {
         setSelectedProfile('');
         setChecks([]);
       }
-      addToast('Profile Deleted', 'Farmer profile and all history wiped successfully', 'success');
+      addToast(t('sb_farmers'), t('toast_profile_deleted_desc'), 'success');
     } catch (e) {
       console.error('Failed to delete profile', e);
       addToast('Deletion Failed', 'Could not delete the farmer profile', 'error');

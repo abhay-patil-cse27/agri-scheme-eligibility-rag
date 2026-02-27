@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import AgriCard from '../components/common/AgriCard';
+import DocumentScanner from '../components/farmers/DocumentScanner';
 
 const indianStates = {
   // ── 28 States ────────────────────────────
@@ -100,7 +101,7 @@ function VoiceInput({ onProfileExtracted }) {
       </div>
 
       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-        Tell us about your farm, income and existing schemes. Our AI will automatically extract your profile — <em>"I am Ramesh from Maharashtra, I have 2 acres of land and I am already in PM-KISAN..."</em>
+        {t('vi_desc_ph')} <em>"{t('vi_desc_example')}"</em>
       </p>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -315,19 +316,19 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
           <input name="annualIncome" type="number" value={form.annualIncome} onChange={handleChange} placeholder="e.g. 200000" className="input-dark" />
         </div>
         <div>
-          <label style={labelStyle}><User size={14} /> Gender</label>
+          <label style={labelStyle}><User size={14} /> {t('pf_gender')}</label>
           <select name="gender" value={form.gender} onChange={handleChange} className="select-dark">
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
+            <option value="Male">{t('pf_male')}</option>
+            <option value="Female">{t('pf_female')}</option>
+            <option value="Other">{t('pf_other')}</option>
           </select>
         </div>
         <div>
-          <label style={labelStyle}><MapPin size={14} /> Ownership Type</label>
+          <label style={labelStyle}><MapPin size={14} /> {t('pf_ownership_type')}</label>
           <select name="ownershipType" value={form.ownershipType} onChange={handleChange} className="select-dark">
-            <option value="Owner">Owner</option>
-            <option value="Tenant/Sharecropper">Tenant/Sharecropper</option>
-            <option value="Co-owner">Co-owner</option>
+            <option value="Owner">{t('pf_owner')}</option>
+            <option value="Tenant/Sharecropper">{t('pf_tenant')}</option>
+            <option value="Co-owner">{t('pf_coowner')}</option>
           </select>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px 0' }}>
@@ -339,24 +340,24 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
           <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
             <input type="checkbox" name="hasBPLCard" checked={form.hasBPLCard} onChange={handleChange}
               style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-            <span><FileText size={14} style={{ display: 'inline', marginRight: '4px' }} /> BPL Ration Card Holder</span>
+            <span><FileText size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t('pf_bpl_card')}</span>
           </label>
           <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
             <input type="checkbox" name="hasKcc" checked={form.hasKcc} onChange={handleChange}
               style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-            <span><Wallet size={14} style={{ display: 'inline', marginRight: '4px' }} /> Kisan Credit Card (KCC) Owner</span>
+            <span><Wallet size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t('pf_kcc_owner')}</span>
           </label>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px 0' }}>
           <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
             <input type="checkbox" name="isDifferentlyAbled" checked={form.isDifferentlyAbled} onChange={handleChange}
               style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-            <span><User size={14} style={{ display: 'inline', marginRight: '4px' }} /> Differently Abled (Divyangjan)</span>
+            <span><User size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t('pf_divyangjan')}</span>
           </label>
           <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
             <input type="checkbox" name="hasAadharSeededBank" checked={form.hasAadharSeededBank} onChange={handleChange}
               style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-            <span><CheckCircle2 size={14} style={{ display: 'inline', marginRight: '4px' }} /> Aadhar Seeded Bank Account</span>
+            <span><CheckCircle2 size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t('pf_aadhar_seeded')}</span>
           </label>
         </div>
 
@@ -366,10 +367,10 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
       <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
         <label style={{ ...labelStyle, marginBottom: '12px' }}>
           <Shield size={16} style={{ color: 'var(--accent-indigo)' }} /> 
-          Are you already enrolled in any of these? (Enables Conflict Detection)
+          {t('pf_enrolled_title')}
         </label>
         {displaySchemes.length === 0 ? (
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No related schemes found based on selection.</p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{t('pf_no_schemes_found')}</p>
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {displaySchemes.map(s => {
@@ -439,7 +440,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
                 }}
               >
                 <Plus size={14} style={{ display: 'inline', marginRight: '4px' }} />
-                Not Listed?
+                {t('pf_not_listed')}
               </button>
             )}
           </div>
@@ -451,7 +452,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
               type="text" 
               value={customSchemeName}
               onChange={(e) => setCustomSchemeName(e.target.value)}
-              placeholder="Enter scheme name..."
+              placeholder={t('pf_enter_scheme_ph')}
               className="input-dark"
               style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem' }}
             />
@@ -468,7 +469,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
               className="btn-glow"
               style={{ padding: '8px 16px', fontSize: '0.8rem' }}
             >
-              Add
+              {t('pf_add')}
             </button>
             <button
               type="button"
@@ -625,7 +626,7 @@ function ProofCard({ result }) {
         audioObj.currentTime = 0;
       }
       setIsSpeaking(false);
-      addToast('Playback Stopped', 'Voice analysis paused', 'info');
+      addToast(t('sb_history'), 'Voice analysis paused', 'info');
     } else {
       setIsSpeaking(true);
       const textToSpeak = `AI Analysis regarding ${displayResult.scheme}. ${displayResult.reason}`;
@@ -641,7 +642,7 @@ function ProofCard({ result }) {
           url = audioCache.current[cacheKey];
         } else {
           // ── Audio cache miss: fetch from ElevenLabs, then cache URL ──
-          addToast('Generating Audio', 'Fetching high-quality AI voice...', 'info');
+          addToast(t('sb_history'), 'Fetching high-quality AI voice...', 'info');
           const audioBlob = await generateSpeech(textToSpeak, langCode);
           url = URL.createObjectURL(audioBlob);
           audioCache.current[cacheKey] = url;
@@ -770,7 +771,7 @@ function ProofCard({ result }) {
                 }}
               >
                 {isTranslating ? <Loader2 size={14} className="spin" /> : <Globe size={14} />}
-                {isTranslating ? 'Translating...' : translateLabel}
+                {isTranslating ? t('pf_btn_loading') : translateLabel}
                 {!isTranslating && <ChevronDown size={12} style={{ opacity: 0.6, transform: showLangMenu ? '180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />}
               </motion.button>
 
@@ -809,6 +810,16 @@ function ProofCard({ result }) {
                 )}
               </AnimatePresence>
             </div>
+
+            {isSpeaking && (
+               <div className="waveform" style={{ marginRight: '8px' }}>
+                 <div className="waveform-bar" style={{ background: 'var(--accent-indigo)' }}></div>
+                 <div className="waveform-bar" style={{ background: 'var(--accent-indigo)' }}></div>
+                 <div className="waveform-bar" style={{ background: 'var(--accent-indigo)' }}></div>
+                 <div className="waveform-bar" style={{ background: 'var(--accent-indigo)' }}></div>
+                 <div className="waveform-bar" style={{ background: 'var(--accent-indigo)' }}></div>
+               </div>
+            )}
 
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -890,7 +901,7 @@ function ProofCard({ result }) {
         <div style={{ padding: '20px', background: 'rgba(56, 189, 248, 0.05)', borderRadius: '16px', border: '1px solid rgba(56, 189, 248, 0.2)', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
             <Quote size={18} style={{ color: 'var(--accent-cyan)' }} />
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Official Document Citation</h4>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{t('pc_citation_title')}</h4>
           </div>
           <p style={{ fontSize: '0.9rem', fontStyle: 'italic', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 12px 10px', paddingLeft: '12px', borderLeft: '3px solid var(--accent-cyan)' }}>
             "{displayResult.citation}"
@@ -899,17 +910,17 @@ function ProofCard({ result }) {
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginLeft: '10px' }}>
               {displayResult.citationSource.page && (
                 <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-glass)' }}>
-                  Page {displayResult.citationSource.page}
+                  {t('pc_page')} {displayResult.citationSource.page}
                 </span>
               )}
               {displayResult.citationSource.section && (
                 <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-glass)' }}>
-                  Sect: {displayResult.citationSource.section}
+                  {t('pc_sect')} {displayResult.citationSource.section}
                 </span>
               )}
               {displayResult.citationSource.paragraph && (
                 <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-glass)' }}>
-                  Para: {displayResult.citationSource.paragraph}
+                  {t('pc_para')} {displayResult.citationSource.paragraph}
                 </span>
               )}
             </div>
@@ -928,7 +939,7 @@ function ProofCard({ result }) {
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'}
               onMouseLeave={e => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'}
             >
-              <ExternalLink size={16} /> Official Website
+              <ExternalLink size={16} /> {t('pc_official_website')}
             </a>
           )}
           {displayResult.documentUrl && (
@@ -938,7 +949,7 @@ function ProofCard({ result }) {
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
               onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
             >
-              <FileText size={16} /> View Document
+              <FileText size={16} /> {t('sb_schemes')}
             </a>
           )}
         </div>
@@ -973,7 +984,7 @@ export default function EligibilityCheck() {
 
   const handleCheck = async (profileData) => {
     if (!selectedScheme) {
-      addToast('Missing Scheme', 'Please select a scheme from the dropdown first', 'warning');
+      addToast(t('us_error_title'), 'Please select a scheme from the dropdown first', 'warning');
       return;
     }
 
@@ -1044,7 +1055,7 @@ export default function EligibilityCheck() {
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: user ? '0' : '0 auto', paddingTop: user ? '0' : '100px', paddingBottom: '60px' }}>
+    <div style={{ maxWidth: '800px', margin: '0 auto', paddingTop: user ? '0' : '100px', paddingBottom: '60px' }}>
       <AgriCard
         animate={true}
         className="agri-card"
@@ -1105,7 +1116,7 @@ export default function EligibilityCheck() {
             >
               <option value="">{t('ec_choose_scheme')}</option>
               <option value="all">
-                🔍 I don&apos;t know the exact scheme (Scan {selectedCategory ? 'Category' : 'All'})
+                🔍 {schemes.length === 0 ? t('db_no_schemes') : `Search all schemes in ${selectedCategory ? selectedCategory : 'All'} category`}
               </option>
               {schemes
                 .filter(s => !selectedCategory || s.category === selectedCategory)
@@ -1119,6 +1130,12 @@ export default function EligibilityCheck() {
 
         {/* Voice Input */}
         <VoiceInput onProfileExtracted={setVoiceProfile} />
+
+        {/* Phase 4: Document Auto-Scan Vault */}
+        <DocumentScanner onDataExtracted={(data) => {
+          setVoiceProfile(data); // Re-use the same state to auto-fill the form below
+          addToast('Scan Success', 'Form fields auto-filled from document.', 'success');
+        }} />
 
         {/* Profile Form */}
         <ProfileForm initialData={voiceProfile || location.state?.profile} onSubmit={handleCheck} loading={loading} allSchemes={schemes} selectedScheme={selectedScheme} />

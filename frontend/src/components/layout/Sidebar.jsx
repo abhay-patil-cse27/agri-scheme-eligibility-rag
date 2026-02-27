@@ -19,18 +19,20 @@ import {
   Settings,
   Sun,
   Moon,
-  Network
+  Network,
+  MessageSquare
 } from 'lucide-react';
 
 const navItems = [
-  { to: '/dashboard/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/dashboard/check', icon: Search, label: 'Eligibility Check' },
-  { to: '/dashboard/schemes', icon: FileText, label: 'Schemes' },
-  { to: '/dashboard/farmers', icon: Users, label: 'Farmers' },
-  { to: '/dashboard/users', icon: Users, label: 'Users' },
-  { to: '/dashboard/history', icon: History, label: 'History' },
-  { to: '/dashboard/graph', icon: Network, label: 'Knowledge Graph' },
-  { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
+  { to: '/dashboard/', icon: LayoutDashboard, label: 'dashboard' },
+  { to: '/dashboard/check', icon: Search, label: 'eligibility_check' },
+  { to: '/dashboard/schemes', icon: FileText, label: 'schemes' },
+  { to: '/dashboard/farmers', icon: Users, label: 'farmers' },
+  { to: '/dashboard/users', icon: Users, label: 'users' },
+  { to: '/dashboard/history', icon: History, label: 'history' },
+  { to: '/dashboard/chat', icon: MessageSquare, label: 'krishi_mitra' },
+  { to: '/dashboard/graph', icon: Network, label: 'knowledge_graph' },
+  { to: '/dashboard/settings', icon: Settings, label: 'settings' },
 ];
 
 export default function Sidebar() {
@@ -43,7 +45,7 @@ export default function Sidebar() {
   // Filter navigation items based on role
   const filteredNavItems = navItems.filter(item => {
     // Only hide the Farmers and Users admin pages from farmer accounts
-    if (user?.role === 'farmer' && (item.label === 'Farmers' || item.label === 'Users' || item.label === 'Knowledge Graph')) {
+    if (user?.role === 'farmer' && (item.label === 'farmers' || item.label === 'users' || item.label === 'knowledge_graph')) {
       return false;
     }
     return true;
@@ -139,7 +141,7 @@ export default function Sidebar() {
                     flex: 1,
                   }}
                 >
-                  {t(`sb_${item.label.toLowerCase().replace(' ', '_')}`, item.label)}
+                  {t(`sb_${item.label}`)}
                 </span>
                 {isActive && (
                   <ChevronRight size={16} style={{ color: 'var(--accent-indigo)' }} />
@@ -149,6 +151,13 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Help & Legal links */}
+      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', margin: '0 0 16px 0', fontSize: '0.75rem' }}>
+        <Link to="/faq" target="_blank" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={e=>e.currentTarget.style.color='var(--accent-indigo)'} onMouseOut={e=>e.currentTarget.style.color='var(--text-muted)'}>FAQ</Link>
+        <span style={{ color: 'var(--border-glass)' }}>|</span>
+        <Link to="/privacy" target="_blank" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={e=>e.currentTarget.style.color='var(--accent-indigo)'} onMouseOut={e=>e.currentTarget.style.color='var(--text-muted)'}>Privacy Policy</Link>
+      </div>
 
       {/* Footer */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -167,7 +176,7 @@ export default function Sidebar() {
             </div>
             <div style={{ overflow: 'hidden', minWidth: 0 }}>
               <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name || 'User'}</p>
-              <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{user?.role === 'admin' ? t('sb_admin', 'Administrator') : t('sb_farmer', 'Farmer Portal')}</p>
+              <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{user?.role === 'admin' ? t('sb_admin') : t('sb_farmer')}</p>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '6px' }}>
@@ -176,14 +185,14 @@ export default function Sidebar() {
               className="btn-secondary"
               style={{ flex: 1, padding: '7px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', cursor: 'pointer', background: 'rgba(244,63,94,0.1)', color: 'var(--accent-rose)', border: 'none', borderRadius: '8px' }}
             >
-              <LogOut size={13} /> {t('sb_logout', 'Logout')}
+              <LogOut size={13} /> {t('sb_logout')}
             </button>
             <button
               onClick={() => setIsNotifOpen(true)}
               style={{ width: '36px', padding: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: 'rgba(99, 102, 241, 0.08)', color: 'var(--accent-indigo)', border: 'none', borderRadius: '8px', transition: 'all 0.2s' }}
               onMouseOver={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)'}
               onMouseOut={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.08)'}
-              title="View Notifications"
+              title={t('lp_footer_portal')}
             >
               <Bell size={15} />
             </button>
@@ -236,7 +245,7 @@ export default function Sidebar() {
                 transition: 'background 0.3s ease',
                 flexShrink: 0,
               }}
-              title="Toggle Theme"
+              title={theme === 'light' ? t('sb_dark_mode') : t('sb_light_mode')}
             >
               <motion.div
                 animate={{ x: theme === 'light' ? 20 : 2 }}
@@ -266,7 +275,7 @@ export default function Sidebar() {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div className="pulse-dot" />
-            <span style={{ fontSize: '0.72rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>{t('sb_system_online', 'System Online')}</span>
+            <span style={{ fontSize: '0.72rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>{t('sb_system_online')}</span>
             <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>RAG • Groq</span>
           </div>
         </div>

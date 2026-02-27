@@ -88,7 +88,7 @@ export default function Settings() {
           {t('st_title')}
         </h1>
         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-          Update your profile information and manage your active scheme enrollments
+          {t('st_profile_desc')}
         </p>
       </div>
 
@@ -123,7 +123,7 @@ export default function Settings() {
           <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
             <label style={{ ...labelStyle, marginBottom: '12px' }}>
               <KeyRound size={16} style={{ color: 'var(--accent-indigo)' }} /> 
-              Your Active Enrollments (This enables Graph-based Conflict detection)
+              {t('st_active_enrollments')}
             </label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {allSchemes.map(scheme => {
@@ -199,7 +199,7 @@ export default function Settings() {
                   }}
                 >
                   <Plus size={14} style={{ display: 'inline', marginRight: '4px' }} />
-                  {t('Not Listed?')}
+                  {t('pf_not_listed')}
                 </button>
               )}
             </div>
@@ -210,7 +210,7 @@ export default function Settings() {
                   type="text" 
                   value={customSchemeName}
                   onChange={(e) => setCustomSchemeName(e.target.value)}
-                  placeholder="Enter scheme name..."
+                  placeholder={t('pf_enter_scheme_ph')}
                   className="input-dark"
                   style={{ flex: 1, padding: '8px 12px' }}
                 />
@@ -227,7 +227,7 @@ export default function Settings() {
                   className="btn-glow"
                   style={{ padding: '8px 16px', fontSize: '0.8rem' }}
                 >
-                  Add
+                  {t('pf_add')}
                 </button>
                 <button
                   type="button"
@@ -237,7 +237,7 @@ export default function Settings() {
                   }}
                   style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
                 >
-                  Cancel
+                  {t('cm_cancel')}
                 </button>
               </div>
             )}

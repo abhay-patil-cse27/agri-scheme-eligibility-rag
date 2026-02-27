@@ -1,11 +1,45 @@
-# Ignore OAuth client secrets
-docs/client_secret_*.json
-docs/schemes/**/*.pdf
-docs/schemes/*/*.pdf
-*.pdf
+# System Files
+.DS_Store
+Thumbs.db
+*.swp
+
+# Dependencies
 node_modules/
-backend/node_modules/
-frontend/node_modules/
-backend/.env
-frontend/.env
-package-lock.json
+**/node_modules/
+
+# Environment Variables (CRITICAL)
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.*
+
+# Build Outputs
+dist/
+dist-ssr/
+build/
+**/dist/
+
+# Logs and Scratch Files
+*.log
+error_log.txt
+out.txt
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+**/*.log
+
+# Project Specific (Sensitive Data)
+backend/uploads/*
+!backend/uploads/.gitkeep
+docs/client_secret_*.json
+docs/Neo4j-*.txt
+*.pdf
+
+# Editor Folders
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

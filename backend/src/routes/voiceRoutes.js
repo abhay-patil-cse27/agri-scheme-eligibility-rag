@@ -123,8 +123,19 @@ router.post(
     try {
       // Use the Multilingual v2 model with a default voice (e.g., Rachel, or any generic voice ID)
       // Voice ID "EXAVITQu4vr4xnSDxMaL" is a common default 'Bella' or 'Rachel' '21m00Tcm4TlvDq8ikWAM'
-      const voiceId = "21m00Tcm4TlvDq8ikWAM"; 
+      // Select voice based on language
+      // Hindi (hi): 'fD9jD4N1J6U1K1K1K1K1' or 'EXAVITQu4vr4xnSDxMaL'
+      // Marathi (mr): 'Lcf7uRWjS0D1IogJ_0A_'
+      const voiceMapping = {
+        'hi': 'cgSbaPmcP2lUWs9G8CuK', // Warm, clear Hindi female
+        'mr': 'Lcf7uRWjS0D1IogJ_0A_', // High quality Marathi female
+        'en': '21m00Tcm4TlvDq8ikWAM'  // Default Rachel for English
+      };
       
+      const voiceId = voiceMapping[language] || voiceMapping['en'];
+      
+      console.log(`Generating TTS for language: ${language} using voice: ${voiceId}`);
+
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
         method: 'POST',
         headers: {
@@ -136,8 +147,8 @@ router.post(
           text: text,
           model_id: "eleven_multilingual_v2",
           voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
+            stability: 0.6,
+            similarity_boost: 0.8,
             style: 0.0,
             use_speaker_boost: true
           }

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Outlet, useLocation } from 'react-router-
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import GlobalLoader from './components/common/GlobalLoader';
+import KrishiMitra from './components/common/KrishiMitra';
 import Aurora from './components/Aurora';
 // Lazy load the heaviest pages that will contain 3D components
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -10,6 +11,8 @@ const Schemes = lazy(() => import('./pages/Schemes'));
 const Landing = lazy(() => import('./pages/Landing'));
 const EligibilityCheck = lazy(() => import('./pages/EligibilityCheck'));
 const GraphExplorer = lazy(() => import('./pages/GraphExplorer'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const LegalPolicy = lazy(() => import('./pages/LegalPolicy'));
 
 import Sidebar from './components/layout/Sidebar';
 import LandingNav from './components/layout/LandingNav';
@@ -29,6 +32,8 @@ import { ToastContainer } from './components/Toast';
 import './index.css';
 
 /* ── Authenticated app shell with Sidebar ── */
+const ChatDashboard = lazy(() => import('./pages/ChatDashboard'));
+
 function AppShell() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -45,6 +50,8 @@ function AppShell() {
           padding: '32px 40px',
           minHeight: '100vh',
           background: 'var(--bg-primary)',
+          minWidth: 0,
+          width: '100%'
         }}>
           <Outlet />
         </main>
@@ -139,9 +146,11 @@ function AnimatedRoutes() {
           <Route path="/resetpassword/:token" element={<PageWrapper><ResetPassword /></PageWrapper>} />
           {/* Public Eligibility Check Tool (unauthenticated / guest) */}
           <Route path="/check" element={<PageWrapper><EligibilityCheck /></PageWrapper>} />
-        </Route>
 
-        {/* Protected app — proper nested Outlet routing inside Sidebar shell */}
+          {/* Public Content Pages within AuthShell */}
+          <Route path="/faq" element={<PageWrapper><FAQ /></PageWrapper>} />
+          <Route path="/privacy" element={<PageWrapper><LegalPolicy /></PageWrapper>} />
+        </Route>
         <Route path="/dashboard" element={<AppShell />}>
           <Route index element={<PageWrapper><Dashboard /></PageWrapper>} />
           {/* Authenticated Eligibility Check renders INSIDE the Sidebar layout */}
@@ -152,6 +161,7 @@ function AnimatedRoutes() {
           <Route path="settings" element={<PageWrapper><Settings /></PageWrapper>} />
           <Route path="users" element={<PageWrapper><UsersPage /></PageWrapper>} />
           <Route path="graph" element={<PageWrapper><GraphExplorer /></PageWrapper>} />
+          <Route path="chat" element={<PageWrapper><ChatDashboard /></PageWrapper>} />
         </Route>
       </Routes>
     </AnimatePresence>
@@ -168,6 +178,7 @@ export default function App() {
           <Suspense fallback={<GlobalLoader />}>
             <AnimatedRoutes />
           </Suspense>
+          <KrishiMitra />
         </BrowserRouter>
         <ToastContainer />
       </ToastProvider>

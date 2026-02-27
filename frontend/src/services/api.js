@@ -91,7 +91,19 @@ export const getHealth = () => api.get('/health').then((r) => r.data);
 // ── Analytics ─────────────────────────────
 export const getAnalytics = () => api.get('/analytics').then((r) => r.data);
 
-// ── Graph ─────────────────────────────────
 export const getGraphData = () => api.get('/graph/explorer').then((r) => r.data);
 
+// ── Scanning ──────────────────────────────
+export const scanDocument = (file, documentType) => {
+  const formData = new FormData();
+  formData.append('document', file);
+  formData.append('documentType', documentType);
+  
+  return api.post('/scan/document', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
+  }).then((r) => r.data);
+};
+
 export default api;
+

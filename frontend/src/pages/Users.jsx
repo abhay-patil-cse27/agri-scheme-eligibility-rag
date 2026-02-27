@@ -11,7 +11,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { addToast } = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     fetchUsers();
@@ -123,7 +123,7 @@ export default function UsersPage() {
                     <td style={{ ...tdStyle, borderRadius: '0 12px 12px 0' }}>
                       <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Calendar size={14} />
-                        {new Date(user.createdAt).toLocaleDateString(undefined, {
+                        {new Date(user.createdAt).toLocaleDateString(i18n.language === 'en' ? 'en-IN' : (i18n.language === 'hi' ? 'hi-IN' : 'mr-IN'), {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric'

@@ -13,8 +13,9 @@ import { easing } from 'maath';
 import { useTheme } from '../context/ThemeContext';
 
 export default function FluidGlass() {
-  const { isDark } = useTheme();
-  const bgColor = isDark ? '#000000' : '#111827';
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const bgColor = isDark ? '#060d06' : '#faf7ee';
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -24,9 +25,10 @@ export default function FluidGlass() {
       >
         <color attach="background" args={[bgColor]} />
         <Suspense fallback={null}>
-          <ambientLight intensity={3} />
-          <directionalLight position={[10, 10, 10]} intensity={2} />
-          <Environment preset="city" />
+          <ambientLight intensity={isDark ? 1.5 : 2.5} />
+          <directionalLight position={[10, 10, 10]} intensity={isDark ? 1 : 2} />
+          <spotLight position={[-10, 20, 10]} angle={0.15} penumbra={1} intensity={isDark ? 2 : 5} castShadow />
+          <Environment preset={isDark ? "city" : "apartment"} />
 
           <ScrollControls damping={0.2} pages={3} distance={1}>
             <Scene />
@@ -38,6 +40,8 @@ export default function FluidGlass() {
 }
 
 function Scene() {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const lensRef = useRef();
   const { viewport } = useThree();
 
@@ -69,13 +73,14 @@ function Scene() {
           samples={16}
           resolution={1024}
           transmission={1}
-          roughness={0}
-          thickness={5}
-          ior={1.15}
-          chromaticAberration={0.1}
+          roughness={0.05}
+          thickness={isDark ? 5 : 2.5}
+          ior={isDark ? 1.15 : 1.25}
+          chromaticAberration={isDark ? 0.1 : 0.05}
           anisotropy={0.1}
           clearcoat={1}
           clearcoatRoughness={0}
+          color={isDark ? "#ffffff" : "#e0e0e0"}
         />
       </mesh>
 
@@ -92,6 +97,8 @@ function Scene() {
 
 // Separate component to handle the responsive text sizing based on viewport width
 function ZoomingTypography() {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const group = useRef();
   const titleRef = useRef();
   const data = useScroll();
@@ -147,7 +154,7 @@ function ZoomingTypography() {
         position={[0, 0, 0]} 
         fontSize={titleSize} 
         fontWeight={900} 
-        color="#ffffff"
+        color={isDark ? "#ffffff" : "#1a2a0e"}
         letterSpacing={-0.05}
         anchorX="center" 
         anchorY="middle"

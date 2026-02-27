@@ -5,11 +5,15 @@ const logger = require("../config/logger");
 const groqInstances = [new Groq({ apiKey: config.groqApiKey })];
 let currentGroqIndex = 0;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// ── Global Concurrency Management ────────────────────────
+// ── Global Concurrency & LRU Cache ──────────────────
 const queue = [];
 let activeCount = 0;
 const MAX_CONCURRENT = 3;
+
+// Phase 5 In-Memory Cache for Heavy LLM tasks
+const translationCache = new Map();
+const MAX_CACHE_SIZE = 500; // LRU approach
+
 
 /**
  * Limit the number of concurrent LLM requests globally.
@@ -204,7 +208,8 @@ async function checkEligibility(
   graphConflicts = [],
 ) {
   const startTime = Date.now();
-  const targetLangString = languageMap[language] || "English";
+  const cleanLang = language.split('-')[0].toLowerCase();
+  const targetLangString = languageMap[cleanLang] || "English";
 
   // Build the user prompt with profile and document context
   const documentContext = relevantChunks
@@ -246,7 +251,7 @@ ${documentContext}
 Based ONLY on the above document excerpts, determine if this farmer is eligible for ${schemeName}. Return your answer as the specified JSON structure.
 
 IMPORTANT MULTILINGUAL RULE: 
-You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'benefitAmount', 'paymentFrequency', and the string values inside the 'rejectionExplanation' object into the following target language: **${targetLangString}**. Keep the JSON keys in English, but output the human-readable text strictly in the target language. Use simple, conversational language suitable for a farmer.`;
+You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'benefitAmount', 'paymentFrequency', 'requiredDocuments' (array of strings), 'rejectionExplanation' (critera and yourProfile), and 'citation' into the following target language: **${targetLangString}**. Keep the JSON keys in English, but output the human-readable text strictly in the target language. Use simple, conversational language suitable for a farmer. Ensure currency is written using native numerals if appropriate.`;
 
   let rawResponse;
 
@@ -311,7 +316,7 @@ function parseResponse(rawResponse) {
   try {
     const parsed = JSON.parse(cleaned);
 
-    // Sanitize citationSource.page — LLM sometimes returns strings like "Various"
+    // Sanitize citationSource.page — LLM    returns strings like "Various"
     let pageVal = parsed.citationSource?.page;
     if (pageVal !== null && pageVal !== undefined) {
       const num = Number(pageVal);
@@ -365,8 +370,10 @@ STRICT TRANSLATION & STANDARDIZATION RULES:
 2. Handling Numbers: Regional spoken numbers (e.g. "दोन एकर", "दो", "पाच") MUST be converted into actual JSON numbers (e.g. 2, 5).
 3. Social Category: If the user says "मागासवर्गीय", "पिछड़ा वर्ग", "OBC", map it to "OBC". If they say "SC/ST", "दलित", map to "SC" or "ST". If they don't explicitly mention it, set it to null.
 4. Land Units: If they say "एकर" or "Bigha" or "Gunta", attempt to roughly convert to Acres if possible, or just extract the raw number.
-5. Irrigation: If they mention well, canal, river, pump ("विहीर", "नदी", "कालवा", "सिंचाई"), set hasIrrigationAccess to true.
-6. Demographics: Look for keywords indicating BPL/Ration card ("रेशन कार्ड", "दारिद्र्य"), tenancy/rental vs ownership ("भाडेतत्त्वावर", "मालकी"), Kisan Credit Card ("KCC", "किसान क्रेडिट"), Divyangjan ("दिव्यांग", "अपंग"), and bank accounts linked to Aadhar ("आधार बँक"). Infer gender naturally from the name or spoken grammar (e.g. "मी महिला आहे").
+5. Irrigation: If they mention well, canal, river, pump ("विहीर", "नदी", "कालवा", "सिंचाई", "ट्यूबवेल", "बोअरवेल", "विहीर"), set hasIrrigationAccess to true.
+6. Demographics: Look for keywords indicating BPL/Ration card ("रेशन कार्ड", "दारिद्र्य", "अंत्योदय", "बीपीएल"), tenancy/rental vs ownership ("भाडेतत्त्वावर", "मालकी", "बटाटेदार", "हिस्सेदार", "खरेदी खत"), Kisan Credit Card ("KCC", "किसान क्रेडिट"), Divyangjan ("दिव्यांग", "अपंग", "अपाहिज", "विकलांग"), and bank accounts linked to Aadhar ("आधार बँक", "सीडेड"). Infer gender naturally from the name or spoken grammar (e.g. "मी महिला आहे", "मैं किसान हूँ" vs "मैं महिला किसान हूँ").
+7. Dialect Awareness: Correctly interpret regional pronunciations or slag (e.g., "शेत" vs "क्षेत्र", "पैसे" vs "रकमे", "पानी" vs "जल"). Use context to disambiguate. If they say "७/१२" (Satbara) or "८अ" (8A), it implies they are a land owner.
+8. Conflict Detection: If they mention receiving benefits from other schemes (e.g. "पंतप्रधान सन्मान निधीचे पैसे येतात", "नमो शेतकरी चे पैसे येतात"), ensure these are added to activeSchemes using their official names (e.g., "PM-KISAN", "Namo Shetkari Mahasanman Nidhi").
 
 RESPOND ONLY WITH THIS EXACT JSON STRUCTURE (No markdown, no explanation):
 {
@@ -472,7 +479,8 @@ async function transcribeAudio(filePath, language = "en") {
  * Translate an eligibility result JSON natively into the target language.
  */
 async function translateEligibilityResult(resultObj, targetLanguage = "hi") {
-  const targetLangString = languageMap[targetLanguage] || targetLanguage;
+  const cleanLang = targetLanguage.split('-')[0].toLowerCase();
+  const targetLangString = languageMap[cleanLang] || cleanLang;
 
   const systemPrompt = `You are a strict, expert translator for an Indian government agricultural scheme platform.
 
@@ -495,6 +503,13 @@ EXAMPLE (English → Hindi):
 Input benefitAmount: "₹6,000 per year"
 Output benefitAmount: "₹६,००० प्रति वर्ष"`;
 
+  // --- Phase 5: In-Memory LRU Caching ---
+  const cacheKey = `${targetLanguage}::${JSON.stringify({scheme: resultObj.scheme, err: resultObj.error, cite: resultObj.citation})}`;
+  if (translationCache.has(cacheKey)) {
+    logger.info(`[LRU CACHE HIT] Translated ${resultObj.scheme} into ${targetLanguage}`);
+    return translationCache.get(cacheKey);
+  }
+
   try {
     const completion = await runQueued(() =>
       withRetry(() =>
@@ -514,7 +529,7 @@ Output benefitAmount: "₹६,००० प्रति वर्ष"`;
       completion.choices[0]?.message?.content || "{}",
     );
 
-    return {
+    const finalTranslatedObj = {
       ...resultObj,
       reason: translated.reason || resultObj.reason,
       actionSteps: translated.actionSteps || resultObj.actionSteps,
@@ -525,10 +540,146 @@ Output benefitAmount: "₹६,००० प्रति वर्ष"`;
         translated.requiredDocuments || resultObj.requiredDocuments,
       rejectionExplanation:
         translated.rejectionExplanation || resultObj.rejectionExplanation,
+      citation: translated.citation || resultObj.citation,
     };
+
+    // Store in cache and manage LRU size
+    if (translationCache.size >= MAX_CACHE_SIZE) {
+      // Delete the oldest key (first item in Map)
+      const oldestKey = translationCache.keys().next().value;
+      translationCache.delete(oldestKey);
+    }
+    translationCache.set(cacheKey, finalTranslatedObj);
+
+    return finalTranslatedObj;
   } catch (error) {
     logger.error("Translation failed:", error.message);
     throw new Error(`LLM translation failed: ${error.message}`);
+  }
+}
+
+/**
+ * General conversational assistant for Krishi Mitra.
+ * Handles both navigation (rule-based hints) and general agricultural knowledge.
+ *
+ * @param {string} query - The user's question
+ * @param {Array} history - Previous messages in the conversation
+ * @param {Object} profile - Brief farmer profile for personalization
+ * @param {string} language - Target language code (default 'en')
+ * @returns {string} The AI's response text
+ */
+async function chatWithKrishiMitra(query, history = [], profile = {}, language = 'en') {
+  const systemPrompt = `You are "Krishi Mitra", a helpful and knowledgeable agricultural assistant for the Niti Setu platform.
+  
+  YOUR PERSONALITY:
+  - You are a friendly, wise, and empathetic "friend of the farmer".
+  - You speak simply and clearly, avoiding unnecessary jargon.
+  - You are passionate about helping farmers access government benefits and improve their yields.
+
+  YOUR KNOWLEDGE BASE:
+  - You know about Indian government schemes (PM-Kisan, RKVY, NMSA, etc.).
+  - You know basic farming practices (soil health, irrigation, pest control).
+  - You know how to use the Niti Setu app (Eligibility Check, Schemes Page, Profile Management).
+
+  STRICT RULES:
+  1. If the user asks about the app itself, guide them to the correct page:
+     - To check eligibility: "Go to the 'Eligibility Check' page in the sidebar."
+     - To see their history: "Check the 'History' tab in your dashboard."
+     - To view documents: "The 'Schemes' section has all the official PDF documents."
+  2. If the user asks a specialized farming question, provide helpful advice but suggest consulting a local KVK (Krishi Vigyan Kendra) for critical matters.
+  3. ALWAYS maintain a supportive tone.
+  4. If you don't know the answer, admit it and suggest where they might find it.
+  5. CRITICAL INSTRUCTION: You MUST translate and respond strictly in the language code provided: "${language}". If "${language}" is "hi-IN", reply entirely in Hindi script. If Marathi, Bengali, Tamil etc., use their native script. Do not output English if a native Indian language code is passed.
+
+  FARMER CONTEXT:
+  The person you are talking to is named ${profile.name || "Farmer"}. They are from ${profile.state || "India"} and grow ${profile.cropType || "crops"}. Use this to personalize your advice.`;
+
+  const messages = [
+    { role: "system", content: systemPrompt },
+    ...history.slice(-6), // Keep last 3 turns of context
+    { role: "user", content: query }
+  ];
+
+  try {
+    const completion = await runQueued(() =>
+      withRetry(() =>
+        groqInstances[currentGroqIndex].chat.completions.create({
+          model: "llama-3.3-70b-versatile", // High quality for general chat
+          messages: messages,
+          temperature: 0.7,
+          max_tokens: 1024,
+        }),
+      ),
+    );
+
+    return completion.choices[0]?.message?.content || "I'm sorry, I couldn't process that request.";
+  } catch (error) {
+    logger.error("Krishi Mitra chat failed:", error.message);
+    throw new Error(`Chat assistant failed: ${error.message}`);
+  }
+}
+
+/**
+ * Phase 4: Ephemeral Auto-Scan Multi-Modal Extraction
+ * Extracts farmer profile structured data from a base64 encoded document image.
+ * Uses strict data minimization to avoid extracting generic PII (like Aadhaar numbers).
+ * 
+ * @param {string} base64Image - The base64 string of the uploaded document
+ * @param {string} documentType - Type of document (e.g. '7/12', 'Aadhaar', 'KCC')
+ * @returns {Promise<Object>} - Parsed profile object
+ */
+async function extractProfileFromDocument(base64Image, documentType) {
+  const systemPrompt = `You are a strict, secure OCR and data extraction AI for a government agricultural platform.
+Your job is to read the provided document (type: ${documentType}) and extract ONLY the agricultural and core demographic data required for scheme eligibility.
+
+STRICT PRIVACY RULES:
+1. NEVER extract or output any Government ID numbers (e.g., the 12-digit Aadhaar number, PAN number). Ignore them completely.
+2. If the document is an Aadhaar card, extract the Name, State, Date of Birth/Age, and Gender.
+3. If the document is a 7/12 Land Extract (Satbara), extract the Owner Name, State/District, and Land Holding (Sum the total land size in Acres heavily accurately by converting Hectares if needed; 1 Hectare = 2.47 Acres).
+
+OUTPUT FORMAT:
+Output ONLY valid JSON. Your output must strictly adhere to this schema:
+{
+  "name": "Extracted full name",
+  "age": Number (calculated from DOB if present),
+  "gender": "male" | "female" | "other",
+  "state": "Full State Name in English (e.g. Maharashtra)",
+  "category": "general" | "obc" | "sc" | "st" | "other" (infer if possible, else leave empty),
+  "landHolding": Number (in Acres),
+  "annualIncome": Number (if present)
+}
+Omit any keys where the data is not found in the image. DO NOT output markdown, backticks, or conversational text.`;
+
+  const messages = [
+    {
+      role: 'user',
+      content: [
+        { type: 'text', text: systemPrompt },
+        { 
+          type: 'image_url', 
+          image_url: { url: `data:image/jpeg;base64,${base64Image}` } 
+        }
+      ]
+    }
+  ];
+
+  try {
+    const completion = await runQueued(() =>
+      withRetry(() =>
+        groqInstances[currentGroqIndex].chat.completions.create({
+          model: "llama-3.2-11b-vision-preview", // Vision model
+          messages: messages,
+          temperature: 0.1,
+          response_format: { type: "json_object" }
+        })
+      )
+    );
+
+    const extractedText = completion.choices[0]?.message?.content || '{}';
+    return JSON.parse(extractedText);
+  } catch (error) {
+    logger.error('Document extraction failed:', error);
+    throw new Error('Failed to analyze document: ' + error.message);
   }
 }
 
@@ -537,4 +688,6 @@ module.exports = {
   extractProfileFromTranscript,
   transcribeAudio,
   translateEligibilityResult,
+  chatWithKrishiMitra,
+  extractProfileFromDocument
 };

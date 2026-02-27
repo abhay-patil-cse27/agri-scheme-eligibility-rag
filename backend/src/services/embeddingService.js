@@ -4,6 +4,10 @@ const logger = require('../config/logger');
 let embeddingPipeline = null;
 let isInitializing = false;
 
+// Phase 5 Performance: In-Memory cache for repeated embeddings (queries)
+const embeddingCache = new Map();
+const MAX_CACHE_SIZE = 1000;
+
 /**
  * Initialize the embedding model.
  * Downloads Xenova/all-MiniLM-L6-v2 on first run (~80MB), cached after.
@@ -42,6 +46,11 @@ async function initialize() {
  * Generate a 384-dimensional embedding for a single text string.
  */
 async function generateEmbedding(text) {
+  // Phase 5: Cache Check
+  if (embeddingCache.has(text)) {
+    return embeddingCache.get(text);
+  }
+
   const pipe = await initialize();
 
   const output = await pipe(text, {
@@ -50,7 +59,16 @@ async function generateEmbedding(text) {
   });
 
   // Convert from Tensor to plain JS array
-  return Array.from(output.data);
+  const embeddingArray = Array.from(output.data);
+
+  // Store in cache
+  if (embeddingCache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = embeddingCache.keys().next().value;
+    embeddingCache.delete(oldestKey);
+  }
+  embeddingCache.set(text, embeddingArray);
+
+  return embeddingArray;
 }
 
 /**

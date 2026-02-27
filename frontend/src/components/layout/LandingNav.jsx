@@ -50,8 +50,8 @@ export default function LandingNav() {
             <Sprout size={17} color="white" />
           </div>
           <span style={{ fontSize: '1.15rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
-            <span style={{ background: GREEN_GRAD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Niti</span>
-            <span style={{ color: text }}>Setu</span>
+            <span style={{ background: GREEN_GRAD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{t('app_name_prefix')}</span>
+            <span style={{ color: text }}>{t('app_name_suffix')}</span>
           </span>
         </Link>
 
@@ -76,7 +76,7 @@ export default function LandingNav() {
           
           <LanguageSwitcher />
 
-          <motion.button whileTap={{ scale: 0.9 }} onClick={toggleTheme} title="Toggle theme" style={{
+          <motion.button whileTap={{ scale: 0.9 }} onClick={toggleTheme} title={isDark ? t('sb_light_mode') : t('sb_dark_mode')} style={{
             background: glass, border: `1px solid ${border}`, borderRadius: '8px',
             padding: '7px', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s',
           }}>

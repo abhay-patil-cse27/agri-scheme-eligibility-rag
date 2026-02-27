@@ -67,4 +67,8 @@ const schemeSchema = new mongoose.Schema(
   }
 );
 
+// Phase 5 Performance: Indexing for faster getAllSchemes lookup
+schemeSchema.index({ isActive: 1, createdAt: -1 });
+schemeSchema.index({ category: 1 });
+
 module.exports = mongoose.model('Scheme', schemeSchema);

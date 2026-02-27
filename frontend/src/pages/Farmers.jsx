@@ -52,7 +52,7 @@ export default function Farmers() {
   }, []);
 
   const handleDelete = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete the profile for ${name}?`)) return;
+    if (!window.confirm(`${t('toast_confirm_profile_delete')} (${name})`)) return;
     try {
       setLoading(true);
       await deleteProfile(id);
@@ -288,19 +288,19 @@ export default function Farmers() {
                     <input name="annualIncome" type="number" value={editingProfile.annualIncome || ''} onChange={handleChange} className="input-dark" />
                   </div>
                   <div>
-                    <label style={labelStyle}><User size={14} /> Gender</label>
+                    <label style={labelStyle}><User size={14} /> {t('pf_gender')}</label>
                     <select name="gender" value={editingProfile.gender || 'Male'} onChange={handleChange} className="select-dark">
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
+                      <option value="Male">{t('pf_male')}</option>
+                      <option value="Female">{t('pf_female')}</option>
+                      <option value="Other">{t('pf_other')}</option>
                     </select>
                   </div>
                   <div>
-                    <label style={labelStyle}><MapPin size={14} /> Ownership Type</label>
+                    <label style={labelStyle}><MapPin size={14} /> {t('pf_ownership_type')}</label>
                     <select name="ownershipType" value={editingProfile.ownershipType || 'Owner'} onChange={handleChange} className="select-dark">
-                      <option value="Owner">Owner</option>
-                      <option value="Tenant/Sharecropper">Tenant/Sharecropper</option>
-                      <option value="Co-owner">Co-owner</option>
+                      <option value="Owner">{t('pf_owner')}</option>
+                      <option value="Tenant/Sharecropper">{t('pf_tenant')}</option>
+                      <option value="Co-owner">{t('pf_coowner')}</option>
                     </select>
                   </div>
                   
@@ -311,22 +311,22 @@ export default function Farmers() {
                     </label>
                     <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: 0 }}>
                       <input type="checkbox" name="hasBPLCard" checked={editingProfile.hasBPLCard || false} onChange={handleChange} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-                      <User size={14} /> BPL Card Holder
+                      <User size={14} /> {t('pf_bpl_card')}
                     </label>
                     <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: 0 }}>
                       <input type="checkbox" name="hasKcc" checked={editingProfile.hasKcc || false} onChange={handleChange} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-                      <Wallet size={14} /> Kisan Credit Card
+                      <Wallet size={14} /> {t('pf_kcc_owner')}
                     </label>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '12px' }}>
                     <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: 0 }}>
                       <input type="checkbox" name="isDifferentlyAbled" checked={editingProfile.isDifferentlyAbled || false} onChange={handleChange} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-                      <User size={14} /> Divyangjan
+                      <User size={14} /> {t('pf_divyangjan')}
                     </label>
                     <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: 0 }}>
                       <input type="checkbox" name="hasAadharSeededBank" checked={editingProfile.hasAadharSeededBank || false} onChange={handleChange} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-                      <CheckCircle2 size={14} /> Aadhar Seeded Bank
+                      <CheckCircle2 size={14} /> {t('pf_aadhar_seeded')}
                     </label>
                   </div>
                 </div>
@@ -335,7 +335,7 @@ export default function Farmers() {
                 <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
                   <label style={{ ...labelStyle, marginBottom: '12px' }}>
                     <Shield size={16} style={{ color: 'var(--accent-indigo)' }} /> 
-                    Currently Enrolled Schemes (Enables Conflict Detection)
+                    {t('pf_enrolled_title')}
                   </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                     {allSchemes.map(scheme => {
@@ -411,7 +411,7 @@ export default function Farmers() {
                         }}
                       >
                         <Plus size={14} style={{ display: 'inline', marginRight: '4px' }} />
-                        Not Listed?
+                        {t('pf_not_listed')}
                       </button>
                     )}
                   </div>
@@ -422,7 +422,7 @@ export default function Farmers() {
                         type="text" 
                         value={customSchemeName}
                         onChange={(e) => setCustomSchemeName(e.target.value)}
-                        placeholder="Enter scheme name..."
+                        placeholder={t('pf_enter_scheme_ph')}
                         className="input-dark"
                         style={{ flex: 1, padding: '8px 12px' }}
                       />
@@ -439,7 +439,7 @@ export default function Farmers() {
                         className="btn-glow"
                         style={{ padding: '8px 16px', fontSize: '0.8rem' }}
                       >
-                        Add
+                        {t('pf_add')}
                       </button>
                       <button
                         type="button"

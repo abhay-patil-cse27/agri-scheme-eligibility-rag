@@ -24,8 +24,11 @@ const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const graphRoutes = require('./routes/graphRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+const scanRoutes = require('./routes/scanRoutes');
 
 const app = express();
+
 
 // Serve scheme documents statically
 app.use('/api/schemes/docs', express.static(path.join(__dirname, '..', 'data', 'schemes')));
@@ -71,6 +74,8 @@ app.use('/api/voice', voiceRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/graph', graphRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/scan', scanRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────
 app.use((req, res) => {

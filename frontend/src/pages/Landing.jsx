@@ -230,9 +230,9 @@ export default function Landing() {
           />
         </motion.div>
 
-        <div style={{ position: 'absolute', top: '15%', right: '8%', zIndex: 0, opacity: isDark ? 0.2 : 0.3 }}>
+        <div style={{ position: 'absolute', top: '15%', right: '8%', zIndex: 0, opacity: isDark ? 0.4 : 0.6 }}>
           <CircularText 
-            text="NITI*SETU*SMART*SCHEMES*" 
+            text="SMART * SCHEMES * NITI * SETU * " 
             onHover="goBonkers" 
             spinDuration={15} 
           />
@@ -343,15 +343,15 @@ export default function Landing() {
         </div>
       </InView>
 
-      <Wave fill={isDark ? '#000000' : '#111827'} />
+      <Wave fill={isDark ? '#060d06' : '#faf7ee'} />
 
       {/* ══ Interactive Fluid Glass Section ══ */}
-      <InView id="interactive" style={{ padding: '0', background: isDark ? '#000000' : '#111827', position: 'relative' }}>
+      <InView id="interactive" style={{ padding: '0', background: isDark ? '#060d06' : '#faf7ee', position: 'relative' }}>
         <div style={{ textAlign: 'center', paddingTop: '80px', position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, pointerEvents: 'none' }}>
-          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#4ade80' }}>
+          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534' }}>
             {t('lp_interactive_explore', 'Interactive Exploration')}
           </span>
-          <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3.5rem)', fontWeight: 800, color: 'white', marginTop: '16px', letterSpacing: '-0.03em' }}>
+          <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3.5rem)', fontWeight: 800, color: c.text, marginTop: '16px', letterSpacing: '-0.03em' }}>
             {t('lp_fluid_title', 'Experience the Engine')}
           </h2>
         </div>
@@ -490,6 +490,15 @@ export default function Landing() {
             <div>
               <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>{t('lp_footer_portal')}</p>
               {[[t('btn_free_check'), '/check'], [t('btn_signin'), '/login'], [t('btn_register'), '/register']].map(([l, to]) => (
+                <Link key={l} to={to} style={{ display: 'block', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textDecoration: 'none', transition: 'color 0.2s' }}
+                  onMouseOver={e => e.currentTarget.style.color = c.text}
+                  onMouseOut={e => e.currentTarget.style.color = c.textMute}
+                >{l}</Link>
+              ))}
+            </div>
+            <div>
+              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>Legal & Resources</p>
+              {[["FAQ", '/faq'], ["Privacy Policy", '/privacy']].map(([l, to]) => (
                 <Link key={l} to={to} style={{ display: 'block', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textDecoration: 'none', transition: 'color 0.2s' }}
                   onMouseOver={e => e.currentTarget.style.color = c.text}
                   onMouseOut={e => e.currentTarget.style.color = c.textMute}

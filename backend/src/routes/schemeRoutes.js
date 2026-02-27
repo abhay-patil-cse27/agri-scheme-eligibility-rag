@@ -175,7 +175,7 @@ router.post(
 router.get(
   '/',
   protect,
-  cache('5 minutes'),
+  cache('1 hour'),
   asyncHandler(async (req, res) => {
     const schemes = await Scheme.find({ isActive: true })
       .select('-__v')
