@@ -35,6 +35,8 @@ backend/uploads/*
 !backend/uploads/.gitkeep
 docs/client_secret_*.json
 docs/Neo4j-*.txt
+docs/schemes.zip
+*.zip
 *.pdf
 
 # Editor Folders
