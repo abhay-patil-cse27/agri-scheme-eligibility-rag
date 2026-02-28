@@ -376,7 +376,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
       </div>
 
       {/* Existing Enrollments Section */}
-      <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
+      <div style={{ marginTop: '24px', padding: '20px', background: 'var(--bg-glass)', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isEnrolled ? '16px' : '0' }}>
           <label style={{ ...labelStyle, marginBottom: 0 }}>
             <Shield size={16} style={{ color: 'var(--accent-indigo)' }} /> 
@@ -394,8 +394,8 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
               }}
               style={{
                 padding: '4px 12px', borderRadius: '100px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
-                background: isEnrolled ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.05)',
-                color: isEnrolled ? 'black' : 'var(--text-secondary)',
+                background: isEnrolled ? 'var(--accent-indigo)' : 'var(--bg-glass)',
+                color: isEnrolled ? 'var(--bg-primary)' : 'var(--text-secondary)',
                 border: `1px solid ${isEnrolled ? 'var(--accent-indigo)' : 'var(--border-glass)'}`,
                 transition: 'all 0.2s'
               }}
@@ -410,7 +410,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
               }}
               style={{
                 padding: '4px 12px', borderRadius: '100px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
-                background: !isEnrolled ? 'var(--accent-rose)' : 'rgba(255,255,255,0.05)',
+                background: !isEnrolled ? 'var(--accent-rose)' : 'var(--bg-glass)',
                 color: !isEnrolled ? 'white' : 'var(--text-secondary)',
                 border: `1px solid ${!isEnrolled ? 'var(--accent-rose)' : 'var(--border-glass)'}`,
                 transition: 'all 0.2s'
@@ -437,8 +437,8 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
                         onClick={() => toggleScheme(s.name)}
                         style={{
                           padding: '6px 12px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-                          background: isSelected ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.05)',
-                          color: isSelected ? 'black' : 'var(--text-secondary)',
+                          background: isSelected ? 'var(--accent-indigo)' : 'var(--bg-glass)',
+                          color: isSelected ? 'var(--bg-primary)' : 'var(--text-secondary)',
                           border: `1px solid ${isSelected ? 'var(--accent-indigo)' : 'var(--border-glass)'}`
                         }}
                       >
@@ -453,7 +453,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
                       type="button"
                       onClick={() => setForm({ ...form, activeSchemes: form.activeSchemes.filter(s => s !== customName) })}
                       style={{
-                        padding: '6px 14px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', background: 'var(--accent-indigo)', color: 'black', border: '1px solid var(--accent-indigo)', display: 'flex', alignItems: 'center', gap: '4px'
+                        padding: '6px 14px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', background: 'var(--accent-indigo)', color: 'var(--bg-primary)', border: '1px solid var(--accent-indigo)', display: 'flex', alignItems: 'center', gap: '4px'
                       }}
                     >
                       {customName} <X size={12} />
@@ -465,7 +465,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
                       type="button"
                       onClick={() => setShowCustomInput(true)}
                       style={{
-                        padding: '6px 14px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', background: 'rgba(255,255,255,0.05)', color: 'var(--accent-indigo)', border: '1px dashed var(--accent-indigo)'
+                        padding: '6px 14px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', background: 'var(--bg-glass)', color: 'var(--accent-indigo)', border: '1px dashed var(--accent-indigo)'
                       }}
                     >
                       <Plus size={14} style={{ display: 'inline', marginRight: '4px' }} />
