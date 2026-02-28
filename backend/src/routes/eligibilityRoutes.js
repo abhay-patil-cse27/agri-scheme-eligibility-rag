@@ -22,9 +22,11 @@ const PublicCheckCache = require('../models/PublicCheckCache');
  */
 function hashProfile(profile) {
   const sortedKeys = ['age', 'annualIncome', 'category', 'cropType', 'district', 'hasIrrigationAccess', 'landHolding', 'name', 'state'];
-  const baseString = sortedKeys
+  const coreString = sortedKeys
     .map(key => `${key}:${profile[key] || ''}`)
     .join('|');
+  const activeSchemesString = Array.isArray(profile.activeSchemes) ? profile.activeSchemes.sort().join(',') : '';
+  const baseString = coreString + '|activeSchemes:' + activeSchemesString;
   return crypto.createHash('sha256').update(baseString).digest('hex');
 }
 
