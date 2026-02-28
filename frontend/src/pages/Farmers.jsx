@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Users, Trash2, Edit2, Loader2, MapPin, Ruler, Search, User, Droplets, Wallet, Sprout, Shield, AlertCircle, CheckCircle2, X, Plus } from 'lucide-react';
 import { getProfiles, deleteProfile, updateProfile, getSchemes } from '../services/api';
+import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
 import { useTranslation } from 'react-i18next';
 import AgriCard from '../components/common/AgriCard';
 
@@ -23,6 +24,8 @@ export default function Farmers() {
   // Modal state
   const [editingProfile, setEditingProfile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleteName, setDeleteName] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customSchemeName, setCustomSchemeName] = useState('');
   
@@ -51,10 +54,17 @@ export default function Farmers() {
     fetchData();
   }, []);
 
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`${t('toast_confirm_profile_delete')} (${name})`)) return;
+  const handleDeleteClick = (id, name) => {
+    setDeleteId(id);
+    setDeleteName(name);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
     try {
       setLoading(true);
+      setDeleteId(null);
       await deleteProfile(id);
       await fetchData();
     } catch (err) {
@@ -199,7 +209,7 @@ export default function Farmers() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => handleDelete(profile._id, profile.name)}
+                  onClick={() => handleDeleteClick(profile._id, profile.name)}
                   style={{
                     background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.2)',
                     color: 'var(--accent-rose)', width: '36px', height: '36px', borderRadius: '8px',
@@ -470,6 +480,14 @@ export default function Farmers() {
           </div>
         )}
       </AnimatePresence>
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleConfirmDelete}
+        itemName={deleteName}
+        isDeleting={loading && !editingProfile}
+      />
     </div>
   );
 }

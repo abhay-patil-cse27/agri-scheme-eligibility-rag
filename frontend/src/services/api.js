@@ -85,6 +85,37 @@ export const transcribeAudio = (audioBlob, language = 'en') => {
 export const generateSpeech = (text, language = 'hi') =>
   api.post('/voice/tts', { text, language }, { responseType: 'blob' }).then((r) => r.data);
 
+// ── Chat API ──────────────────────────────
+export const chatWithKrishiMitra = async (query, history, language = 'en', sessionId = null) => {
+  const { data } = await api.post('/chat', { query, history, language, sessionId });
+  return data;
+};
+
+export const getChatSessions = async () => {
+  const { data } = await api.get('/chat/sessions');
+  return data;
+};
+
+export const createChatSession = async (title) => {
+  const { data } = await api.post('/chat/sessions', { title });
+  return data;
+};
+
+export const getSessionMessages = async (sessionId) => {
+  const { data } = await api.get(`/chat/sessions/${sessionId}/messages`);
+  return data;
+};
+
+export const deleteChatSession = async (sessionId) => {
+  const { data } = await api.delete(`/chat/sessions/${sessionId}`);
+  return data;
+};
+
+export const clearChatHistory = async () => {
+  const { data } = await api.delete('/chat/clear');
+  return data;
+};
+
 // ── Health ────────────────────────────────
 export const getHealth = () => api.get('/health').then((r) => r.data);
 

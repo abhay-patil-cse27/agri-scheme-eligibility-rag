@@ -429,5 +429,12 @@
   "lp_sec3_title": "Data Encryption",
   "lp_sec3_desc": "All data transmitted is secured using bank-grade TLS/SSL encryption. Database records are secured within our isolated clusters with strictly controlled access.",
   "lp_sec4_title": "AI Processing & Anonymity",
-  "lp_sec4_desc": "We actively strip Personally Identifiable Information (PII) from data before sending it to AI models, ensuring your identity remains completely anonymous during AI computation."
+  "lp_sec4_desc": "We actively strip Personally Identifiable Information (PII) from data before sending it to AI models, ensuring your identity remains completely anonymous during AI computation.",
+  "cm_confirm_delete_title": "Delete Confirmation",
+  "cm_confirm_delete_msg": "STRICT WARNING: This action cannot be undone. Are you sure you want to permanently delete this?",
+  "cm_confirm_delete_type_msg": "Type '{{confirmText}}' to proceed:",
+  "cm_confirm_delete_placeholder": "Type here...",
+  "cm_confirm_delete_btn": "Permanently Delete",
+  "chat_clear_title": "Clear Conversation?",
+  "chat_clear_msg": "STRICT WARNING: This will permanently delete your entire conversation history with Krishi Mitra. This action cannot be undone."
 }

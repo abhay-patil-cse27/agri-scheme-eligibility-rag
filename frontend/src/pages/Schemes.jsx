@@ -4,6 +4,7 @@ import {
   FileText, Upload, Trash2, Loader2, Plus, X, CheckCircle2, BarChart3
 } from 'lucide-react';
 import { getSchemes, uploadScheme, deleteScheme } from '../services/api';
+import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -154,6 +155,8 @@ export default function Schemes() {
   const [schemes, setSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleteName, setDeleteName] = useState('');
   const [deleting, setDeleting] = useState(null);
   const { addToast } = useToast();
   const { user } = useAuth();
@@ -177,9 +180,16 @@ export default function Schemes() {
     return acc;
   }, {});
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this scheme and all its chunks?')) return;
+  const handleDeleteClick = (id, name) => {
+    setDeleteId(id);
+    setDeleteName(name);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
     setDeleting(id);
+    setDeleteId(null);
     try {
       await deleteScheme(id);
       setSchemes((prev) => prev.filter((s) => s._id !== id));
@@ -303,7 +313,7 @@ export default function Schemes() {
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => handleDelete(scheme._id)}
+                              onClick={() => handleDeleteClick(scheme._id, scheme.name)}
                               disabled={deleting === scheme._id}
                               style={{
                                 display: 'flex', alignItems: 'center', gap: '6px',
@@ -330,6 +340,14 @@ export default function Schemes() {
 
       <AnimatePresence>
         {showUpload && <UploadModal onClose={() => setShowUpload(false)} onUpload={loadSchemes} />}
+        
+        <ConfirmDeleteModal
+          isOpen={!!deleteId}
+          onClose={() => setDeleteId(null)}
+          onConfirm={handleConfirmDelete}
+          itemName={deleteName}
+          isDeleting={!!deleting}
+        />
       </AnimatePresence>
     </div>
   );

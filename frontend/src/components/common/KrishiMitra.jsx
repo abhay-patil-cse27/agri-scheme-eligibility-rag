@@ -1,24 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send, Sprout, Leaf, User, Bot, HelpCircle, LayoutDashboard, Search, Volume2, VolumeX, Loader2, Home, Mic, MicOff, ChevronRight, CheckCircle2 } from 'lucide-react';
-import { sendChatMessage } from '../../services/chatService';
-import { generateSpeech } from '../../services/api';
+import { 
+  getChatSessions, 
+  getSessionMessages, 
+  clearChatHistory, 
+  chatWithKrishiMitra, 
+  generateSpeech 
+} from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
+import { 
+  MessageSquare, X, Send, Sprout, Leaf, User, Bot, HelpCircle, 
+  LayoutDashboard, Search, Volume2, VolumeX, Loader2, Home, 
+  Mic, MicOff, ChevronRight, CheckCircle2, Trash2 
+} from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 const KrishiMitra = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { 
-      id: 1, 
-      text: t('chat_greeting', "Namaste! I am Krishi Mitra, your agricultural guide. How can I help you today?"), 
-      sender: 'ai',
-      showSuggestions: true 
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
+  const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
@@ -63,6 +69,57 @@ const KrishiMitra = () => {
     }
   }, [i18n.language]);
 
+  const [currentSessionId, setCurrentSessionId] = useState(null);
+
+  const loadHistory = async () => {
+    try {
+      // 1. Get all sessions
+      const sessions = await getChatSessions();
+      
+      if (sessions && sessions.length > 0) {
+        const latestSession = sessions[0]; // List is sorted by updatedAt desc
+        setCurrentSessionId(latestSession._id);
+        
+        // 2. Load messages for this session
+        const history = await getSessionMessages(latestSession._id);
+        if (history && history.length > 0) {
+          const formatted = history.map(msg => ({
+            id: msg._id,
+            text: msg.content,
+            sender: msg.role === 'assistant' ? 'ai' : 'user',
+            showSuggestions: false
+          }));
+          setMessages(formatted);
+        } else {
+          showGreeting();
+        }
+      } else {
+        showGreeting();
+      }
+      setIsHistoryLoaded(true);
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+      showGreeting();
+    }
+  };
+
+  const showGreeting = () => {
+    setMessages([
+      { 
+        id: 'initial', 
+        text: t('chat_greeting', "Namaste! I am Krishi Mitra, your agricultural guide. How can I help you today?"), 
+        sender: 'ai',
+        showSuggestions: true 
+      }
+    ]);
+  };
+
+  useEffect(() => {
+    if (isOpen && !isHistoryLoaded) {
+      loadHistory();
+    }
+  }, [isOpen, isHistoryLoaded]);
+
   const toggleDictation = () => {
     if (!recognitionRef.current) return alert("Speech Recognition is not supported in this browser.");
     if (isDictating) {
@@ -95,30 +152,32 @@ const KrishiMitra = () => {
   const handleSend = async (text) => {
     if (!text.trim()) return;
 
-    // Clear suggestions from existing messsages when a new message is sent or option clicked
     setMessages(prev => prev.map(m => ({ ...m, showSuggestions: false })));
 
     const userMessage = { id: Date.now(), text, sender: 'user' };
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsLoading(true);
-    setActiveTab('chat'); // Switch to chat view if sent from home
+    setActiveTab('chat');
 
     try {
-      const history = messages.slice(-6).map(m => ({
+      const historyItems = messages.slice(-6).map(m => ({
         role: m.sender === 'user' ? 'user' : 'assistant',
         content: m.text
       }));
 
-      const response = await sendChatMessage(text, history, i18n.language);
+      const res = await chatWithKrishiMitra(text, historyItems, i18n.language, currentSessionId);
       
-      setMessages(prev => [...prev, { id: Date.now() + 1, text: response, sender: 'ai' }]);
+      if (!currentSessionId && res.sessionId) {
+        setCurrentSessionId(res.sessionId);
+      }
+
+      setMessages(prev => [...prev, { id: Date.now() + 1, text: res.response, sender: 'ai' }]);
       
       if (isAutoSpeech) {
-        speakResponse(response);
+        speakResponse(res.response);
       }
       
-      // Delay follow-up to allow reading
       setTimeout(() => {
         setMessages(prev => [
           ...prev, 
@@ -286,6 +345,13 @@ const KrishiMitra = () => {
               </div>
               <div className="flex items-center gap-1 ml-auto">
                 <button 
+                  onClick={() => setShowClearConfirm(true)}
+                  className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors text-white/70"
+                  title="Clear Conversation"
+                >
+                  <Trash2 size={16} />
+                </button>
+                <button 
                   onClick={() => setIsAutoSpeech(!isAutoSpeech)}
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isAutoSpeech ? 'bg-white/20 text-yellow-300' : 'hover:bg-white/10 text-white/70'}`}
                   title={isAutoSpeech ? "Disable Auto-Speech" : "Enable Auto-Speech"}
@@ -300,6 +366,33 @@ const KrishiMitra = () => {
                 </button>
               </div>
             </div>
+
+            <ConfirmDeleteModal
+              isOpen={showClearConfirm}
+              onClose={() => setShowClearConfirm(false)}
+              onConfirm={async () => {
+                setIsClearing(true);
+                try {
+                  await clearChatHistory();
+                  setMessages([
+                    { 
+                      id: 'reset', 
+                      text: t('chat_greeting', "Namaste! I am Krishi Mitra, your agricultural guide. How can I help you today?"), 
+                      sender: 'ai',
+                      showSuggestions: true 
+                    }
+                  ]);
+                  setShowClearConfirm(false);
+                } catch (err) {
+                  alert("Failed to clear history");
+                } finally {
+                  setIsClearing(false);
+                }
+              }}
+              title={t('chat_clear_title', "Clear Conversation?")}
+              message={t('chat_clear_msg', "This will permanently delete all your chat messages with Krishi Mitra.")}
+              isDeleting={isClearing}
+            />
 
             {/* TAB CONTENT */}
             {activeTab === 'home' ? (

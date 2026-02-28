@@ -15,8 +15,8 @@ decisions in their native language.
 
 ## Key Features
 
-*   **Multilingual Support:** Native localization for 6 core languages:
-    **Hindi, Marathi, Malayalam, Punjabi, Bengali, and English**.
+*   **Multilingual Support:** Native localization and intelligence for 10 regional languages:
+    **English, Hindi, Marathi, Bengali, Telugu, Tamil, Gujarati, Kannada, Malayalam, and Punjabi**.
 *   **Krishi Mitra AI Assistant:** A floating, voice-enabled assistant
     supporting **Voice Dictation** (STT) and **Auto-Speech Synthesis** (TTS).
 *   **Privacy-First (Zero-Storage):** Vision AI scans 7/12 extracts and Aadhaar
