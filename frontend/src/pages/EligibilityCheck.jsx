@@ -385,7 +385,13 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
               type="button"
-              onClick={() => setIsEnrolled(true)}
+              onClick={() => {
+                setIsEnrolled(true);
+                // Auto-select everything by default to ensure maximum conflict scanning if they don't know exact names
+                if (!form.activeSchemes || form.activeSchemes.length === 0) {
+                  setForm(prev => ({ ...prev, activeSchemes: displaySchemes.map(s => s.name) }));
+                }
+              }}
               style={{
                 padding: '4px 12px', borderRadius: '100px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
                 background: isEnrolled ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.05)',
