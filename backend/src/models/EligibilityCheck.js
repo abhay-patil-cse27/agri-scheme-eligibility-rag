@@ -17,6 +17,10 @@ const eligibilityCheckSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    profileHash: {
+      type: String,
+      required: false, // Required false to support legacy cached records
+    },
     eligible: {
       type: Boolean,
       required: true,

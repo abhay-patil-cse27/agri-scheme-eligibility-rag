@@ -109,10 +109,19 @@ router.post(
     const results = await Promise.all(
       schemesToCheck.map(async (scheme) => {
         try {
-          // Caching Logic: Check for recent existing results (last 24h)
+          // Calculate a deterministic profile hash so cache invalidates if user changes active schemes or land size
+          const profileStringForHash = JSON.stringify({
+            age: profile.age, state: profile.state, landHolding: profile.landHolding, 
+            cropType: profile.cropType, category: profile.category, income: profile.annualIncome, 
+            activeSchemes: profile.activeSchemes || []
+          });
+          const profileHash = crypto.createHash('sha256').update(profileStringForHash).digest('hex');
+
+          // Caching Logic: Check for recent existing results (last 24h) matching this EXACT profile state
           const recentCheck = await EligibilityCheck.findOne({
             farmerId: profile._id,
             schemeId: scheme._id,
+            profileHash: profileHash,
             createdAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
           })
             .sort({ createdAt: -1 })
@@ -181,6 +190,7 @@ router.post(
             farmerId: profile._id,
             schemeId: scheme._id,
             schemeName: scheme.name,
+            profileHash: profileHash,
             eligible: llmResult.eligible,
             confidence: llmResult.confidence,
             reason: llmResult.reason,
