@@ -124,9 +124,9 @@ STRICT RULES:
     - FAQs are for clarification only and should never override official policy documents.
 9. GRAPH-BASED EXCLUSION RULES & DUPLICATE CHECKS (CRITICAL):
     - If you are provided with "GRAPH CONFLICTS", these are absolute business rules from the graph database.
-    - If the "Currently Enrolled In" list contains the EXACT SAME scheme you are evaluating, you MUST mark them NOT ELIGIBLE with the reason "Duplicate Enrollment".
-    - If the "Currently Enrolled In" list contains multiple other schemes from the exact same category (e.g. they are enrolled in 5 other insurance schemes), treat it as a mutual exclusion conflict and reject them, explaining they already have active coverage.
-    - This rule overrides everything else.
+    - DUPLICATE OVERRIDE: Actively review the "Currently Enrolled In" list. If the farmer is enrolled in a scheme that serves the EXACT SAME PURPOSE or is clearly a variation of the scheme you are evaluating (e.g., evaluating 'Revised KCC' when they already have 'Master Circular KCC', or both are PM crop insurances), you MUST instantly mark them NOT ELIGIBLE with the reason "Duplicate Enrollment / Active Coverage". 
+    - Do NOT require exact string matches to reject them. Be aggressive in identifying overlapping coverage.
+    - This rule overrides everything else. Even if they meet all demographic criteria, they cannot double-dip.
 
 10. ENHANCED ANALYSIS RULES (STRICT DEMOGRAPHICS):
     - CROSS-VERIFY: Check if the farmer's Annual Income exceeds the document's poverty line/limit.
