@@ -6,13 +6,16 @@ Vite. It follows a **Glassmorphic Design System** for a premium, modern aestheti
 ## 🎨 Design System & UI Components
 
 The UI is built using a custom "Glass" framework, utilizing **Tailwind CSS** and
-**Framer Motion** for micro-interactions.
+**Framer Motion** combined with **React Bits** components for high-end micro-interactions
+and complex animations.
 
 ### Signature Components
 *   **Krishi Mitra Assistant:** A persistent, floating AI assistant that handles
     voice interaction (STT/TTS).
 *   **Aurora & Glass Cards:** High-transparency containers with backdrop-blur
-    filters for a cohesive glass effect.
+    filters for a cohesive glassmorphic effect.
+*   **React Bits UI Elements:** Pre-built, customizable animated components that
+    give a modern, polished feel without heavy overhead.
 *   **Multilingual Dashboard:** Supports 6 regional languages with instant context
     switching via i18next logic.
 

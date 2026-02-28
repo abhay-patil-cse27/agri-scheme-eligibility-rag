@@ -36,11 +36,25 @@ performance and strict data privacy.
 
 | Layer | Technology | Role |
 | :--- | :--- | :--- |
-| **Frontend** | React 19, Vite, Framer Motion | Premium Glassmorphic UI/UX |
-| **API Gateway** | Express.js, JWT, Helmet | Secure Orchestration & Rate Limiting |
-| **Intelligence** | Groq (Llama 3.3/3.2), RRF | Core RAG & Vision Reasoning |
-| **Storage** | MongoDB Atlas, Neo4j Aura | Vector Data & Knowledge Graph |
-| **Voice** | Web Speech API, ElevenLabs | Multilingual STT/TTS |
+| **Frontend UI** | React 19, Vite, Framer Motion, **React Bits** | Premium **Glassmorphic** design system, interactive animations, and responsive layouts. |
+| **Auth & Security** | **Google OAuth**, **JWT**, Helmet, Rate Limiter | Secure 1-click social login, stateless session management, and DDOS protection. |
+| **API Gateway** | Express.js, Node.js | Secure orchestration, file uploading (Multer), and caching (`apicache`). |
+| **Intelligence** | **Groq Cloud** (Llama 3.3/3.2) | Core reasoning, RAG analysis, and Vision processing with ultra-fast inference speeds. |
+| **Embeddings** | **Xenova/all-MiniLM-L6-v2** | Local, zero-cost vector embeddings processed via Transformers.js. |
+| **Vector DB** | **MongoDB Atlas** | Stores users, scheme data, and 1000-character document chunks with rich metadata for `$vectorSearch`. |
+| **Graph DB** | **Neo4j Aura (Free)** | Relationship mapping for scheme constraints to detect conflicting eligibility (Knowledge Graph). |
+| **Voice Ops** | Web Speech API, **ElevenLabs** | Multilingual Speech-to-Text (native) and high-fidelity Text-to-Speech synthesis. |
+| **Email/Comms** | Nodemailer, **Mailtrap** | SMTP configuration for reliable, sandboxed transactional email delivery. |
+
+### Component Deep-Dive
+
+*   **Groq Cloud:** Powers the core intelligence utilizing Llama 3.3 for lightning-fast logical reasoning and Llama 3.2 Vision for ephemeral document extraction.
+*   **Vector DB (MongoDB Atlas):** Serves as the primary data lake. Stores over 10,000 highly contextual semantic chunks (1000 chars each with 200 char overlaps) mapped with metadata for `$vectorSearch`.
+*   **Knowledge Graph (Neo4j):** Models complex scheme rules and exclusions, preventing conflicting eligibility conditions natively without heavy procedural code.
+*   **Local Embeddings:** Uses the `Xenova/all-MiniLM-L6-v2` model executed entirely server-side via Transformers.js to map policy texts into zero-cost, privacy-preserving 384-dimensional vectors.
+*   **Voice Engine (ElevenLabs):** Translates the LLM’s text responses into highly realistic, localized neural speech output for an accessibility-first experience.
+*   **SMTP & Mailtrap:** Configured to manage transactional outgoing communications (like OTPs or notices) via a secure, sandboxed testing environment.
+*   **Auth & Security Layer:** Integrates **Google OAuth** for frictionless 1-click logins, combined with **JWT** for stateless session management. **Rate Limiting** middleware strictly guards all critical routes against DDOS attacks and unauthorized scraping.
 
 ### Hybrid RAG Intelligence Pipeline
 
