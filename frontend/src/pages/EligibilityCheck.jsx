@@ -187,7 +187,7 @@ function VoiceInput({ onProfileExtracted }) {
 }
 
 /* ── Profile Form ───────────────────────── */
-function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selectedScheme = '' }) {
+function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selectedScheme = '', selectedCategory = '' }) {
   const { t } = useTranslation();
   const [form, setForm] = useState({
     name: '', age: '', state: '', district: '', landHolding: '',
@@ -200,10 +200,17 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
   const [customSchemeName, setCustomSchemeName] = useState('');
 
   const displaySchemes = allSchemes.filter(s => {
-    if (!selectedScheme || selectedScheme === 'all') return true;
+    // 1. If Category is selected in dropdown, ONLY show schemes in that category
+    if (selectedCategory) {
+      return s.category === selectedCategory && s.name !== selectedScheme;
+    }
+    
+    // 2. Fallback logic: Auto-detect from selectedScheme if no category dropdown is forced
     const selectedObj = allSchemes.find(as => as.name === selectedScheme);
-    if (!selectedObj) return true;
-    return s.category === selectedObj.category && s.name !== selectedScheme;
+    if (!selectedObj && selectedScheme !== 'all') return false; 
+    
+    const targetCategory = selectedObj ? selectedObj.category : (s.category || 'other');
+    return s.category === targetCategory && s.name !== selectedScheme;
   });
 
   useEffect(() => {
@@ -1173,7 +1180,14 @@ export default function EligibilityCheck() {
         }} />
 
         {/* Profile Form */}
-        <ProfileForm initialData={voiceProfile || location.state?.profile} onSubmit={handleCheck} loading={loading} allSchemes={schemes} selectedScheme={selectedScheme} />
+        <ProfileForm 
+          initialData={voiceProfile || location.state?.profile} 
+          onSubmit={handleCheck} 
+          loading={loading} 
+          allSchemes={schemes} 
+          selectedScheme={selectedScheme}
+          selectedCategory={selectedCategory} 
+        />
 
         {/* Result */}
         <AnimatePresence>
