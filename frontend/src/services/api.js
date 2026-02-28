@@ -27,7 +27,7 @@ export const resetPassword = (token, password) => api.put(`/auth/resetpassword/$
 export const getAllUsers = () => api.get('/auth/users').then((r) => r.data);
 
 // ── Schemes ───────────────────────────────
-export const getSchemes = () => api.get('/schemes').then((r) => r.data);
+export const getSchemes = () => api.get(`/schemes?_v=${Date.now()}`).then((r) => r.data);
 export const getScheme = (id) => api.get(`/schemes/${id}`).then((r) => r.data);
 export const deleteScheme = (id) => api.delete(`/schemes/${id}`).then((r) => r.data);
 
