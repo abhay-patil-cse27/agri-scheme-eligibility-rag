@@ -108,7 +108,14 @@ router.post(
 /**
  * POST /api/voice/tts
  * Proxy text to ElevenLabs API and stream back the MP3
+ * Added: In-memory LRU caching to heavily save expensive TTS API calls.
  */
+const crypto = require('crypto');
+const fetch = require('node-fetch');
+// Set up a simple in-memory cache for audio buffers. 
+// In a highly-scaled production environment, Redis would replace this.
+const ttsCache = new Map();
+
 router.post(
   '/tts',
   asyncHandler(async (req, res) => {
@@ -121,11 +128,19 @@ router.post(
     }
 
     try {
-      // Use the Multilingual v2 model with a default voice (e.g., Rachel, or any generic voice ID)
-      // Voice ID "EXAVITQu4vr4xnSDxMaL" is a common default 'Bella' or 'Rachel' '21m00Tcm4TlvDq8ikWAM'
-      // Select voice based on language
-      // Hindi (hi): 'fD9jD4N1J6U1K1K1K1K1' or 'EXAVITQu4vr4xnSDxMaL'
-      // Marathi (mr): 'Lcf7uRWjS0D1IogJ_0A_'
+      // 1. Generate a deterministic hash for this specific TTS request
+      const cacheKey = crypto.createHash('sha256').update(`${language}:${text}`).digest('hex');
+
+      // 2. Check if we already paid for and translated this exact string
+      if (ttsCache.has(cacheKey)) {
+        logger.info(`TTS Cache HIT: Serving pre-generated audio for hash ${cacheKey.substring(0,8)}...`);
+        res.set({
+          'Content-Type': 'audio/mpeg',
+          'X-Cache': 'HIT'
+        });
+        return res.send(ttsCache.get(cacheKey));
+      }
+
       const voiceMapping = {
         'hi': 'cgSbaPmcP2lUWs9G8CuK', // Warm, clear Hindi female
         'mr': 'Lcf7uRWjS0D1IogJ_0A_', // High quality Marathi female
@@ -134,16 +149,12 @@ router.post(
       
       const voiceId = voiceMapping[language] || voiceMapping['en'];
       
-      console.log(`Generating TTS for language: ${language} using voice: ${voiceId}`);
+      logger.info(`TTS Cache MISS: Generating new audio for language: ${language} using voice: ${voiceId}`);
 
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'xi-api-key': config.elevenlabsApiKey,
-          'Accept': 'audio/mpeg'
-        },
-        body: JSON.stringify({
+      const axios = require('axios');
+      const response = await axios.post(
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
+        {
           text: text,
           model_id: "eleven_multilingual_v2",
           voice_settings: {
@@ -152,21 +163,35 @@ router.post(
             style: 0.0,
             use_speaker_boost: true
           }
-        })
-      });
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'xi-api-key': config.elevenlabsApiKey,
+            'Accept': 'audio/mpeg'
+          },
+          responseType: 'arraybuffer' // CRITICAL: Treat download as RAW bits, not string JSON
+        }
+      );
 
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`ElevenLabs API Error: ${response.status} - ${errText}`);
+      // Convert downloaded stream to Buffer
+      const buffer = Buffer.from(response.data);
+
+      // 3. Save to cache
+      ttsCache.set(cacheKey, buffer);
+      
+      // Limit memory cache to roughly the last 500 requests to prevent memory leaks
+      if (ttsCache.size > 500) {
+        const firstKey = ttsCache.keys().next().value;
+        ttsCache.delete(firstKey);
       }
 
       res.set({
-        'Content-Type': 'audio/mpeg'
+        'Content-Type': 'audio/mpeg',
+        'X-Cache': 'MISS'
       });
 
       // Send the audio buffer back to the client
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
       res.send(buffer);
 
     } catch (err) {
@@ -175,5 +200,6 @@ router.post(
     }
   })
 );
+
 
 module.exports = router;

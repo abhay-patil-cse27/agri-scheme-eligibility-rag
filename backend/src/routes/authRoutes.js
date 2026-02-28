@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
+const OTP = require('../models/OTP');
 const { asyncHandler } = require('../middleware/errorHandler');
 const config = require('../config/env');
 const { protect, authorize } = require('../middleware/auth');
@@ -10,6 +11,76 @@ const sendEmail = require('../utils/sendEmail');
 const { OAuth2Client } = require('google-auth-library');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+/**
+ * POST /api/auth/send-otp
+ * Generate and send OTP for registration or password reset
+ */
+router.post(
+  '/send-otp',
+  asyncHandler(async (req, res) => {
+    const { email, purpose } = req.body;
+
+    if (!email || !purpose) {
+      return res.status(400).json({ success: false, error: 'Please provide email and purpose' });
+    }
+
+    // If purpose is registration, check if user already exists
+    if (purpose === 'registration') {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ success: false, error: 'An account with this email already exists. Please log in instead.' });
+      }
+    }
+
+    // If purpose is password reset, check if user exists
+    if (purpose === 'password_reset') {
+      const existingUser = await User.findOne({ email });
+      if (!existingUser) {
+        return res.status(404).json({ success: false, error: 'No account found with this email address. Please register first.' });
+      }
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Save/Update OTP in DB
+    await OTP.findOneAndUpdate(
+      { email, purpose },
+      { otp, createdAt: Date.now() },
+      { upsert: true, new: true }
+    );
+
+    // Send Email
+    try {
+      const subject = purpose === 'registration' ? 'Verification Code for Registration' : 'Password Reset Code';
+      const action = purpose === 'registration' ? 'your account registration' : 'resetting your password';
+      
+      await sendEmail({
+        email,
+        subject,
+        html: `
+          <p style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 8px;">Authentication Code Required</p>
+          <p style="margin-bottom: 32px; color: #4b5563;">Use the high-security verification code below to authorize <strong>${action}</strong> on the Niti-Setu Portal. This code is unique to your session.</p>
+          
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; text-align: center; margin: 32px 0;">
+            <span style="font-size: 38px; font-weight: 800; letter-spacing: 12px; color: #059669; font-family: monospace;">${otp}</span>
+          </div>
+
+          <p style="font-size: 14px; color: #9ca3af; line-height: 1.5;">
+            <strong>Validity:</strong> 10 Minutes<br/>
+            If you did not initiate this request, please disregard this email. Your account remains protected.
+          </p>
+        `
+      });
+
+      res.status(200).json({ success: true, message: 'OTP sent to email' });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ success: false, error: 'Email could not be sent' });
+    }
+  })
+);
 
 // Helper to get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
@@ -33,12 +104,18 @@ const sendTokenResponse = (user, statusCode, res) => {
 
 /**
  * POST /api/auth/register
- * Register a new farmer
+ * Register a new farmer with OTP
  */
 router.post(
   '/register',
   asyncHandler(async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, otp } = req.body;
+
+    // Verify OTP
+    const otpRecord = await OTP.findOne({ email, otp, purpose: 'registration' });
+    if (!otpRecord) {
+      return res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
+    }
 
     // Create user (Force role to farmer, admins must be created manually in DB)
     const user = await User.create({
@@ -48,15 +125,23 @@ router.post(
       role: 'farmer',
     });
 
+    // Delete OTP record
+    await OTP.deleteOne({ _id: otpRecord._id });
+
     // Send Welcome Email
     try {
       await sendEmail({
         email: user.email,
         subject: 'Welcome to Niti-Setu',
         html: `
-          <h2 style="color: #1f2937; margin-top: 0;">Welcome, ${user.name}!</h2>
-          <p style="font-size: 16px; line-height: 1.5;">Your account has been successfully created. You can now log in to the Niti-Setu engine to check your agricultural scheme eligibility, save your history, and manage your profile.</p>
-          <p style="font-size: 16px; line-height: 1.5;">Thank you for joining.</p>
+          <p style="font-size: 20px; font-weight: 700; color: #111827; margin-top: 0;">Welcome to Niti-Setu, ${user.name}</p>
+          <p style="margin-bottom: 24px;">We are pleased to confirm that your account has been successfully provisioned. You now have full access to our agricultural intelligence engine, including personalized scheme matching and historical analytics.</p>
+          
+          <div style="background-color: #059669; color: #ffffff; padding: 16px 24px; border-radius: 8px; display: inline-block; font-weight: 600;">
+            Account Verified & Active
+          </div>
+
+          <p style="margin-top: 32px; font-size: 15px; color: #64748b;">Visit your dashboard to begin exploring eligible agricultural welfare programs.</p>
         `
       });
     } catch (err) {
@@ -139,9 +224,12 @@ router.put(
         email: user.email,
         subject: 'Security Alert: Profile Updated',
         html: `
-          <h2 style="color: #1f2937; margin-top: 0;">Hello, ${user.name}</h2>
-          <p style="font-size: 16px; line-height: 1.5;">Your Niti-Setu profile details (Name/Email) have been successfully updated.</p>
-          <p style="font-size: 16px; line-height: 1.5;">If you did not make this change, please contact an administrator immediately.</p>
+          <p style="font-size: 18px; font-weight: 700; color: #111827; margin-top: 0;">Identity Notification: Profile Updated</p>
+          <p style="margin-bottom: 16px;">Hello, ${user.name}. This is a professional notification to confirm that your profile attributes (Name/Email) have been successfully modified on the Niti-Setu platform.</p>
+          
+          <p style="font-size: 14px; padding: 12px; background-color: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b;">
+            <strong>Immediate Action:</strong> If you did not authorize this modification, please contact our security team immediately to prevent unauthorized access.
+          </p>
         `
       });
     } catch (err) {
@@ -178,9 +266,12 @@ router.put(
         email: user.email,
         subject: 'Security Alert: Password Changed',
         html: `
-          <h2 style="color: #1f2937; margin-top: 0;">Hello, ${user.name}</h2>
-          <p style="font-size: 16px; line-height: 1.5;">Your Niti-Setu account password was just changed successfully.</p>
-          <p style="font-size: 16px; line-height: 1.5; color: #dc2626; font-weight: bold;">If you did not make this change, please contact an administrator immediately as your account may be compromised.</p>
+          <p style="font-size: 18px; font-weight: 700; color: #111827; margin-top: 0;">Identity Security: Password Modification</p>
+          <p style="margin-bottom: 16px;">Hello, ${user.name}. We are writing to confirm that the security credentials (password) for your Niti-Setu account were recently updated.</p>
+          
+          <p style="font-size: 14px; padding: 12px; background-color: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b;">
+            <strong>Security Warning:</strong> High-risk activity detected. If this credential update was not performed by you, your account security may be compromised. Take immediate action to secure your portal access.
+          </p>
         `
       });
     } catch (err) {
@@ -191,79 +282,33 @@ router.put(
   })
 );
 
-/**
- * POST /api/auth/forgotpassword
- * Forgot password
- */
-router.post(
-  '/forgotpassword',
-  asyncHandler(async (req, res) => {
-    const user = await User.findOne({ email: req.body.email });
-
-    if (!user) {
-      return res.status(404).json({ success: false, error: 'There is no user with that email' });
-    }
-
-    // Get reset token
-    const resetToken = user.getResetPasswordToken();
-
-    // Generate Reset URL
-    const resetUrl = `http://localhost:5173/resetpassword/${resetToken}`;
-
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Password Reset Request',
-        html: `
-          <h2 style="color: #1f2937; margin-top: 0;">Password Reset</h2>
-          <p style="font-size: 16px; line-height: 1.5;">You requested a password reset for your Niti-Setu account. Please click the secure button below to choose a new password.</p>
-          <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; margin: 16px 0; font-size: 16px; color: #ffffff; background-color: #4f46e5; text-decoration: none; border-radius: 8px; font-weight: bold;">Reset Password</a>
-          <p style="font-size: 14px; color: #6b7280; margin-top: 16px;">This link will expire in 10 minutes. If you did not request this, please ignore this email.</p>
-        `
-      });
-
-      res.status(200).json({
-        success: true,
-        data: 'Email sent'
-      });
-    } catch (err) {
-      console.error(err);
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpire = undefined;
-      await user.save({ validateBeforeSave: false });
-
-      return res.status(500).json({ success: false, error: 'Email could not be sent' });
-    }
-  })
-);
 
 /**
- * PUT /api/auth/resetpassword/:resettoken
- * Reset password
+ * PUT /api/auth/resetpassword
+ * Reset password with OTP
  */
 router.put(
-  '/resetpassword/:resettoken',
+  '/resetpassword',
   asyncHandler(async (req, res) => {
-    // Get hashed token
-    const resetPasswordToken = crypto
-      .createHash('sha256')
-      .update(req.params.resettoken)
-      .digest('hex');
+    const { email, otp, password } = req.body;
 
-    const user = await User.findOne({
-      resetPasswordToken,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
+    // Verify OTP
+    const otpRecord = await OTP.findOne({ email, otp, purpose: 'password_reset' });
+    if (!otpRecord) {
+      return res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
+    }
 
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ success: false, error: 'Invalid or expired token' });
+      return res.status(404).json({ success: false, error: 'User not found' });
     }
 
     // Set new password
-    user.password = req.body.password;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
+    user.password = password;
     await user.save();
+
+    // Delete OTP
+    await OTP.deleteOne({ _id: otpRecord._id });
 
     sendTokenResponse(user, 200, res);
   })
@@ -311,6 +356,10 @@ router.post(
  * GET /api/auth/users
  * Get all registered users (Admin only)
  */
+/**
+ * GET /api/auth/users
+ * Get all registered users (Admin only)
+ */
 router.get(
   '/users',
   protect,
@@ -318,6 +367,32 @@ router.get(
   asyncHandler(async (req, res) => {
     const users = await User.find({}).select('-password').sort('-createdAt');
     res.status(200).json({ success: true, data: users });
+  })
+);
+
+/**
+ * DELETE /api/auth/users/:id
+ * Delete a user account (Admin only)
+ */
+router.delete(
+  '/users/:id',
+  protect,
+  authorize('admin'),
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    // Prevent admin from deleting themselves (safety)
+    if (user.id === req.user.id) {
+      return res.status(400).json({ success: false, error: 'You cannot delete your own admin account' });
+    }
+
+    await user.deleteOne();
+
+    res.status(200).json({ success: true, message: 'User deleted successfully' });
   })
 );
 

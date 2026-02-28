@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  FileText, Upload, Trash2, Loader2, Plus, X, CheckCircle2, BarChart3
+import { 
+  FileText, Upload, Trash2, Loader2, Plus, X, CheckCircle2, ExternalLink 
 } from 'lucide-react';
 import { getSchemes, uploadScheme, deleteScheme } from '../services/api';
 import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { CATEGORY_LINKS } from '../services/categoryService';
 import AgriCard from '../components/common/AgriCard';
 
 const fadeUp = {
@@ -257,9 +258,21 @@ export default function Schemes() {
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([catName, catSchemes]) => (
             <div key={catName}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '16px', color: categoryColors[catName]?.text || 'var(--accent-indigo)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {catName.replace(/_/g, ' ')} ({catSchemes.length})
-              </h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0, color: categoryColors[catName]?.text || 'var(--accent-indigo)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {catName.replace(/_/g, ' ')} ({catSchemes.length})
+                </h2>
+                {CATEGORY_LINKS[catName] && (
+                  <a 
+                    href={CATEGORY_LINKS[catName]} target="_blank" rel="noopener noreferrer"
+                    style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', background: 'rgba(56,189,248,0.1)', color: '#38bdf8', borderRadius: '100px', fontSize: '0.8rem', fontWeight: 600, border: '1px solid rgba(56,189,248,0.2)', transition: 'all 0.2s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(56,189,248,0.2)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(56,189,248,0.1)'}
+                  >
+                    Direct Portal <ExternalLink size={14} />
+                  </a>
+                )}
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
                 {catSchemes.map((scheme, i) => {
                   const cat = categoryColors[scheme.category] || categoryColors.other;

@@ -131,47 +131,39 @@ STRICT RULES:
 10. ENHANCED ANALYSIS RULES (STRICT DEMOGRAPHICS):
     - CROSS-VERIFY: Check if the farmer's Annual Income exceeds the document's poverty line/limit.
     - LAND AUDIT: Check if the farmer's Land Holding exceeds the small/marginal farmer definition in the text (typically 2 hectares or 5 acres).
-    - CATEGORY MATCH: Ensure specific benefits for women, SC, ST, or Minority groups are highlighted if the farmer belongs to those groups.
-    - DEMOGRAPHIC CHECK: If a scheme explicitly isolates women farmers, and the farmer's gender is Male, you MUST reject immediately.
-    - BPL CHECK: If the scheme explicitly requires BPL (Below Poverty Line) status, and the farmer's 'hasBPLCard' is false, YOU MUST REJECT, regardless of stated income.
-    - OWNERSHIP CHECK: If the scheme prohibits tenant/sharecropper farmers and requires ownership, check 'ownershipType'. If 'Tenant/Sharecropper', YOU MUST REJECT.
-    - QUESTION REASONING: In the 'reason', proactively explain 'why' they passed/failed. Don't just say 'You are eligible'. Say: 'You are eligible because your land holding of 2 acres is below the 5-acre limit defined in section 3.2'.
+    - CATEGORY MATCH: Ensure specific benefits for women, SC, ST, or Minority groups are highlighted.
+    - DEMOGRAPHIC CHECK: If a scheme is Gender-locked (e.g. women-only) and the profile is Male, reject.
+    - BPL CHECK: If BPL status is required and 'hasBPLCard' is false, REJECT.
+    - OWNERSHIP CHECK: If tenancy is prohibited and ownership is required, REJECT if 'ownershipType' is 'Tenant/Sharecropper'.
 
-Your task:
-- Compare the farmer's profile against the scheme's eligibility criteria found in the document excerpts.
-- Determine if the farmer is ELIGIBLE or NOT ELIGIBLE.
-- If ELIGIBLE:
-    - Provide the exact Benefit Amount (e.g., "₹6,000").
-    - Provide the Payment Frequency if available (e.g., "Yearly in 3 installments").
-    - Provide clear, simple Action Steps to apply (e.g., "1. Visit pmkisan.gov.in", "2. Submit Aadhar").
-    - Set rejectionExplanation to null.
-- If NOT ELIGIBLE:
-    - Set benefitAmount, paymentFrequency, and actionSteps to null.
-    - Provide a scannable rejectionExplanation object detailing EXACTLY what criteria they failed.
-        - criteria: The strict rule from the document.
-        - yourProfile: The farmer's actual value that caused the failure.
+11. STRICT FINANCIAL & CITATION AUDIT (CRITICAL):
+    - BENEFIT ACCURACY: Only provide an exact numerical amount (e.g., '₹6,000') if clearly stated in the excerpts.
+    - APPROX BENEFITS: If an exact amount is NOT in the text but the scheme type implies a range (e.g., KCC credit limits, PM-Kisan standard ¥6,000), you MAY provide an estimate but you MUST prefix it with "Approx: " and explain it's an estimation based on regional norms.
+    - UNREALISTIC AMOUNTS: Do NOT invent high benefit amounts. If the text mentions a subsidy percentage (e.g., 50% subsidy), record "50% Subsidy" instead of a raw rupee amount.
+    - STRICT CITATIONS: Your citation MUST be a verbatim, direct quote from the provided excerpts. Do not summarize or paraphrase. If you cannot find a direct quote, do not provide one.
+    - WEBSITE LOGIC: For 'officialWebsite', provide the URL only if found in the text. If NOT found, set it to exactly null. NEVER return the text "URL or null".
 
 RESPOND ONLY WITH THIS EXACT JSON STRUCTURE:
 {
   "eligible": true or false,
   "confidence": "high" or "medium" or "low",
-  "reason": "Detailed 3-5 sentence explanation that: (a) states whether the farmer is eligible or not, (b) explains which specific criteria from the document matched or failed against the farmer's profile, (c) mentions the specific numbers (e.g. land size, income, age) that led to the decision, and (d) uses a warm, empathetic tone addressing the farmer directly.",
-  "benefitAmount": "Exact amount as string or null (e.g., '₹6,000')",
-  "paymentFrequency": "Frequency as string or null (e.g., 'Yearly in 3 installments')",
-  "actionSteps": ["Upload Aadhar on portal", "Wait for verification"] or [],
-  "requiredDocuments": ["Aadhaar Card", "Land ownership records / 7/12 extract", "Bank passbook with IFSC", "Passport-size photo"] (ALWAYS provide this list — include all standard documents needed to apply for this scheme, plus any category-specific certificates as per the rules above),
+  "reason": "Detailed 3-5 sentence explanation. Use a warm, empathetic tone addressing the farmer directly.",
+  "benefitAmount": "Exact amount (e.g., '₹6,000') or 'Approx: ₹1.60 Lakh' or null",
+  "paymentFrequency": "Frequency string or null",
+  "actionSteps": ["Step 1", "Step 2"] or [],
+  "requiredDocuments": ["Doc 1", "Doc 2"] (Always include standard docs + category certs),
   "rejectionExplanation": {
-    "criteria": "Rule they failed (e.g., 'Maximum land holding allowed is 2 hectares')",
-    "yourProfile": "Their profile value (e.g., 'You have 3 hectares of land')"
+    "criteria": "Rule they failed",
+    "yourProfile": "Their profile value"
   } or null,
-  "citation": "Exact verbatim text quoted from the document excerpts that supports your decision. Must be a direct quote, not a paraphrase.",
+  "citation": "Verbatim text quoted from the document excerpts.",
   "citationSource": {
-    "documentName": "The filename of the source document (e.g., 'PM-KISAN_Guidelines.pdf')",
-    "page": 12,
-    "section": "Eligibility Criteria",
+    "documentName": "filename.pdf",
+    "page": 1,
+    "section": "Eligibility",
     "paragraph": 3
   },
-  "officialWebsite": "URL or null"
+  "officialWebsite": "https://example.gov.in or null"
 }`;
 
 const languageMap = {

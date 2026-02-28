@@ -17,15 +17,14 @@ decisions in their native language.
 
 *   **Multilingual Support:** Native localization and intelligence for 10 regional languages:
     **English, Hindi, Marathi, Bengali, Telugu, Tamil, Gujarati, Kannada, Malayalam, and Punjabi**.
-*   **Krishi Mitra AI Assistant:** A floating, voice-enabled assistant
-    supporting **Voice Dictation** (STT) and **Auto-Speech Synthesis** (TTS).
-*   **Privacy-First (Zero-Storage):** Vision AI scans 7/12 extracts and Aadhaar
-    documents in-memory without permanent storage.
+*   **Secure OTP Verification:** Robust 2-step verification system for registration and password recovery via official Government-style emails.
+*   **Krishi Mitra AI Assistant:** A floating, voice-enabled assistant with **Multi-session Chat History**, supporting **Voice Dictation** (STT) and **Auto-Speech Synthesis** (TTS) powered by a heavily optimized LRU Audio Cache.
+*   **Privacy-First (Zero-Storage):** Vision AI scans 7/12 extracts and Aadhaar documents in-memory without permanent storage.
 *   **Advanced RAG Engine:** Hybrid search (Vector + BM25) with **MMR** for
-    diversity and **Reciprocal Rank Fusion (RRF)** for precision.
-*   **Massive Knowledge Base:** 35+ official PDFs across 9 priority sectors.
+    diversity, **Reciprocal Rank Fusion (RRF)** for precision, and an **Intelligent Fuzzy-PDF Matcher** for robust document retrieval.
+*   **Massive Knowledge Base:** 35+ official PDFs across 9 priority sectors, directly linked to official government domains.
 *   **Citation-Backed Decisions:** Every result includes verbatim quotes and
-    page references for 100% verifiability.
+    page references for 100% verifiability, driven by a deep 3-Tier Optimization Cache (Eligibility, Translation, and TTS) to save API tokens and reduce latency.
 
 ---
 
@@ -37,24 +36,24 @@ performance and strict data privacy.
 | Layer | Technology | Role |
 | :--- | :--- | :--- |
 | **Frontend UI** | React 19, Vite, Framer Motion, **React Bits** | Premium **Glassmorphic** design system, interactive animations, and responsive layouts. |
-| **Auth & Security** | **Google OAuth**, **JWT**, Helmet, Rate Limiter | Secure 1-click social login, stateless session management, and DDOS protection. |
+| **Auth & Security** | **OTP**, **Google OAuth**, **JWT** | Secure 2-step registration, social login, stateless session management, and DDOS protection. |
 | **API Gateway** | Express.js, Node.js | Secure orchestration, file uploading (Multer), and caching (`apicache`). |
 | **Intelligence** | **Groq Cloud** (Llama 3.3/3.2) | Core reasoning, RAG analysis, and Vision processing with ultra-fast inference speeds. |
 | **Embeddings** | **Xenova/all-MiniLM-L6-v2** | Local, zero-cost vector embeddings processed via Transformers.js. |
 | **Vector DB** | **MongoDB Atlas** | Stores users, scheme data, and 1000-character document chunks with rich metadata for `$vectorSearch`. |
 | **Graph DB** | **Neo4j Aura (Free)** | Relationship mapping for scheme constraints to detect conflicting eligibility (Knowledge Graph). |
 | **Voice Ops** | Web Speech API, **ElevenLabs** | Multilingual Speech-to-Text (native) and high-fidelity Text-to-Speech synthesis. |
-| **Email/Comms** | Nodemailer, **Mailtrap** | SMTP configuration for reliable, sandboxed transactional email delivery. |
+| **Email/Comms** | Nodemailer, **Mailtrap** | SMTP for reliable transactional delivery of **OTPs**, welcome notices, and alerts. |
 
 ### Component Deep-Dive
 
 *   **Groq Cloud:** Powers the core intelligence utilizing Llama 3.3 for lightning-fast logical reasoning and Llama 3.2 Vision for ephemeral document extraction.
-*   **Vector DB (MongoDB Atlas):** Serves as the primary data lake. Stores over 10,000 highly contextual semantic chunks (1000 chars each with 200 char overlaps) mapped with metadata for `$vectorSearch`.
+*   **Vector DB (MongoDB Atlas):** Serves as the primary data lake. Stores 10,000+ contextual chunks for RAG and persists **Multi-session Chat History** for authenticated users.
 *   **Knowledge Graph (Neo4j):** Models complex scheme rules and exclusions, preventing conflicting eligibility conditions natively without heavy procedural code.
 *   **Local Embeddings:** Uses the `Xenova/all-MiniLM-L6-v2` model executed entirely server-side via Transformers.js to map policy texts into zero-cost, privacy-preserving 384-dimensional vectors.
 *   **Voice Engine (ElevenLabs):** Translates the LLM’s text responses into highly realistic, localized neural speech output for an accessibility-first experience.
-*   **SMTP & Mailtrap:** Configured to manage transactional outgoing communications (like OTPs or notices) via a secure, sandboxed testing environment.
-*   **Auth & Security Layer:** Integrates **Google OAuth** for frictionless 1-click logins, combined with **JWT** for stateless session management. **Rate Limiting** middleware strictly guards all critical routes against DDOS attacks and unauthorized scraping.
+*   **SMTP & Mailtrap:** Configured to manage secure **OTP verification** and transactional communications via a sandboxed testing environment.
+*   **Auth & Security Layer:** Integrates **OTP-based 2-step verification** for high-security registrations, combined with **Google OAuth** for frictionless 1-click logins.
 
 ### Hybrid RAG Intelligence Pipeline
 

@@ -15,6 +15,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import AgriCard from '../components/common/AgriCard';
 import DocumentScanner from '../components/farmers/DocumentScanner';
+import { CATEGORY_LINKS } from '../services/categoryService';
 
 const indianStates = {
   // ── 28 States ────────────────────────────
@@ -698,48 +699,57 @@ function ProofCard({ result }) {
       transition={{ type: 'spring', stiffness: 100, damping: 20 }}
       style={{ marginBottom: '24px' }}
     >
-      {/* 1. Header Banner */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      {/* 1. Header Banner & Verification Status */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px', flexWrap: 'wrap', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', delay: 0.2 }}
+            initial={{ scale: 0, rotate: -15 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', damping: 12, delay: 0.1 }}
             style={{
-              width: '64px', height: '64px', borderRadius: '18px',
+              width: '72px', height: '72px', borderRadius: '22px',
               background: isEligible ? 'var(--gradient-success)' : 'var(--gradient-danger)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: isEligible ? '0 8px 24px rgba(16,185,129,0.3)' : '0 8px 24px rgba(244,63,94,0.3)',
+              boxShadow: isEligible ? '0 12px 32px rgba(16,185,129,0.35)' : '0 12px 32px rgba(244,63,94,0.35)',
+              border: '2px solid rgba(255,255,255,0.2)'
             }}
           >
-            {isEligible ? <CheckCircle2 size={32} color="white" /> : <XCircle size={32} color="white" />}
+            {isEligible ? <CheckCircle2 size={36} color="white" /> : <XCircle size={36} color="white" />}
           </motion.div>
           <div>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '2px', letterSpacing: '-0.02em', color: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
-              {isEligible ? t('pc_eligible') : t('pc_not_eligible')}
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <h2 style={{ fontSize: '2rem', fontWeight: 900, margin: 0, letterSpacing: '-0.03em', color: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
+                {isEligible ? t('pc_eligible') : t('pc_not_eligible')}
+              </h2>
+              <div style={{ padding: '4px 10px', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '20px', border: '1px solid var(--border-agri)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Shield size={12} style={{ color: 'var(--accent-emerald)' }} />
+                <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-emerald)', letterSpacing: '0.05em' }}>Verified by RAG</span>
+              </div>
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '1rem', color: 'var(--text-primary)', fontWeight: 600 }}>{displayResult.scheme}</span>
+              <span style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 700 }}>{displayResult.scheme}</span>
               <span style={{ color: 'var(--text-muted)' }}>•</span>
-              <span className={`badge ${isEligible ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.7rem' }}>
-                {t('pc_confidence')}: {displayResult.confidence}
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                {t('pc_confidence')}: <strong style={{ color: 'var(--text-primary)' }}>{displayResult.confidence.toUpperCase()}</strong>
               </span>
             </div>
           </div>
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleDownload}
-          disabled={isDownloading}
-          className="btn-glass"
-          data-html2canvas-ignore="true"
-          style={{ padding: '10px 16px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}
-        >
-          {isDownloading ? <Loader2 size={16} className="spin" /> : <Download size={16} />}
-          {isDownloading ? t('pc_exporting') : t('pc_download_pdf')}
-        </motion.button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <motion.button
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="btn-glass"
+            data-html2canvas-ignore="true"
+            style={{ padding: '12px 20px', borderRadius: '14px', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)' }}
+          >
+            {isDownloading ? <Loader2 size={18} className="spin" /> : <Download size={18} />}
+            {isDownloading ? t('pc_exporting') : t('pc_download_pdf')}
+          </motion.button>
+        </div>
       </div>
 
       {/* 2. AI Decision Summary */}
@@ -845,24 +855,28 @@ function ProofCard({ result }) {
         {/* Benefit Amount Widget */}
         {isEligible && displayResult.benefitAmount && (
           <div style={{ 
-            padding: '28px', borderRadius: '16px', 
+            padding: '32px', borderRadius: '24px', 
             background: 'var(--gradient-success)', 
-            boxShadow: '0 8px 32px rgba(16, 185, 129, 0.25)',
+            boxShadow: '0 12px 40px rgba(16, 185, 129, 0.3)',
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
-            position: 'relative', overflow: 'hidden'
+            position: 'relative', overflow: 'hidden',
+            border: '1px solid rgba(255,255,255,0.2)'
           }}>
-            <div style={{ position: 'absolute', top: -20, right: -20, opacity: 0.1 }}>
-              <Wallet size={120} color="white" />
+            <div style={{ position: 'absolute', top: -30, right: -30, opacity: 0.15, transform: 'rotate(-10deg)' }}>
+              <Brain size={160} color="white" />
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', marginBottom: '8px', fontWeight: 600, letterSpacing: '0.05em' }}>{t('pc_benefit_amount')}</p>
-            <p style={{ fontSize: '2.5rem', fontWeight: 800, color: 'white', letterSpacing: '-0.02em', marginBottom: '4px' }}>
-              {String(displayResult.benefitAmount).startsWith('₹') ? displayResult.benefitAmount : `₹${displayResult.benefitAmount}`}
-            </p>
-            {displayResult.paymentFrequency && (
-              <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
-                {displayResult.paymentFrequency}
-              </p>
-            )}
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', marginBottom: '12px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('pc_benefit_amount')}</p>
+              <h3 style={{ fontSize: '3rem', fontWeight: 900, color: 'white', letterSpacing: '-0.04em', marginBottom: '8px', lineHeight: 1 }}>
+                {String(displayResult.benefitAmount).startsWith('₹') ? displayResult.benefitAmount : `₹${displayResult.benefitAmount}`}
+              </h3>
+              {displayResult.paymentFrequency && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(255,255,255,0.15)', borderRadius: '100px', border: '1px solid rgba(255,255,255,0.2)' }}>
+                  <Clock size={14} color="white" />
+                  <span style={{ fontSize: '0.9rem', color: 'white', fontWeight: 600 }}>{displayResult.paymentFrequency}</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -928,32 +942,53 @@ function ProofCard({ result }) {
         </div>
       )}
 
-      {/* 4. Action Buttons */}
-      {(displayResult.officialWebsite || displayResult.documentUrl) && (
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '4px' }} data-html2canvas-ignore="true">
-          {displayResult.officialWebsite && (
-            <a 
+      {/* 4. High-Priority Action Section */}
+      <div style={{ 
+        marginTop: '32px', padding: '24px', borderRadius: '20px', 
+        background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)',
+        display: 'flex', flexDirection: 'column', gap: '20px'
+      }} data-html2canvas-ignore="true">
+        <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Shield size={16} style={{ color: 'var(--accent-indigo)' }} /> Primary Access & Official Resources
+        </h4>
+
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+          {/* Always Priority: Official Website */}
+          {displayResult.officialWebsite && displayResult.officialWebsite !== 'null' ? (
+            <motion.a 
+              whileHover={{ scale: 1.02, x: 5 }}
+              whileTap={{ scale: 0.98 }}
               href={displayResult.officialWebsite.startsWith('http') ? displayResult.officialWebsite : `https://${displayResult.officialWebsite}`} 
               target="_blank" rel="noopener noreferrer"
-              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-indigo)', borderRadius: '12px', fontWeight: 600, fontSize: '0.9rem', border: '1px solid rgba(99, 102, 241, 0.2)', transition: 'all 0.2s' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'}
+              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 32px', background: 'var(--gradient-primary)', color: 'white', borderRadius: '16px', fontWeight: 800, fontSize: '1rem', boxShadow: '0 8px 24px rgba(16, 163, 74, 0.4)', transition: 'all 0.2s', flex: 1, minWidth: '240px', justifyContent: 'center' }}
             >
-              <ExternalLink size={16} /> {t('pc_official_website')}
-            </a>
+              <ExternalLink size={20} /> {t('pc_official_website')}
+            </motion.a>
+          ) : (
+             <motion.a 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              href={CATEGORY_LINKS[displayResult.category] || CATEGORY_LINKS['other']} 
+              target="_blank" rel="noopener noreferrer"
+              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 32px', background: 'rgba(255,255,255,0.08)', color: 'var(--text-primary)', borderRadius: '16px', fontWeight: 700, fontSize: '1rem', border: '1px solid var(--border-glass)', transition: 'all 0.2s', flex: 1, minWidth: '240px', justifyContent: 'center' }}
+            >
+              <ExternalLink size={20} /> Access Official Portal
+            </motion.a>
           )}
+
+          {/* Official Documents / Guidelines */}
           {displayResult.documentUrl && (
-            <a 
+            <motion.a 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               href={displayResult.documentUrl} target="_blank" rel="noopener noreferrer"
-              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-primary)', borderRadius: '12px', fontWeight: 600, fontSize: '0.9rem', border: '1px solid var(--border-glass)', transition: 'all 0.2s' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 32px', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-primary)', borderRadius: '16px', fontWeight: 600, fontSize: '1rem', border: '1px solid var(--border-glass)', transition: 'all 0.2s', flex: 1, minWidth: '240px', justifyContent: 'center' }}
             >
-              <FileText size={16} /> {t('sb_schemes')}
-            </a>
+              <FileText size={20} /> {t('pc_view_official_docs') || 'Download Official Guidelines'}
+            </motion.a>
           )}
         </div>
-      )}
+      </div>
     </motion.div>
   );
 }

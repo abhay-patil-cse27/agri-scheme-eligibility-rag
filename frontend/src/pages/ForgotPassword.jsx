@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, ArrowLeft, Loader2, KeyRound } from 'lucide-react';
+import { Mail, ArrowLeft, Loader2, ShieldCheck, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
-import { forgotPassword } from '../services/api';
+import { sendOTP } from '../services/api';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [resetToken, setResetToken] = useState(null); // MVP Testing Flow
   const navigate = useNavigate();
   const { addToast } = useToast();
   const { t } = useTranslation();
@@ -18,12 +17,13 @@ export default function ForgotPassword() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await forgotPassword(email);
-      addToast(t('fp_toast_sent'), t('fp_toast_sent_desc'), 'success');
-      // For MVP testing without an actual SMTP Email server like SendGrid, 
-      // we catch the backend token and display it instantly.
-      if (res.resetToken) {
-        setResetToken(res.resetToken);
+      const res = await sendOTP(email.trim(), 'password_reset');
+      if (res.success) {
+        addToast(t('otp_sent_title', 'Code Sent'), t('otp_sent_desc', 'Please check your email for the reset code.'), 'success');
+        // Navigate to reset password page and pass email in state
+        navigate('/resetpassword', { state: { email } });
+      } else {
+        addToast(t('fp_failed', 'Request Failed'), res.error, 'error');
       }
     } catch (err) {
       addToast(t('fp_toast_failed'), err.response?.data?.error || 'Could not process request', 'error');
@@ -33,67 +33,66 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      
+      {/* Decorative background */}
+      <div style={{ position: 'fixed', top: '20%', right: '10%', width: '300px', height: '300px', background: 'var(--accent-indigo)', filter: 'blur(150px)', opacity: 0.1, zIndex: 0 }}></div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="glass-card"
-        style={{ width: '100%', maxWidth: '440px', padding: '32px' }}
+        style={{ width: '100%', maxWidth: '440px', padding: '40px', position: 'relative', zIndex: 1, borderRadius: '24px' }}
       >
-        <button onClick={() => navigate('/login')} className="btn-glass" style={{ padding: '6px 12px', border: 'none', background: 'transparent', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '24px', cursor: 'pointer' }}>
-          <ArrowLeft size={16} /> {t('fp_back_login')}
+        <button 
+          onClick={() => navigate('/login')} 
+          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', marginBottom: '32px', cursor: 'pointer', fontWeight: 500 }}
+        >
+          <ArrowLeft size={18} /> {t('fp_back_login', 'Back to Login')}
         </button>
 
-        <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>{t('fp_title')} <span className="gradient-text">{t('fp_title_accent')}</span></h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: 1.6 }}>
-          {t('fp_subtitle')}
-        </p>
+        <div style={{ marginBottom: '32px' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--shadow-glow)', marginBottom: '20px' }}>
+            <ShieldCheck size={28} color="white" />
+          </div>
+          <h2 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '12px', letterSpacing: '-0.02em' }}>
+            {t('fp_title_main', 'Forgot')} <span className="gradient-text">{t('fp_title_accent', 'Password?')}</span>
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: 1.6 }}>
+            {t('fp_subtitle', "No worries! Enter your registered email and we'll send you a 6-digit code to reset your password.")}
+          </p>
+        </div>
 
-        {!resetToken ? (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', fontWeight: 500 }}>{t('fp_email_label')}</label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={18} style={{ position: 'absolute', top: '12px', left: '14px', color: 'var(--text-muted)' }} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="input-dark"
-                  style={{ paddingLeft: '42px', paddingRight: '16px' }}
-                  placeholder="name@example.com"
-                  required
-                />
-              </div>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: '10px', fontWeight: 600 }}>
+              {t('fp_email_label', 'Email Address')}
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Mail size={18} style={{ position: 'absolute', top: '50%', left: '16px', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="input-dark"
+                style={{ padding: '16px 16px 16px 48px', borderRadius: '16px' }}
+                placeholder="name@example.com"
+                required
+              />
             </div>
+          </div>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit"
-              disabled={loading}
-              className="btn-glow"
-              style={{ padding: '12px', fontSize: '1rem', marginTop: '8px', display: 'flex', justifyContent: 'center', gap: '8px' }}
-            >
-              {loading ? <Loader2 size={18} className="spin" /> : t('fp_btn_send')}
-            </motion.button>
-          </form>
-        ) : (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ padding: '20px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', color: 'var(--accent-emerald)', fontWeight: 600 }}>
-               <KeyRound size={20} /> {t('fp_mvp_title')}
-             </div>
-             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-               {t('fp_mvp_desc')}
-             </p>
-             <button 
-                onClick={() => navigate(`/resetpassword/${resetToken}`)}
-                className="btn-glow" 
-                style={{ width: '100%', background: 'var(--gradient-success)', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)' }}>
-               {t('fp_btn_reset_now')}
-             </button>
-          </motion.div>
-        )}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="submit"
+            disabled={loading}
+            className="btn-glow"
+            style={{ padding: '16px', fontSize: '1.05rem', fontWeight: 700, borderRadius: '16px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}
+          >
+            {loading ? <Loader2 size={22} className="animate-spin" /> : <>{t('fp_btn_send', 'Send Code')} <ArrowRight size={20} /></>}
+          </motion.button>
+        </form>
       </motion.div>
     </div>
   );

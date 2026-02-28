@@ -8,11 +8,23 @@ Most endpoints require a JWT Bearer token.
 Header: `Authorization: Bearer <token>`
 
 ### Auth Endpoints
-*   `POST /api/auth/register` - Create a new farmer account.
-*   `POST /api/auth/login` - Authenticate and receive JWT.
-*   `POST /api/auth/google` - Seamless Google OAuth login.
-*   `GET /api/auth/me` - Get current user profile.
-*   `POST /api/auth/forgotpassword` - Trigger password reset email.
+
+* `POST /api/auth/send-otp` - Unified bridge for Registration & Password Reset verification.
+* `POST /api/auth/register` - Create account (Requires 8-digit **Complex Password** & **OTP**).
+* `POST /api/auth/login` - Authenticate and receive JWT.
+* `POST /api/auth/google` - Seamless Google OAuth login.
+* `GET /api/auth/me` - Get current user profile.
+* `PUT /api/auth/resetpassword` - Reset password (Requires **Identity Verification**, **OTP**, and **New Complex Password**).
+* `GET /api/auth/users` (**Admin Only**) - List all registered accounts.
+* `DELETE /api/auth/users/:id` (**Admin Only**) - Permanently delete a user account with data protection warnings.
+
+### 🛡️ Security & Compliance
+
+* **Identity Violation Check:** Password resets are gated by a mandatory account existence check. Non-existent emails receive a high-visibility security alert.
+* **Password Complexity Rules:** Enforced for all users:
+    * Minimum 8 characters.
+    * Compulsory: 1 Uppercase | 1 Lowercase | 1 Number | 1 Special Character (`@$!%*?&`).
+* **Administrative Safeguards:** Explicit warning modals for data removal pursuant to **IT Act 2000**.
 
 ---
 
@@ -71,5 +83,16 @@ Specialized endpoints for high-accessibility feature extraction.
 
 ## 🗺️ Chat (Krishi Mitra)
 
-*   `POST /api/chat` - Chat with the agricultural assistant.
-*   **Body:** `{ "query": "...", "history": [...], "language": "mr" }`
+The assistant supports persistent, multi-session conversation history.
+
+### AI Interaction
+
+* `POST /api/chat` - Chat with the agricultural assistant.
+* **Body:** `{ "query": "...", "history": [...], "language": "mr", "sessionId": "..." }`
+
+### Session Management
+
+* `GET /api/chat/sessions` - List all chat sessions for the current user.
+* `POST /api/chat/sessions` - Create a new chat session (returns `sessionId`).
+* `GET /api/chat/sessions/:id/messages` - Retrieve full message history for a specific session.
+* `DELETE /api/chat/sessions/:id` - Delete a specific chat session and all its messages.

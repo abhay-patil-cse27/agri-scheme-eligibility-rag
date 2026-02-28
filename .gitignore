@@ -50,3 +50,7 @@ docs/Phase2_Farmer_Profile_Enrichment.md
 *.ntvs*
 *.njsproj
 *.sln
+
+# Temporary Workspaces
+tmp/
+backend/scripts/

@@ -1,5 +1,5 @@
 ﻿import { createContext, useContext, useState, useEffect } from 'react';
-import { getMe, login as apiLogin, register as apiRegister, googleLogin as apiGoogleLogin } from '../services/api';
+import { getMe, login as apiLogin, register as apiRegister, googleLogin as apiGoogleLogin, sendOTP as apiSendOTP } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -48,9 +48,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password) => {
+  const sendOTP = async (email, purpose) => {
     try {
-      const res = await apiRegister(name, email, password);
+      return await apiSendOTP(email, purpose);
+    } catch (err) {
+      console.error('Send OTP error', err);
+      return { success: false, error: err.response?.data?.error || err.message || 'Failed to send OTP' };
+    }
+  };
+
+  const register = async (name, email, password, otp) => {
+    try {
+      const res = await apiRegister(name, email, password, otp);
       if (res.success) {
         localStorage.setItem('token', res.token);
         setUser(res.user);
@@ -79,13 +88,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    if (user) {
+      localStorage.removeItem(`nitisetu_notifications_${user._id}`);
+    }
     localStorage.removeItem('token');
     setUser(null);
     window.location.href = '/';
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, login, register, googleAuth, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, register, googleAuth, logout, sendOTP }}>
       {children}
     </AuthContext.Provider>
   );

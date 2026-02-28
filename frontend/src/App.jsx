@@ -143,7 +143,7 @@ function AnimatedRoutes() {
           <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
           <Route path="/register" element={<PageWrapper><Register /></PageWrapper>} />
           <Route path="/forgotpassword" element={<PageWrapper><ForgotPassword /></PageWrapper>} />
-          <Route path="/resetpassword/:token" element={<PageWrapper><ResetPassword /></PageWrapper>} />
+          <Route path="/resetpassword" element={<PageWrapper><ResetPassword /></PageWrapper>} />
           {/* Public Eligibility Check Tool (unauthenticated / guest) */}
           <Route path="/check" element={<PageWrapper><EligibilityCheck /></PageWrapper>} />
 

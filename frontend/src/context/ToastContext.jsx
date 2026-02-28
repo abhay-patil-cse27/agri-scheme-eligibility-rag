@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from './AuthContext';
 
 const ToastContext = createContext(null);
 
@@ -11,25 +12,32 @@ export const useToast = () => {
 };
 
 export const ToastProvider = ({ children }) => {
+  const { user } = useAuth();
   const [toasts, setToasts] = useState([]);
-  const [history, setHistory] = useState(() => {
+  const [history, setHistory] = useState([]);
+
+  // Use a unique storage key for each user to prevent notification leaking
+  const storageKey = user ? `nitisetu_notifications_${user._id}` : 'nitisetu_notifications_guest';
+
+  // Load history from localStorage whenever the user (storageKey) changes
+  useEffect(() => {
     try {
-      const saved = localStorage.getItem('nitisetu_notifications');
-      return saved ? JSON.parse(saved) : [];
+      const saved = localStorage.getItem(storageKey);
+      setHistory(saved ? JSON.parse(saved) : []);
     } catch (e) {
       console.warn('Failed to load notification history', e);
-      return [];
+      setHistory([]);
     }
-  });
+  }, [storageKey]);
 
   // Sync history to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem('nitisetu_notifications', JSON.stringify(history));
+      localStorage.setItem(storageKey, JSON.stringify(history));
     } catch (e) {
       console.warn('Failed to save notification history', e);
     }
-  }, [history]);
+  }, [history, storageKey]);
 
   /**
    * Add a new toast notification
@@ -64,8 +72,8 @@ export const ToastProvider = ({ children }) => {
 
   const clearHistory = useCallback(() => {
     setHistory([]);
-    localStorage.removeItem('nitisetu_notifications');
-  }, []);
+    localStorage.removeItem(storageKey);
+  }, [storageKey]);
 
   return (
     <ToastContext.Provider value={{ toasts, history, addToast, removeToast, clearHistory }}>

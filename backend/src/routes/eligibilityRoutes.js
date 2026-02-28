@@ -136,6 +136,7 @@ router.post(
               responseTime: 0,
               chunksAnalyzed: 0,
               isCached: true,
+              category: scheme.category,
             };
           }
 
@@ -172,8 +173,9 @@ router.post(
           const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
 
           const officialWebsiteUrl = scheme.officialWebsite || llmResult.officialWebsite;
-          const citedDoc = llmResult.citationSource?.documentName || scheme.sourceFile || (scheme.documents && scheme.documents[0]?.path);
-          const documentUrl = citedDoc ? `${req.protocol}://${req.get('host')}/api/schemes/docs/${citedDoc}` : null;
+          // IMPORTANT: Rely on actual DB file path, ignore hallucinated file names from LLM
+          const citedDoc = (scheme.documents && scheme.documents.length > 0) ? scheme.documents[0].path : scheme.sourceFile;
+          const documentUrl = citedDoc ? `${req.protocol}://${req.get('host')}/api/schemes/docs/${encodeURIComponent(citedDoc)}` : null;
 
           const eligibilityRecord = await EligibilityCheck.create({
             farmerId: profile._id,
@@ -207,6 +209,7 @@ router.post(
             suggestions: suggestions,
             responseTime: totalResponseTime,
             chunksAnalyzed: relevantChunks.length,
+            category: scheme.category,
           };
         } catch (err) {
           logger.error(`Error processing scheme ${scheme.name}:`, err.message);
@@ -327,8 +330,9 @@ router.post(
           const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
 
           const officialWebsiteUrl = scheme.officialWebsite || llmResult.officialWebsite;
-          const citedDoc = llmResult.citationSource?.documentName || scheme.sourceFile || (scheme.documents && scheme.documents[0]?.path);
-          const documentUrl = citedDoc ? `${req.protocol}://${req.get('host')}/api/schemes/docs/${citedDoc}` : null;
+          // IMPORTANT: Rely on actual DB file path, ignore hallucinated file names from LLM
+          const citedDoc = (scheme.documents && scheme.documents.length > 0) ? scheme.documents[0].path : scheme.sourceFile;
+          const documentUrl = citedDoc ? `${req.protocol}://${req.get('host')}/api/schemes/docs/${encodeURIComponent(citedDoc)}` : null;
 
           const result = {
             checkId: 'public-' + Date.now(),
@@ -340,6 +344,7 @@ router.post(
             responseTime: totalResponseTime,
             chunksAnalyzed: relevantChunks.length,
             isPublicCheck: true,
+            category: scheme.category,
           };
 
           // Save to Public Cache

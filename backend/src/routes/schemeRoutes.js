@@ -275,6 +275,95 @@ router.delete(
   })
 );
 
+/**
+ * GET /api/schemes/docs/:filename
+ * Serve a specific PDF document from the data/schemes directory.
+ */
+router.get(
+  '/docs/:filename',
+  // Note: We leave this public for now so shared proof cards can access it, 
+  // but in a strict prod environment, we might add a signed-URL logic.
+  asyncHandler(async (req, res) => {
+    const fileName = decodeURIComponent(req.params.filename);
+    let filePath = path.join(uploadsDir, fileName);
+
+    // If perfectly found in normal uploads (for user-uploaded schemes)
+    if (fs.existsSync(filePath)) {
+      res.contentType('application/pdf');
+      return res.sendFile(filePath);
+    }
+
+    // FALLBACK 1: Try appending .pdf if missing
+    if (!fileName.toLowerCase().endsWith('.pdf') && fs.existsSync(`${filePath}.pdf`)) {
+      res.contentType('application/pdf');
+      return res.sendFile(`${filePath}.pdf`);
+    }
+
+    // FALLBACK 2: Search the original 'docs/schemes' seed directory structure
+    const seedDocsDir = path.join(__dirname, '..', '..', '..', 'docs', 'schemes');
+    if (fs.existsSync(seedDocsDir)) {
+      // Find all PDF files recursively in the docs/schemes seed folder
+      const getAllFiles = function(dirPath, arrayOfFiles) {
+        const files = fs.readdirSync(dirPath);
+        arrayOfFiles = arrayOfFiles || [];
+        files.forEach(function(file) {
+          if (fs.statSync(dirPath + "/" + file).isDirectory()) {
+            arrayOfFiles = getAllFiles(dirPath + "/" + file, arrayOfFiles);
+          } else {
+            if(file.toLowerCase().endsWith('.pdf')) {
+              arrayOfFiles.push(path.join(dirPath, file));
+            }
+          }
+        });
+        return arrayOfFiles;
+      };
+      
+      const allSeededPdfs = getAllFiles(seedDocsDir);
+      
+      // Target filename (without .pdf if we want to do a fuzzy scan)
+      const cleanTarget = fileName.toLowerCase().replace(/\.pdf$/, '');
+      
+      // Look for exact match or substring match
+      let matchedPdf = allSeededPdfs.find(f => {
+        const base = path.basename(f).toLowerCase().replace(/\.pdf$/, '');
+        return base === cleanTarget || base.includes(cleanTarget) || cleanTarget.includes(base);
+      });
+
+      // Powerful Word-Intersection Matcher for hallucinated legacy names (e.g., "(KCC)" vs "Guidelines")
+      if (!matchedPdf) {
+        const targetWords = cleanTarget.split(/[\s_\-\(\)]+/).filter(w => w.length > 2);
+        let bestScore = 0;
+        
+        for (const pdf of allSeededPdfs) {
+          const pdfBase = path.basename(pdf).toLowerCase().replace(/\.pdf$/, '');
+          let score = 0;
+          for (const word of targetWords) {
+            if (pdfBase.includes(word)) score++;
+          }
+          if (score > bestScore) {
+            bestScore = score;
+            matchedPdf = pdf;
+          }
+        }
+        
+        // If we found a PDF that matches at least 2 significant words
+        if (bestScore < 2) {
+          matchedPdf = null;
+        }
+      }
+
+      if (matchedPdf) {
+         logger.info(`Fuzzy PDF Match: Resolved "${req.params.filename}" to actual file "${path.basename(matchedPdf)}"`);
+         res.contentType('application/pdf');
+         return res.sendFile(matchedPdf);
+      }
+    }
+
+    logger.error(`Document not found anywhere for: ${fileName}`);
+    return res.status(404).json({ success: false, error: 'Document file not found' });
+  })
+);
+
 module.exports = router;
 
 // trigger restart

@@ -8,7 +8,7 @@
 Niti Setu is a high-performance, multilingual RAG (Retrieval-Augmented
 Generation) ecosystem designed to bridge the accessibility gap in Indian
 agricultural schemes. It combines state-of-the-art AI with a privacy-first,
-voice-centric UX.
+independent, voice-centric UX.
 
 ## High-Level System Architecture (HLD)
 
@@ -23,7 +23,8 @@ scalability and security.
     **Glassmorphic Design System**. Features advanced UI components: `Aurora`,
     `Plasma`, `Silk`, and `FluidGlass` for high-end aesthetics.
 2.  **API Gateway (Express.js):** Handles security (JWT, Google OAuth 2.0),
-    performance (**GZIP compression**, `apicache`), and request routing.
+    **Identity Verification Gates** (account existence checks for resets),
+    **Strict Password Strategy** (regex-based complexity), and request routing.
 3.  **Intelligence Orchestrators:**
     *   **Pro RAG Engine:** Custom implementation featuring **Reciprocal Rank
         Fusion (RRF)** to combine Vector and Keyword results.
@@ -35,7 +36,8 @@ scalability and security.
         relationships) and scheme recommendation.
 4.  **Data Persistence:**
     *   **MongoDB Atlas:** Vector-indexed storage with `$vectorSearch`. Includes a
-        **PublicCheckCache** for deterministic demographic queries.
+        **PublicCheckCache** for deterministic demographic queries and persists 
+        **Multi-session Chat History** with rich metadata.
     *   **Neo4j Aura:** Knowledge graph for taxonomic relationships and
         multi-scheme complementary modeling.
     *   **Groq Cloud:** Ultra-fast Llama 3.3 70B inference for core reasoning.
@@ -85,7 +87,7 @@ transform static government policies into actionable intelligence.
 
 ### 1. Ground Truth (The PDF Layer)
 
-The KB is seeded with a curated collection of **35+ official Indian Government
+The KB is seeded with a curated collection of **35+ verified Agricultural
 Policy PDFs** spanning **9 priority categories**. These documents serve as the
 absolute "Ground Truth." To ensure maximum factual integrity:
 *   **Direct Ingestion:** Documents are parsed directly from source PDFs to
@@ -110,7 +112,7 @@ Unlike standard chatbots, Niti Setu follows a **"No Citation, No Answer"** rule.
 Every eligibility response is backed by:
 *   **Verbatim Quotes:** Snippets directly from the KB.
 *   **Page References:** Exact page numbers from the source PDF.
-*   **Official Mirrors:** Links to the `gov.in` source file for verification.
+*   **Verified Mirrors:** Links to the primary source file for verification.
 
 ---
 
@@ -181,8 +183,8 @@ four distinct caching layers:
 
 *   **Freemium Model:** Implements a **1-free public check** limit for anonymous
     users, tracked via `localStorage` and profile hashes.
-*   **Government Branding:** System-generated emails feature a **Government of
-    India styled HTML template** with tricolor bars.
+*   **Premium Branding:** System-generated emails feature a **premium,
+    independent styled HTML template** with modern tricolor accents.
 *   **Audit Logger:** Centralized `auditLogger.js` records all administrative
     actions for transparency.
 
@@ -200,6 +202,6 @@ maintenance.
 *   **Services (`/services`):** The "Brains" where LLM logic, Graph traversal,
     and Embeddings live.
 *   **Models (`/models`):** MongoDB schemas for Users, Profiles, Schemes, Chunks,
-    and Logs.
+    **OTPs**, **ChatSessions**, **ChatMessages**, and Logs.
 *   **Middleware (`/middleware`):** Rate limiters, Joi-based validators, and
     high-security Auth checks.
