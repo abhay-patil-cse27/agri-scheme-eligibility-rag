@@ -24,6 +24,7 @@ decisions in their native language.
     diversity, **Reciprocal Rank Fusion (RRF)** for precision, and an **Intelligent Fuzzy-PDF Matcher** for robust document retrieval.
 *   **Massive Knowledge Base:** 35+ official PDFs across 9 priority sectors, directly linked to `myscheme.gov.in` for high-availability universal access.
 *   **Dual-Layer Conflict Engine:** Actively prevents fraudulent or overlapping applications combining **Neo4j Graph `EXCLUSIVE_OF` rules** with **Semantic Duplicate Override** prompts in the LLM.
+*   **Deterministic RAG Caching:** Eligibility checks are secured via **SHA-256 profile hashing**. The cache intelligently recognizes if a farmer modifies their active enrollments list (Conflict Test) and instantly bypasses stale cache to trigger a fresh LLM evaluation.
 *   **Citation-Backed Decisions:** Every result includes verbatim quotes and
     page references for 100% verifiability, driven by a deep 3-Tier Optimization Cache (Eligibility, Translation, and TTS) to save API tokens and reduce latency.
 *   **Progressive Disclosure UI:** Dynamic "Existing Enrollments" toggles adapting seamlessly to Light/Dark modes, ensuring farmers aren't overwhelmed with forms.
