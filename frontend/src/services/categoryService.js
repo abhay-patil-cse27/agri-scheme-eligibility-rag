@@ -7,7 +7,7 @@ export const CATEGORY_LINKS = {
   soil: "https://soilhealth.dac.gov.in/",
   horticulture: "https://midh.gov.in/",
   livestock: "https://nlm.udyamimitra.in/",
-  other: "https://agricoop.nic.in/"
+  other: "https://www.myscheme.gov.in/"
 };
 
 export const CATEGORY_NAMES = {
