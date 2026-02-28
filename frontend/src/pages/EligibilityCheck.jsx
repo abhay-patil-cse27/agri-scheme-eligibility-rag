@@ -1116,7 +1116,7 @@ export default function EligibilityCheck() {
             >
               <option value="">{t('ec_choose_scheme')}</option>
               <option value="all">
-                🔍 {schemes.length === 0 ? t('db_no_schemes') : `Search all schemes in ${selectedCategory ? selectedCategory : 'All'} category`}
+                🔍 {schemes.length === 0 ? t('db_no_schemes') : `I don't know my scheme — Search all in ${selectedCategory ? selectedCategory.replace('_', ' ') : 'this'} category`}
               </option>
               {schemes
                 .filter(s => !selectedCategory || s.category === selectedCategory)
