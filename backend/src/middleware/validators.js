@@ -68,6 +68,10 @@ const validateProfile = [
     .optional({ nullable: true })
     .isBoolean()
     .withMessage('hasAadharSeededBank must be true or false'),
+  body('activeSchemes')
+    .optional({ nullable: true })
+    .isArray()
+    .withMessage('activeSchemes must be an array of strings'),
   handleValidationErrors,
 ];
 

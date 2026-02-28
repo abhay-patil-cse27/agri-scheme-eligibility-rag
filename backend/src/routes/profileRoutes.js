@@ -32,6 +32,7 @@ router.post(
       hasKcc: req.body.hasKcc || false,
       isDifferentlyAbled: req.body.isDifferentlyAbled || false,
       hasAadharSeededBank: req.body.hasAadharSeededBank || false,
+      activeSchemes: req.body.activeSchemes || [],
       userId: req.user.id,
     };
 
@@ -117,7 +118,7 @@ router.put(
     const allowedFields = [
       'name', 'age', 'state', 'district', 'landHolding',
       'cropType', 'category', 'annualIncome', 'hasIrrigationAccess',
-      'gender', 'hasBPLCard', 'ownershipType', 'hasKcc', 'isDifferentlyAbled', 'hasAadharSeededBank'
+      'gender', 'hasBPLCard', 'ownershipType', 'hasKcc', 'isDifferentlyAbled', 'hasAadharSeededBank', 'activeSchemes'
     ];
 
     const updateData = {};
