@@ -153,7 +153,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Help & Legal links */}
-      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', margin: '0 0 16px 0', fontSize: '0.75rem' }}>
+      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', margin: '16px 0', padding: '0 16px', fontSize: '0.75rem' }}>
         <Link to="/faq" target="_blank" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={e=>e.currentTarget.style.color='var(--accent-indigo)'} onMouseOut={e=>e.currentTarget.style.color='var(--text-muted)'}>FAQ</Link>
         <span style={{ color: 'var(--border-glass)' }}>|</span>
         <Link to="/privacy" target="_blank" style={{ color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={e=>e.currentTarget.style.color='var(--accent-indigo)'} onMouseOut={e=>e.currentTarget.style.color='var(--text-muted)'}>Privacy Policy</Link>

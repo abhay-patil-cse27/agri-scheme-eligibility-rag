@@ -100,6 +100,34 @@ class GraphService {
       await session.close();
     }
   }
+
+  /**
+   * Link multiple Chunks to a Document in Neo4j in a single batch.
+   */
+  async linkChunksBatch(docPath, chunksMetadata) {
+    const session = getSession();
+    try {
+      const cypher = `
+        MATCH (d:Document {path: $docPath})
+        UNWIND $chunks as chunk
+        CREATE (c:Chunk {
+          chunkIndex: chunk.chunkIndex,
+          page: chunk.page,
+          section: chunk.section || 'General'
+        })
+        CREATE (c)-[:PART_OF]->(d)
+      `;
+      
+      await session.run(cypher, {
+        docPath,
+        chunks: chunksMetadata
+      });
+    } catch (error) {
+      logger.error('Neo4j linkChunksBatch error:', error);
+    } finally {
+      await session.close();
+    }
+  }
   
   /**
    * Check if a target scheme conflicts with any of the farmer's current schemes.

@@ -62,7 +62,9 @@ async function bulkIngest() {
           name: schemeName,
           description: `Government scheme document: ${schemeName}`,
           category: category,
-          version: '1.0'
+          version: '1.0',
+          totalChunks: totalChunks,
+          processedAt: new Date(),
         });
 
         // 4. Save to MongoDB - SchemeChunks
@@ -88,10 +90,9 @@ async function bulkIngest() {
         const docMetadata = { path: pdfFile, type: 'guidelines', state: 'All', language: 'en' };
         await graphService.addDocumentToScheme(schemeName, docMetadata);
 
-        for (const chunk of chunks) {
-          await graphService.linkChunkToDocument(pdfFile, chunk.metadata);
-        }
-        console.log(`  → Added nodes & relationships to Neo4j.`);
+        const chunksMetadata = chunks.map(c => c.metadata);
+        await graphService.linkChunksBatch(pdfFile, chunksMetadata);
+        console.log(`  → Added nodes & relationships to Neo4j (Batch).`);
         
         console.log(`  ✅ SUCCESS: ${schemeName}`);
         successCount++;
