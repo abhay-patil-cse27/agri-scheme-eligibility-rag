@@ -175,6 +175,7 @@ router.post(
 router.get(
   '/',
   protect,
+  cache('1 hour'),
   asyncHandler(async (req, res) => {
     const schemes = await Scheme.find({ isActive: true })
       .select('-__v')
@@ -279,3 +280,5 @@ module.exports = router;
 // trigger restart
 
 // clear apicache manually
+
+// final cache clear
