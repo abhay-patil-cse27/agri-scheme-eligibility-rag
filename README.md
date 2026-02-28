@@ -22,9 +22,11 @@ decisions in their native language.
 *   **Privacy-First (Zero-Storage):** Vision AI scans 7/12 extracts and Aadhaar documents in-memory without permanent storage.
 *   **Advanced RAG Engine:** Hybrid search (Vector + BM25) with **MMR** for
     diversity, **Reciprocal Rank Fusion (RRF)** for precision, and an **Intelligent Fuzzy-PDF Matcher** for robust document retrieval.
-*   **Massive Knowledge Base:** 35+ official PDFs across 9 priority sectors, directly linked to official government domains.
+*   **Massive Knowledge Base:** 35+ official PDFs across 9 priority sectors, directly linked to `myscheme.gov.in` for high-availability universal access.
+*   **Dual-Layer Conflict Engine:** Actively prevents fraudulent or overlapping applications combining **Neo4j Graph `EXCLUSIVE_OF` rules** with **Semantic Duplicate Override** prompts in the LLM.
 *   **Citation-Backed Decisions:** Every result includes verbatim quotes and
     page references for 100% verifiability, driven by a deep 3-Tier Optimization Cache (Eligibility, Translation, and TTS) to save API tokens and reduce latency.
+*   **Progressive Disclosure UI:** Dynamic "Existing Enrollments" toggles adapting seamlessly to Light/Dark modes, ensuring farmers aren't overwhelmed with forms.
 
 ---
 
@@ -49,7 +51,7 @@ performance and strict data privacy.
 
 *   **Groq Cloud:** Powers the core intelligence utilizing Llama 3.3 for lightning-fast logical reasoning and Llama 3.2 Vision for ephemeral document extraction.
 *   **Vector DB (MongoDB Atlas):** Serves as the primary data lake. Stores 10,000+ contextual chunks for RAG and persists **Multi-session Chat History** for authenticated users.
-*   **Knowledge Graph (Neo4j):** Models complex scheme rules and exclusions, preventing conflicting eligibility conditions natively without heavy procedural code.
+*   **Knowledge Graph (Neo4j):** Models complex scheme rules and exclusions, seeding 22+ hard mutual exclusion links to instantly reject overlapping scheme combinations (e.g. holding both PMFBY and WBCIS) before they even reach the LLM.
 *   **Local Embeddings:** Uses the `Xenova/all-MiniLM-L6-v2` model executed entirely server-side via Transformers.js to map policy texts into zero-cost, privacy-preserving 384-dimensional vectors.
 *   **Voice Engine (ElevenLabs):** Translates the LLM’s text responses into highly realistic, localized neural speech output for an accessibility-first experience.
 *   **SMTP & Mailtrap:** Configured to manage secure **OTP verification** and transactional communications via a sandboxed testing environment.

@@ -17,6 +17,9 @@ The core value of the backend lies in its **Custom Native RAG Engine**.
    via Transformers.js locally to generate 384-dimensional vector embeddings at zero cost.
 3. **Hybrid Retrieval:** Merges Vector similarity scores and Keyword match scores.
 4. **MMR Re-ranking:** Diversifies the top-k chunks to maximize the LLM's context coverage.
+5. **Dual-Layer Conflict Detection:** 
+   - **Hard Conflicts (Neo4j):** Intercepts explicitly defined `EXCLUSIVE_OF` business rules.
+   - **Soft Conflicts (LLM Output):** Employs aggressive "Semantic Duplicate Override" prompting to reject conceptually identical scheme overlaps even if string names differ.
 
 ![Vector Search Logic](architecture/vector-search-logic.png)
 
@@ -28,8 +31,7 @@ The core value of the backend lies in its **Custom Native RAG Engine**.
 * **Vector Search Index:** Handles the `$vectorSearch` queries using cosine similarity.
 * **Neo4j Aura (Free):**
   * Stores the **Scholarship/Scheme Taxonomy** as a Knowledge Graph.
-  * Enforces **Mutual Exclusion** logic (e.g., preventing a user from getting Scheme B
-    if they already have Scheme A).
+  * Enforces **Mutual Exclusion** logic natively. The database seeds over 22+ explicit hard rules preventing farmers from holding cross-sector overlapping schemes (e.g. blocking PMFBY and WBCIS simultaneously).
 *   **Chat Session Logic:**
     *   **ChatSession:** Stores session metadata (title, language).
     *   **ChatMessage:** Stores persistent conversation history linked to sessions.

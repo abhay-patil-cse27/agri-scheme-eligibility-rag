@@ -13,6 +13,7 @@ and complex animations.
   OTP entry, **Real-time Password Complexity Validation**, **Confirm Password Match Indicators**, and identity safeguards.
 * **Identity Violation Alerts:** Prominent red toast notifications for unauthorized
   access attempts (e.g., password reset for non-existent accounts).
+* **Dynamic Enrollment Opt-In:** An intelligent progressive disclosure UI ("Yes/No" toggle) that dynamically swaps colors based on the Light/Dark mode Tailwind variables (`var(--bg-glass)`, `var(--bg-primary)`) allowing bulk auto-selection of specific category schemes without overwhelming the user.
 * **Google OAuth 2.0:** Secure, one-click login via a customized callback flow.
 
 ## 🏗️ State Management & Data Flow
