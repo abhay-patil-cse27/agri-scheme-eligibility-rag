@@ -198,6 +198,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
 
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customSchemeName, setCustomSchemeName] = useState('');
+  const [isEnrolled, setIsEnrolled] = useState(false);
 
   const displaySchemes = allSchemes.filter(s => {
     // 1. If Category is selected in dropdown, ONLY show schemes in that category
@@ -219,6 +220,9 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
         ...prev,
         ...Object.fromEntries(Object.entries(initialData).filter((entry) => entry[1] != null && entry[1] !== '')),
       }));
+      if (initialData.activeSchemes && initialData.activeSchemes.length > 0) {
+        setIsEnrolled(true);
+      }
     }
   }, [initialData]);
 
@@ -373,124 +377,135 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
 
       {/* Existing Enrollments Section */}
       <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
-        <label style={{ ...labelStyle, marginBottom: '12px' }}>
-          <Shield size={16} style={{ color: 'var(--accent-indigo)' }} /> 
-          {t('pf_enrolled_title')}
-        </label>
-        {displaySchemes.length === 0 ? (
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{t('pf_no_schemes_found')}</p>
-        ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {displaySchemes.map(s => {
-              const isSelected = form.activeSchemes?.includes(s.name);
-              return (
-                <button
-                  key={s._id}
-                  type="button"
-                  onClick={() => toggleScheme(s.name)}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '100px',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    background: isSelected ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.05)',
-                    color: isSelected ? 'black' : 'var(--text-secondary)',
-                    border: `1px solid ${isSelected ? 'var(--accent-indigo)' : 'var(--border-glass)'}`
-                  }}
-                >
-                  {s.name}
-                </button>
-              );
-            })}
-            
-            {/* Display custom schemes already in form.activeSchemes but not in displaySchemes */}
-            {form.activeSchemes?.filter(s => !displaySchemes.some(as => as.name === s)).map(customName => (
-              <button
-                key={customName}
-                type="button"
-                onClick={() => {
-                  const next = form.activeSchemes.filter(s => s !== customName);
-                  setForm({ ...form, activeSchemes: next });
-                }}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '100px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  background: 'var(--accent-indigo)',
-                  color: 'black',
-                  border: '1px solid var(--accent-indigo)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                {customName} <X size={12} />
-              </button>
-            ))}
-
-            {!showCustomInput && (
-              <button
-                type="button"
-                onClick={() => setShowCustomInput(true)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '100px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.05)',
-                  color: 'var(--accent-indigo)',
-                  border: '1px dashed var(--accent-indigo)',
-                }}
-              >
-                <Plus size={14} style={{ display: 'inline', marginRight: '4px' }} />
-                {t('pf_not_listed')}
-              </button>
-            )}
-          </div>
-        )}
-
-        {showCustomInput && (
-          <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-            <input 
-              type="text" 
-              value={customSchemeName}
-              onChange={(e) => setCustomSchemeName(e.target.value)}
-              placeholder={t('pf_enter_scheme_ph')}
-              className="input-dark"
-              style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem' }}
-            />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isEnrolled ? '16px' : '0' }}>
+          <label style={{ ...labelStyle, marginBottom: 0 }}>
+            <Shield size={16} style={{ color: 'var(--accent-indigo)' }} /> 
+            Are you already enrolled in any related <b>{selectedCategory ? selectedCategory.replace(/_/g, ' ') : 'government'}</b> schemes?
+          </label>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button
               type="button"
-              onClick={() => {
-                if (customSchemeName.trim()) {
-                  const next = [...(form.activeSchemes || []), customSchemeName.trim()];
-                  setForm({ ...form, activeSchemes: [...new Set(next)] });
-                  setCustomSchemeName('');
-                  setShowCustomInput(false);
-                }
+              onClick={() => setIsEnrolled(true)}
+              style={{
+                padding: '4px 12px', borderRadius: '100px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+                background: isEnrolled ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.05)',
+                color: isEnrolled ? 'black' : 'var(--text-secondary)',
+                border: `1px solid ${isEnrolled ? 'var(--accent-indigo)' : 'var(--border-glass)'}`,
+                transition: 'all 0.2s'
               }}
-              className="btn-glow"
-              style={{ padding: '8px 16px', fontSize: '0.8rem' }}
             >
-              {t('pf_add')}
+              Yes
             </button>
             <button
               type="button"
               onClick={() => {
-                setShowCustomInput(false);
-                setCustomSchemeName('');
+                setIsEnrolled(false);
+                setForm(prev => ({ ...prev, activeSchemes: [] }));
               }}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem' }}
+              style={{
+                padding: '4px 12px', borderRadius: '100px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+                background: !isEnrolled ? 'var(--accent-rose)' : 'rgba(255,255,255,0.05)',
+                color: !isEnrolled ? 'white' : 'var(--text-secondary)',
+                border: `1px solid ${!isEnrolled ? 'var(--accent-rose)' : 'var(--border-glass)'}`,
+                transition: 'all 0.2s'
+              }}
             >
-              Cancel
+              No
             </button>
           </div>
-        )}
+        </div>
+
+        <AnimatePresence>
+          {isEnrolled && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}>
+              {displaySchemes.length === 0 ? (
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{t('pf_no_schemes_found')}</p>
+              ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '8px', borderTop: '1px dashed var(--border-glass)' }}>
+                  {displaySchemes.map(s => {
+                    const isSelected = form.activeSchemes?.includes(s.name);
+                    return (
+                      <button
+                        key={s._id}
+                        type="button"
+                        onClick={() => toggleScheme(s.name)}
+                        style={{
+                          padding: '6px 12px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          background: isSelected ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.05)',
+                          color: isSelected ? 'black' : 'var(--text-secondary)',
+                          border: `1px solid ${isSelected ? 'var(--accent-indigo)' : 'var(--border-glass)'}`
+                        }}
+                      >
+                        {s.name}
+                      </button>
+                    );
+                  })}
+                  
+                  {form.activeSchemes?.filter(s => !displaySchemes.some(as => as.name === s)).map(customName => (
+                    <button
+                      key={customName}
+                      type="button"
+                      onClick={() => setForm({ ...form, activeSchemes: form.activeSchemes.filter(s => s !== customName) })}
+                      style={{
+                        padding: '6px 14px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', background: 'var(--accent-indigo)', color: 'black', border: '1px solid var(--accent-indigo)', display: 'flex', alignItems: 'center', gap: '4px'
+                      }}
+                    >
+                      {customName} <X size={12} />
+                    </button>
+                  ))}
+
+                  {!showCustomInput && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomInput(true)}
+                      style={{
+                        padding: '6px 14px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', background: 'rgba(255,255,255,0.05)', color: 'var(--accent-indigo)', border: '1px dashed var(--accent-indigo)'
+                      }}
+                    >
+                      <Plus size={14} style={{ display: 'inline', marginRight: '4px' }} />
+                      {t('pf_not_listed')}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {showCustomInput && (
+                <div style={{ marginTop: '12px', display: 'flex', gap: '8px', paddingBottom: '8px' }}>
+                  <input 
+                    type="text" 
+                    value={customSchemeName}
+                    onChange={(e) => setCustomSchemeName(e.target.value)}
+                    placeholder={t('pf_enter_scheme_ph')}
+                    className="input-dark"
+                    style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (customSchemeName.trim()) {
+                        const next = [...(form.activeSchemes || []), customSchemeName.trim()];
+                        setForm({ ...form, activeSchemes: [...new Set(next)] });
+                        setCustomSchemeName('');
+                        setShowCustomInput(false);
+                      }
+                    }}
+                    className="btn-glow"
+                    style={{ padding: '8px 16px', fontSize: '0.8rem' }}
+                  >
+                    {t('pf_add')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowCustomInput(false); setCustomSchemeName(''); }}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <motion.button
