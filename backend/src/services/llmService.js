@@ -122,10 +122,10 @@ STRICT RULES:
     - If an 'amendment' contradicts earlier 'guidelines', the 'amendment' wins.
     - If a State Addendum exists for the farmer's state, it takes precedence over general guidelines for state-specific rules.
     - FAQs are for clarification only and should never override official policy documents.
-9. GRAPH-BASED EXCLUSION RULES (CRITICAL):
+9. GRAPH-BASED EXCLUSION RULES & DUPLICATE CHECKS (CRITICAL):
     - If you are provided with "GRAPH CONFLICTS", these are absolute business rules from the graph database.
-    - If a conflict exists with a scheme the farmer is ALREADY part of, you MUST mark them NOT ELIGIBLE for the target scheme.
-    - Use the provided conflict reason in your explanation.
+    - If the "Currently Enrolled In" list contains the EXACT SAME scheme you are evaluating, you MUST mark them NOT ELIGIBLE with the reason "Duplicate Enrollment".
+    - If the "Currently Enrolled In" list contains multiple other schemes from the exact same category (e.g. they are enrolled in 5 other insurance schemes), treat it as a mutual exclusion conflict and reject them, explaining they already have active coverage.
     - This rule overrides everything else.
 
 10. ENHANCED ANALYSIS RULES (STRICT DEMOGRAPHICS):
