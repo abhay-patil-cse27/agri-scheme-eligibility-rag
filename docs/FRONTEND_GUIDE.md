@@ -40,7 +40,7 @@ and complex animations.
 
 ## 📂 Directory Structure
 
-* `/src/components`: UI building blocks (GlassCard, CustomButton, etc.)
-* `/src/pages`: Main application views (Dashboard, EligibilityChecker, Auth)
-* `/src/services`: API interaction logic and voice processing
-* `/src/locales`: JSON-based translation files for regional support
+* `/src/components`: UI building blocks (`GlassSurface`, `Aurora`, `Plasma`, `Silk`, `AgriCard`, etc.)
+* `/src/pages`: Application views (`Dashboard`, `EligibilityCheck`, `ResourceManagement`, `ChatDashboard`, `Settings`, etc.)
+* `/src/services`: API interaction logic, voice processing, and profile management.
+* `/src/locales`: JSON-based translation files for regional support.

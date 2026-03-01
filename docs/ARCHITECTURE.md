@@ -212,11 +212,7 @@ maintenance.
 
 ![Backend Component Map](architecture/backend-component-map.png)
 
-- **Routes (`/routes`):** Clean API surface (Auth, Eligibility, Voice, Scan,
-  Analytics, Graph).
-- **Services (`/services`):** The "Brains" where LLM logic, Graph traversal,
-  and Embeddings live.
-- **Models (`/models`):** MongoDB schemas for Users, Profiles, Schemes, Chunks,
-  **OTPs**, **ChatSessions**, **ChatMessages**, and Logs.
-- **Middleware (`/middleware`):** Rate limiters, Joi-based validators, and
-  high-security Auth checks.
+- **Routes (`/routes`):** Clean API surface (Auth, Eligibility, Voice, Scan, Analytics, Graph, Chat, Profile).
+- **Services (`/services`):** The "Brains" where LLM logic, Graph traversal, and Embeddings live.
+- **Models (`/models`):** MongoDB schemas for Users, Profiles, Schemes, Chunks, OTPs, ChatSessions, ChatMessages, ResourceUsage, and AuditLogs.
+- **Middleware (`/middleware`):** Rate limiters, Joi-based validators, and high-security Auth checks.
