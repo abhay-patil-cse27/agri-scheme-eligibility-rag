@@ -33,6 +33,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  useEffect(() => {
+    // Listen for role-sync signals from the API interceptor
+    const handleRoleSync = (event) => {
+      const { role } = event.detail;
+      if (user && user.role !== role) {
+        console.warn(`[AuthContext] Role mismatch detected (local: ${user.role}, server: ${role}). Syncing...`);
+        loadUser();
+      }
+    };
+
+    window.addEventListener('nitisetu:role-sync', handleRoleSync);
+    return () => window.removeEventListener('nitisetu:role-sync', handleRoleSync);
+  }, [user]);
+
   const login = async (email, password) => {
     try {
       const res = await apiLogin(email, password);

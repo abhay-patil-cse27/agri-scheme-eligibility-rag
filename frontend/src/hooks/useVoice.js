@@ -15,7 +15,18 @@ export function useVoice(language = 'en') {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      
+      // Select best supported mimeType (Chrome/Safari/Firefox compatibility)
+      const supportedTypes = [
+        'audio/webm;codecs=opus', 
+        'audio/webm', 
+        'audio/mp4',
+        'audio/ogg;codecs=opus'
+      ];
+      
+      const mimeType = supportedTypes.find(type => MediaRecorder.isTypeSupported(type)) || '';
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+      
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {

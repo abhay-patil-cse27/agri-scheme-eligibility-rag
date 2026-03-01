@@ -10,11 +10,11 @@ import {
   Cpu, Lock, Languages, HeartHandshake, Wheat, MapPin,
   Github, Sprout, TrendingUp, Clock, CheckCircle2, Search, Info, Check, Quote
 } from 'lucide-react';
-import LanguageSwitcher from '../components/common/LanguageSwitcher';
+import FluidGlass from '../components/FluidGlass';
+import LandingNav from '../components/layout/LandingNav';
 import Plasma from '../components/Plasma';
 import Silk from '../components/Silk';
 import CircularText from '../components/CircularText';
-import FluidGlass from '../components/FluidGlass';
 /* ─── Agricultural color system ─────────────────────────── */
 const C = (isDark) => ({
   bg:         isDark ? '#060d06'                      : '#faf7ee',
@@ -127,95 +127,7 @@ export default function Landing() {
     <div style={{ minHeight: '100vh', background: c.bg, color: c.text, fontFamily: '"Inter", sans-serif', transition: 'background 0.35s ease, color 0.25s ease' }}>
 
       {/* ══ Navbar ══ */}
-      <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
-        background: scrolled ? c.navBg : 'transparent',
-        backdropFilter: scrolled ? 'blur(24px)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(24px)' : 'none',
-        borderBottom: scrolled ? `1px solid ${c.border}` : '1px solid transparent',
-        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-      }}>
-        <div style={{ maxWidth: '1180px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '64px', padding: '0 28px' }}>
-
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '0 0 auto', marginRight: '32px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: GREEN_GRAD, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(22,163,74,0.4)' }}>
-              <Sprout size={18} color="white" />
-            </div>
-            <span style={{ fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
-              <span style={{ background: GREEN_GRAD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Niti</span>
-              <span style={{ color: c.text }}>Setu</span>
-            </span>
-          </div>
-
-          {/* Desktop links */}
-          <div style={{ display: 'flex', gap: '2px', flex: 1 }}>
-            {NAV.map(n => (
-              <button key={n.id} onClick={() => go(n.id)} style={{
-                background: 'none', border: 'none', cursor: 'pointer', padding: '8px 14px',
-                borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500, color: c.textSec,
-                transition: 'color 0.2s, background 0.2s',
-              }}
-                onMouseOver={e => { e.currentTarget.style.color = c.text; e.currentTarget.style.background = c.bgGlass; }}
-                onMouseOut={e => { e.currentTarget.style.color = c.textSec; e.currentTarget.style.background = 'none'; }}
-              >{n.label}</button>
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <LanguageSwitcher />
-
-            <motion.button whileTap={{ scale: 0.9 }} onClick={toggleTheme} title="Toggle theme" style={{
-              background: c.bgGlass, border: `1px solid ${c.border}`, borderRadius: '8px',
-              padding: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center',
-              transition: 'all 0.2s',
-            }}>
-              {isDark ? <Sun size={16} color="#fbbf24" /> : <Moon size={16} color="#166534" />}
-            </motion.button>
-            {user ? (
-              <Link to="/dashboard" style={{ textDecoration: 'none' }}>
-                <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} style={{
-                  background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '10px',
-                  padding: '9px 22px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
-                  boxShadow: '0 4px 16px rgba(22,163,74,0.4)',
-                }}>{t('lp_go_dashboard')}</motion.button>
-              </Link>
-            ) : (
-              <>
-                <Link to="/login" style={{ textDecoration: 'none' }}>
-                  <button style={{
-                    background: 'none', color: isDark ? '#4ade80' : '#166534',
-                    border: `1px solid ${c.border}`, borderRadius: '10px',
-                    padding: '9px 18px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                    onMouseOver={e => { e.currentTarget.style.background = c.bgGlass; }}
-                    onMouseOut={e => { e.currentTarget.style.background = 'none'; }}
-                  >{t('btn_signin', 'Sign In')}</button>
-                </Link>
-                <Link to="/check" style={{ textDecoration: 'none' }}>
-                  <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} style={{
-                    background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '10px',
-                    padding: '9px 22px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
-                    boxShadow: '0 4px 16px rgba(22,163,74,0.4)',
-                  }}>{t('btn_free_check', 'Free Check')}</motion.button>
-                </Link>
-              </>
-            )}
-            <button onClick={() => setOpen(!open)} style={{ background: 'none', border: `1px solid ${c.border}`, borderRadius: '8px', padding: '8px', cursor: 'pointer', color: c.textSec, display: 'none' }} className="ns-hamburger">
-              {open ? <X size={18} /> : <Menu size={18} />}
-            </button>
-          </div>
-        </div>
-
-        {open && (
-          <div style={{ background: c.navBg, borderTop: `1px solid ${c.border}`, padding: '10px 28px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            {NAV.map(n => (
-              <button key={n.id} onClick={() => go(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '12px 14px', borderRadius: '8px', textAlign: 'left', fontSize: '0.95rem', fontWeight: 500, color: c.textSec }}>{n.label}</button>
-            ))}
-          </div>
-        )}
-      </nav>
+      <LandingNav />
 
       {/* ══ Hero ══ */}
       <div ref={heroRef} style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', alignItems: 'center' }}>
@@ -258,14 +170,14 @@ export default function Landing() {
           </p>
 
           <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/check" style={{ textDecoration: 'none' }}>
+            <Link to={user ? "/dashboard/check" : "/check"} style={{ textDecoration: 'none' }}>
               <motion.button whileHover={{ scale: 1.05, boxShadow: '0 16px 48px rgba(22,163,74,0.45)' }} whileTap={{ scale: 0.97 }} style={{
                 background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '14px',
                 padding: '14px 32px', fontSize: '1.05rem', fontWeight: 700, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: '10px',
                 boxShadow: '0 6px 24px rgba(22,163,74,0.4)', transition: 'box-shadow 0.3s',
               }}>
-                {t('lp_hero_btn_check')} <ArrowRight size={18} />
+                {user ? t('lp_go_dashboard') : t('lp_hero_btn_check')} <ArrowRight size={18} />
               </motion.button>
             </Link>
             <button onClick={() => go('#features')} style={{
@@ -489,7 +401,10 @@ export default function Landing() {
             </div>
             <div>
               <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>{t('lp_footer_portal')}</p>
-              {[[t('btn_free_check'), '/check'], [t('btn_signin'), '/login'], [t('btn_register'), '/register']].map(([l, to]) => (
+              {(user 
+                ? [[t('lp_go_dashboard', 'Go to Dashboard →'), '/dashboard']] 
+                : [[t('btn_free_check'), '/check'], [t('btn_signin'), '/login'], [t('btn_register'), '/register']]
+              ).map(([l, to]) => (
                 <Link key={l} to={to} style={{ display: 'block', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textDecoration: 'none', transition: 'color 0.2s' }}
                   onMouseOver={e => e.currentTarget.style.color = c.text}
                   onMouseOut={e => e.currentTarget.style.color = c.textMute}

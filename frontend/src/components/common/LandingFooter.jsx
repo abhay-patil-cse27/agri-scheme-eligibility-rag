@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Sprout } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 const GREEN_GRAD = 'linear-gradient(135deg, #166534 0%, #16a34a 50%, #4ade80 100%)';
 
@@ -16,6 +17,7 @@ const C = (isDark) => ({
 export default function LandingFooter() {
   const { t } = useTranslation();
   const { theme } = useTheme();
+  const { user } = useAuth();
   const isDark = theme === 'dark';
   const c = C(isDark);
 
@@ -38,7 +40,10 @@ export default function LandingFooter() {
         <div style={{ display: 'flex', gap: '44px', flexWrap: 'wrap' }}>
           <div>
             <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>{t('lp_footer_portal')}</p>
-            {[[t('btn_free_check'), '/check'], [t('btn_signin'), '/login'], [t('btn_register'), '/register']].map(([l, to]) => (
+            {(user 
+              ? [[t('lp_go_dashboard', 'Go to Dashboard →'), '/dashboard']] 
+              : [[t('btn_free_check'), '/check'], [t('btn_signin'), '/login'], [t('btn_register'), '/register']]
+            ).map(([l, to]) => (
               <Link key={l} to={to} style={{ display: 'block', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textDecoration: 'none', transition: 'color 0.2s' }}
                 onMouseOver={e => e.currentTarget.style.color = c.text}
                 onMouseOut={e => e.currentTarget.style.color = c.textMute}

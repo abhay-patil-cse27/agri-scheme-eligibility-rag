@@ -26,6 +26,11 @@ exports.protect = asyncHandler(async (req, res, next) => {
 
     req.user = await User.findById(decoded.id);
 
+    if (req.user) {
+      // Industry Standard: Expose role in header for immediate frontend synchronization
+      res.setHeader('X-User-Role', req.user.role);
+    }
+
     next();
   } catch (err) {
     return res.status(401).json({ success: false, error: 'Not authorized to access this route' });

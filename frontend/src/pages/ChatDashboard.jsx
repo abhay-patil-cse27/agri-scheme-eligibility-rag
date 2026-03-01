@@ -4,7 +4,7 @@ import {
   Send, Sprout, User, Bot, Sparkles, HelpCircle, ArrowRight, 
   Volume2, VolumeX, Globe, Mic, MicOff, Trash2, Plus, 
   MessageSquare, MoreVertical, Edit3, Check, X, History as HistoryIcon,
-  ChevronLeft, Search
+  ChevronLeft, Search, Loader2
 } from 'lucide-react';
 import { 
   getChatSessions, 
@@ -13,23 +13,30 @@ import {
   deleteChatSession, 
   clearChatHistory,
   chatWithKrishiMitra, 
-  generateSpeech 
+  generateSpeech,
+  translateChatHistory 
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { useVoice } from '../hooks/useVoice';
+import { useToast } from '../context/ToastContext';
 import AgriCard from '../components/common/AgriCard';
 import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
+import LanguageSwitcher from '../components/common/LanguageSwitcher';
 
 const ChatDashboard = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const [currentSessionId, setCurrentSessionId] = useState(() => localStorage.getItem('current_session_id'));
   const [sessions, setSessions] = useState([]);
-  const [currentSessionId, setCurrentSessionId] = useState(null);
+  const audioCache = useRef({}); 
+  // Persistent multi-lingual cache for the current session's messages
+  // Structure: { 'en': [...], 'hi': [...], 'mr': [...] }
+  const [messageCache, setMessageCache] = useState({ 'en': [] });
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSessionsLoading, setIsSessionsLoading] = useState(true);
   const [inputValue, setInputValue] = useState('');
-  const [isAutoSpeech, setIsAutoSpeech] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState(null);
@@ -39,10 +46,127 @@ const ChatDashboard = () => {
   const audioRef = useRef(null);
   const messagesEndRef = useRef(null);
   const { i18n } = useTranslation();
-  
-  // Voice Dictation States
-  const [isDictating, setIsDictating] = useState(false);
-  const recognitionRef = useRef(null);
+  const [chatLanguage, setChatLanguage] = useState(() => localStorage.getItem('chat_language') || 'en');
+  const { addToast } = useToast();
+
+  // Sync session ID to localStorage
+  useEffect(() => {
+    if (currentSessionId) {
+      localStorage.setItem('current_session_id', currentSessionId);
+    } else {
+      localStorage.removeItem('current_session_id');
+    }
+  }, [currentSessionId]);
+
+  // Sync language to localStorage
+  useEffect(() => {
+    localStorage.setItem('chat_language', chatLanguage);
+  }, [chatLanguage]);
+
+  // Listen for sync events from floating bot
+  useEffect(() => {
+    const handleSync = () => {
+      fetchSessions(false); // Reload but don't force auto-select
+      const savedSessionId = localStorage.getItem('current_session_id');
+      
+      setCurrentSessionId(prev => {
+        if (savedSessionId !== prev) {
+          // The other chatbot changed the active session! We must sync our messages.
+          if (savedSessionId) {
+             setIsLoading(true);
+             getSessionMessages(savedSessionId).then(data => {
+               setMessages(data.map(msg => ({ id: msg._id, text: msg.content, sender: msg.role === 'assistant' ? 'ai' : 'user' })));
+               setIsLoading(false);
+             }).catch(console.error);
+          } else {
+             setMessages([]);
+          }
+          return savedSessionId;
+        }
+        return prev;
+      });
+    };
+    
+    window.addEventListener('nitisetu:chat-sync', handleSync);
+    return () => window.removeEventListener('nitisetu:chat-sync', handleSync);
+  }, []);
+
+  // Voice Dictation States (using useVoice hook for Whisper STT)
+  const { isListening: isDictating, transcript: voiceTranscript, startListening, stopListening: stopDictation, resetTranscript } = useVoice(chatLanguage || 'hi-IN');
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+
+  // Sync voice transcript to input value
+  useEffect(() => {
+    if (voiceTranscript) {
+      setInputValue(voiceTranscript);
+      resetTranscript();
+    }
+  }, [voiceTranscript, resetTranscript]);
+
+  // Initialize/Update 'en' cache when messages change from AI/User input
+  useEffect(() => {
+    if (messages.length > 0 && !isLoading) {
+      setMessageCache(prev => ({
+        ...prev,
+        [chatLanguage]: messages
+      }));
+    }
+  }, [messages, isLoading, chatLanguage]);
+
+  // Handle Chat History Translation with Caching
+  useEffect(() => {
+    const handleTranslateHistory = async () => {
+      // 1. Check if we already have this translation in cache
+      if (messageCache[chatLanguage] && messageCache[chatLanguage].length === messages.length) {
+        setMessages(messageCache[chatLanguage]);
+        return;
+      }
+
+      // 2. Identify source for translation (prefer 'en' as ground truth)
+      const sourceMessages = messageCache['en'].length > 0 ? messageCache['en'] : messages;
+      
+      const historyToTranslate = sourceMessages.filter(m => m.text).map(m => ({
+        role: m.sender === 'ai' ? 'assistant' : 'user',
+        content: m.text
+      }));
+
+      if (historyToTranslate.length === 0) return;
+      
+      try {
+        setIsLoading(true);
+        addToast('Translation Layer', `Syncing chat into ${chatLanguage.toUpperCase()}...`, 'info');
+        
+        let translated;
+        if (chatLanguage === 'en') {
+           // If switching back to English, use our original 'en' cache
+           translated = messageCache['en'].map(m => ({ role: m.sender === 'ai' ? 'assistant' : 'user', content: m.text }));
+        } else {
+           translated = await translateChatHistory(historyToTranslate, chatLanguage);
+        }
+        
+        const formatted = translated.map((msg, index) => ({
+          id: sourceMessages[index]?.id || Date.now() + index,
+          text: msg.content,
+          sender: msg.role === 'assistant' ? 'ai' : 'user'
+        }));
+        
+        // Update local state and cache simultaneously
+        setMessages(formatted);
+        setMessageCache(prev => ({
+          ...prev,
+          [chatLanguage]: formatted
+        }));
+      } catch (err) {
+        console.error('Translation sync failed:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (messages.length > 0 && chatLanguage) {
+      handleTranslateHistory();
+    }
+  }, [chatLanguage]);
 
   // Load Sessions on Mount
   useEffect(() => {
@@ -55,9 +179,14 @@ const ChatDashboard = () => {
       const data = await getChatSessions();
       setSessions(data);
       
-      // Only auto-select if we aren't already in a session and haven't started a new unsaved chat
-      if (shouldAutoSelect && data.length > 0 && !currentSessionId && messages.length <= 1) {
-        handleSelectSession(data[0]._id);
+      // Use stored session ID if available, otherwise latest
+      const savedSessionId = localStorage.getItem('current_session_id');
+      if (shouldAutoSelect && data.length > 0) {
+        if (savedSessionId && data.find(s => s._id === savedSessionId)) {
+          handleSelectSession(savedSessionId);
+        } else if (!currentSessionId && messages.length <= 1) {
+          handleSelectSession(data[0]._id);
+        }
       }
     } catch (error) {
       console.error('Error fetching sessions:', error);
@@ -67,9 +196,11 @@ const ChatDashboard = () => {
   };
 
   const handleSelectSession = async (sessionId) => {
-    if (sessionId === currentSessionId) return;
+    if (sessionId === currentSessionId && messages.length > 0) return;
     setCurrentSessionId(sessionId);
+    localStorage.setItem('current_session_id', sessionId);
     setMessages([]);
+    setMessageCache({ 'en': [] });
     setIsLoading(true);
     try {
       const data = await getSessionMessages(sessionId);
@@ -83,46 +214,36 @@ const ChatDashboard = () => {
       console.error('Error fetching messages:', error);
     } finally {
       setIsLoading(false);
+      // Dispatch sync event so floating bot knows we switched sessions
+      window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
     }
   };
 
   const handleNewChat = () => {
     setCurrentSessionId(null);
+    localStorage.removeItem('current_session_id');
     setMessages([]);
+    setMessageCache({ 'en': [] });
+    window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
   };
 
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.onresult = (event) => {
-        const tr = event.results[0][0].transcript;
-        setInputValue(prev => prev ? prev + ' ' + tr : tr);
-      };
-      recognition.onerror = (event) => {
-        console.error('Dictation Error:', event.error);
-        setIsDictating(false);
-      };
-      recognition.onend = () => setIsDictating(false);
-      recognitionRef.current = recognition;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.lang = i18n.language || 'en-IN';
-    }
-  }, [i18n.language]);
-
-  const toggleDictation = () => {
-    if (!recognitionRef.current) return alert("Speech Recognition is not supported in this browser.");
+  const toggleDictation = async () => {
     if (isDictating) {
-      recognitionRef.current.stop();
+      setIsProcessingVoice(true);
+      try {
+        await stopDictation();
+        addToast('Voice Processed', 'Message transcribed successfully', 'success');
+      } catch (err) {
+        addToast('Transcription Failed', 'Could not process audio', 'error');
+      } finally {
+        setIsProcessingVoice(false);
+      }
     } else {
-      recognitionRef.current.start();
-      setIsDictating(true);
+      try {
+        await startListening();
+      } catch (err) {
+        addToast('Microphone Error', 'Could not access microphone', 'error');
+      }
     }
   };
 
@@ -161,10 +282,12 @@ const ChatDashboard = () => {
         content: m.text
       }));
 
-      const res = await chatWithKrishiMitra(text, currentHistory, i18n.language, currentSessionId);
+      const res = await chatWithKrishiMitra(text, currentHistory, chatLanguage, currentSessionId);
       
       if (!currentSessionId && res.sessionId) {
         setCurrentSessionId(res.sessionId);
+        localStorage.setItem('current_session_id', res.sessionId);
+        window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
         fetchSessions(false); 
       }
 
@@ -173,8 +296,8 @@ const ChatDashboard = () => {
         text: res.response, 
         sender: 'ai' 
       }]);
-
-      if (isAutoSpeech) speakResponse(res.response);
+      
+      // Auto-Voice removed as per user request for manual trigger
     } catch (error) {
       setMessages(prev => [...prev, { 
         id: Date.now() + 1, 
@@ -183,6 +306,7 @@ const ChatDashboard = () => {
       }]);
     } finally {
       setIsLoading(false);
+      window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
     }
   };
 
@@ -201,6 +325,7 @@ const ChatDashboard = () => {
     } finally {
       setIsDeleting(false);
       setSessionToDelete(null);
+      window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
     }
   };
 
@@ -215,22 +340,62 @@ const ChatDashboard = () => {
       alert("Failed to clear history");
     } finally {
       setIsDeleting(false);
+      window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
     }
   };
 
-  const speakResponse = async (text) => {
-    if (audioRef.current) audioRef.current.pause();
+  const stopSpeaking = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsSpeaking(false);
+    setSpeakingMsgId(null);
+  };
+
+  const [speakingMsgId, setSpeakingMsgId] = useState(null);
+
+  const speakMessage = async (text, msgId) => {
+    if (isSpeaking && speakingMsgId === msgId) {
+      stopSpeaking();
+      return;
+    }
+
+    stopSpeaking();
     setIsSpeaking(true);
+    setSpeakingMsgId(msgId);
+
     try {
-      const lang = i18n.language.split('-')[0];
-      const audioBlob = await generateSpeech(text, lang);
-      const url = URL.createObjectURL(audioBlob);
+      const lang = chatLanguage.split('-')[0];
+      const cacheKey = `${lang}::${msgId}`;
+      
+      let url;
+      if (audioCache.current[cacheKey]) {
+        url = audioCache.current[cacheKey];
+      } else {
+        addToast(t('sb_history'), 'Fetching natural AI voice...', 'info');
+        const audioBlob = await generateSpeech(text, lang);
+        url = URL.createObjectURL(audioBlob);
+        audioCache.current[cacheKey] = url;
+      }
+
       const audio = new Audio(url);
       audioRef.current = audio;
-      audio.onended = () => setIsSpeaking(false);
+      audio.onended = () => {
+        setIsSpeaking(false);
+        setSpeakingMsgId(null);
+      };
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        setSpeakingMsgId(null);
+        addToast('Audio Error', 'Failed to play speech', 'error');
+      };
       audio.play();
     } catch (err) {
+      console.error("TTS Error:", err);
       setIsSpeaking(false);
+      setSpeakingMsgId(null);
+      addToast('Audio Error', 'Failed to generate voice', 'error');
     }
   };
 
@@ -239,7 +404,12 @@ const ChatDashboard = () => {
       
       {/* Sidebar - Chat History List (ChatGPT style) */}
       <motion.div 
-        animate={{ width: sidebarOpen ? '320px' : '0px', opacity: sidebarOpen ? 1 : 0 }}
+        initial={false}
+        animate={{ 
+          width: sidebarOpen ? '320px' : '0px', 
+          opacity: sidebarOpen ? 1 : 0,
+          marginRight: sidebarOpen ? '0px' : '-24px' 
+        }}
         style={{ 
           display: 'flex', 
           flexDirection: 'column', 
@@ -248,110 +418,174 @@ const ChatDashboard = () => {
           border: '1px solid var(--border-glass)',
           overflow: 'hidden',
           position: 'relative',
-          flexShrink: 0
+          flexShrink: 0,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
         }}
       >
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
+        <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', height: '100%' }}>
+          {/* New Chat Button */}
           <button 
             onClick={handleNewChat}
             className="btn-glow"
             style={{ 
               width: '100%', 
-              padding: '14px', 
-              borderRadius: '14px', 
+              padding: '16px', 
+              borderRadius: '16px', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
-              gap: '10px',
-              fontSize: '0.95rem',
-              fontWeight: 600
+              gap: '12px',
+              fontSize: '1rem',
+              fontWeight: 700,
+              marginBottom: '24px',
+              boxShadow: '0 8px 25px rgba(22, 163, 74, 0.4)'
             }}
           >
-            <Plus size={18} />
+            <Plus size={20} />
             {t('chat_new_chat', 'New Chat')}
           </button>
 
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '20px 8px 10px', paddingBottom: '8px', borderBottom: '1px solid var(--border-glass)' }}>
-              <HistoryIcon size={14} className="text-indigo-400" />
-              <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          {/* Sessions List Container */}
+          <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', paddingRight: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', padding: '0 8px' }}>
+              <HistoryIcon size={14} style={{ color: 'var(--accent-indigo)' }} />
+              <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 {t('chat_recent_chats', 'Recent Conversations')}
               </h3>
             </div>
             
             {isSessionsLoading ? (
-              <div style={{ padding: '20px', textAlign: 'center' }}>
-                <Bot size={24} className="animate-pulse text-indigo-400" />
+              <div style={{ padding: '40px 0', display: 'flex', justifyContent: 'center' }}>
+                <Bot size={28} className="animate-pulse text-indigo-400" />
               </div>
             ) : sessions.length === 0 ? (
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>No previous chats</p>
+              <div style={{ padding: '40px 20px', textAlign: 'center', background: 'rgba(0,0,0,0.05)', borderRadius: '16px', margin: '0 8px' }}>
+                <MessageSquare size={32} style={{ color: 'var(--text-muted)', opacity: 0.3, margin: '0 auto 12px' }} />
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                  {t('chat_no_history', 'No previous chats')}
+                </p>
+              </div>
             ) : (
-              sessions.map(session => (
-                <div 
-                  key={session._id}
-                  onClick={() => handleSelectSession(session._id)}
-                  style={{
-                    padding: '14px',
-                    borderRadius: '16px',
-                    cursor: 'pointer',
-                    background: currentSessionId === session._id ? 'var(--gradient-primary)' : 'transparent',
-                    boxShadow: currentSessionId === session._id ? '0 8px 20px rgba(99, 102, 241, 0.2)' : 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    position: 'relative',
-                    marginBottom: '4px',
-                  }}
-                  className="chat-session-item"
-                >
-                  <MessageSquare size={16} color={currentSessionId === session._id ? 'white' : 'var(--accent-emerald)'} />
-                  <span style={{ 
-                    fontSize: '0.88rem', 
-                    color: currentSessionId === session._id ? 'white' : 'var(--text-primary)',
-                    fontWeight: currentSessionId === session._id ? 700 : 500,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    flex: 1
-                  }}>
-                    {session.title}
-                  </span>
-                  
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSessionToDelete(session._id);
-                      setShowClearConfirm(true);
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {sessions.map(session => (
+                  <motion.div 
+                    key={session._id}
+                    layoutId={session._id}
+                    onClick={() => handleSelectSession(session._id)}
+                    whileHover={{ scale: 1.02, x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      padding: '14px 16px',
+                      borderRadius: '14px',
+                      cursor: 'pointer',
+                      background: currentSessionId === session._id ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${currentSessionId === session._id ? 'transparent' : 'var(--border-glass)'}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      transition: 'all 0.2s ease',
+                      position: 'relative',
                     }}
-                    style={{ 
-                      opacity: 0, 
-                      transition: 'opacity 0.2s', 
-                      background: 'transparent', 
-                      border: 'none', 
-                      color: currentSessionId === session._id ? 'white' : 'var(--accent-rose)',
-                      cursor: 'pointer'
-                    }}
-                    className="delete-btn"
+                    className="group"
                   >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))
+                    <MessageSquare size={16} 
+                      style={{ 
+                        color: currentSessionId === session._id ? 'white' : 'var(--accent-emerald)',
+                        flexShrink: 0 
+                      }} 
+                    />
+                    <span style={{ 
+                      fontSize: '0.88rem', 
+                      color: currentSessionId === session._id ? 'white' : 'var(--text-primary)',
+                      fontWeight: currentSessionId === session._id ? 700 : 500,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      flex: 1
+                    }}>
+                      {session.title}
+                    </span>
+                    
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSessionToDelete(session._id);
+                        setShowClearConfirm(true);
+                      }}
+                      style={{ 
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '6px',
+                        borderRadius: '8px',
+                        background: currentSessionId === session._id ? 'rgba(255,255,255,0.2)' : 'rgba(244,63,94,0.1)', 
+                        border: 'none', 
+                        color: currentSessionId === session._id ? 'white' : 'var(--accent-rose)',
+                        cursor: 'pointer',
+                        opacity: currentSessionId === session._id ? 1 : 0, // Hidden by default unless active or hovered
+                        transition: 'all 0.2s ease'
+                      }}
+                      className="delete-btn-hover"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
             )}
           </div>
 
-          <button 
-            onClick={() => {
-              setSessionToDelete(null); // Setting null signifies "Clear All"
-              setShowClearConfirm(true);
-            }}
-            className="text-rose-400 hover:text-rose-300 transition-colors py-3 mt-4 flex items-center justify-center gap-2 border-t border-[var(--border-glass)]"
-            style={{ fontSize: '0.8rem', fontWeight: 600, background: 'transparent' }}
-          >
-            <Trash2 size={14} /> {t('chat_clear_all', 'Clear All Conversations')}
-          </button>
+          {/* Footer Actions */}
+          {sessions.length > 0 && (
+            <button 
+              onClick={() => {
+                setSessionToDelete(null); 
+                setShowClearConfirm(true);
+              }}
+              style={{ 
+                marginTop: '16px',
+                padding: '12px',
+                borderRadius: '12px',
+                background: 'rgba(244,63,94,0.05)',
+                border: '1px solid rgba(244,63,94,0.1)',
+                color: 'var(--accent-rose)',
+                fontSize: '0.8rem', 
+                fontWeight: 700, 
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer'
+              }}
+              onMouseOver={e => e.currentTarget.style.background = 'rgba(244,63,94,0.1)'}
+              onMouseOut={e => e.currentTarget.style.background = 'rgba(244,63,94,0.05)'}
+            >
+              <Trash2 size={14} /> 
+              {t('chat_clear_all', 'Clear All Conversations')}
+            </button>
+          )}
         </div>
+
+        {/* CSS for hover effects */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          .group:hover .delete-btn-hover {
+            opacity: 1 !important;
+          }
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: var(--border-glass);
+            border-radius: 10px;
+          }
+          .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+          }
+        `}} />
       </motion.div>
 
       {/* Main Container */}
@@ -374,26 +608,14 @@ const ChatDashboard = () => {
             </span>
           </h1>
 
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {isSpeaking && (
-              <div className="waveform">
-                <div className="waveform-bar"></div><div className="waveform-bar"></div>
-                <div className="waveform-bar"></div><div className="waveform-bar"></div>
-                <div className="waveform-bar"></div>
-              </div>
-            )}
-            <button 
-              onClick={() => setIsAutoSpeech(!isAutoSpeech)}
-              className={`btn-glass flex items-center gap-2 px-4 py-2 ${isAutoSpeech ? 'text-indigo-400' : 'text-gray-400'}`}
-              style={{ 
-                borderRadius: '12px',
-                background: isAutoSpeech ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-secondary)',
-                border: `1px solid ${isAutoSpeech ? 'rgba(99, 102, 241, 0.2)' : 'var(--border-glass)'}`
-              }}
-            >
-              {isAutoSpeech ? <Volume2 size={18} /> : <VolumeX size={18} />}
-              <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{isAutoSpeech ? 'Auto-Voice: On' : 'Auto-Voice: Off'}</span>
-            </button>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ width: '130px' }}>
+              <LanguageSwitcher 
+                placement="down" 
+                currentLanguage={chatLanguage}
+                onSelect={(code) => setChatLanguage(code)}
+              />
+            </div>
           </div>
         </div>
 
@@ -462,8 +684,47 @@ const ChatDashboard = () => {
                     background: msg.sender === 'user' ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-secondary)',
                     border: '1px solid var(--border-glass)',
                     color: 'var(--text-primary)', fontSize: '0.95rem', lineHeight: 1.6,
+                    position: 'relative'
                   }}>
                     {msg.text}
+
+                    {msg.sender === 'ai' && (
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--border-glass)' }}>
+                         <motion.button 
+                           whileHover={{ scale: 1.05 }}
+                           whileTap={{ scale: 0.95 }}
+                           onClick={() => speakMessage(msg.text, msg.id || msg.text.substring(0,20))}
+                           style={{ 
+                             background: speakingMsgId === (msg.id || msg.text.substring(0,20)) ? 'var(--accent-emerald)' : 'var(--bg-secondary)',
+                             color: speakingMsgId === (msg.id || msg.text.substring(0,20)) ? 'white' : 'var(--accent-emerald)',
+                             border: '1px solid var(--border-glass)', 
+                             padding: '6px 14px', 
+                             borderRadius: '20px',
+                             fontSize: '0.75rem', 
+                             fontWeight: 700,
+                             display: 'flex',
+                             alignItems: 'center',
+                             gap: '6px',
+                             cursor: 'pointer',
+                             transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                             boxShadow: speakingMsgId === (msg.id || msg.text.substring(0,20)) ? '0 4px 12px rgba(16, 185, 129, 0.3)' : 'none'
+                           }}
+                         >
+                           {speakingMsgId === (msg.id || msg.text.substring(0,20)) ? (
+                             <>
+                               <Volume2 size={12} className="animate-pulse" /> 
+                               <div className="waveform ml-1">
+                                 <div className="waveform-bar" style={{ background: 'white', opacity: 0.8 }} />
+                                 <div className="waveform-bar" style={{ background: 'white', opacity: 0.8 }} />
+                                 <div className="waveform-bar" style={{ background: 'white', opacity: 0.8 }} />
+                               </div>
+                             </>
+                           ) : (
+                             <><Volume2 size={12} /> {t('chat_listen', "Listen")}</>
+                           )}
+                         </motion.button>
+                       </div>
+                    )}
                   </div>
                 </motion.div>
               ))
@@ -482,45 +743,93 @@ const ChatDashboard = () => {
           </div>
 
           {/* Typing Area */}
-          <div style={{ padding: '20px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-glass)' }}>
-            <div style={{ 
-              background: 'var(--bg-primary)', borderRadius: '16px', padding: '8px 8px 8px 18px', 
-              display: 'flex', alignItems: 'center', border: '1px solid var(--border-color)',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-            }}>
-              <input 
-                type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSend(inputValue)}
-                placeholder="Message Krishi Mitra..."
-                style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)', padding: '10px 0', fontSize: '0.95rem' }}
-              />
-              <div style={{ display: 'flex', gap: '4px' }}>
-                <button 
-                  onClick={toggleDictation}
-                  style={{ 
-                    padding: '10px', borderRadius: '12px', 
-                    background: isDictating ? 'rgba(244, 63, 94, 0.1)' : 'transparent',
-                    color: isDictating ? 'var(--accent-rose)' : 'var(--text-muted)',
-                    transition: 'all 0.2s',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {isDictating ? <Mic size={20} className="animate-pulse" /> : <MicOff size={20} />}
-                </button>
-                <button 
-                  onClick={() => handleSend(inputValue)}
-                  disabled={isLoading || !inputValue.trim()}
-                  className="btn-glow" 
-                  style={{ 
-                    padding: '10px 20px', borderRadius: '12px',
-                    opacity: (!inputValue.trim() || isLoading) ? 0.6 : 1
-                  }}
-                >
-                  <Send size={18} />
-                </button>
-              </div>
+          <div style={{ padding: '24px', background: 'var(--bg-primary)' }}>
+          <div style={{
+            display: 'flex', alignItems: 'flex-end', background: 'var(--bg-card)', 
+            border: '1px solid var(--border-glass)', borderRadius: '24px', 
+            padding: '8px 12px', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)',
+            transition: 'all 0.3s ease',
+            boxShadow: inputValue.trim() ? '0 4px 12px rgba(16, 185, 129, 0.08)' : 'inset 0 2px 4px rgba(0,0,0,0.05)',
+            borderColor: inputValue.trim() ? 'rgba(16, 185, 129, 0.2)' : 'var(--border-glass)'
+          }}>
+            <textarea 
+              value={isDictating ? "I'm listening..." : (isProcessingVoice ? "Transcribing..." : inputValue)} 
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px';
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (inputValue.trim() && !isLoading) {
+                    handleSend(inputValue);
+                    e.target.style.height = 'auto'; // Reset after sending
+                  }
+                }
+              }}
+              rows={1}
+              placeholder={isDictating ? "Listening..." : "Ask Krishi Mitra..."}
+              disabled={isDictating || isProcessingVoice}
+              className="custom-scrollbar"
+              style={{
+                flex: 1, background: 'transparent', border: 'none', outline: 'none', 
+                padding: '12px 16px', fontSize: '1.05rem', 
+                color: isDictating ? 'var(--accent-rose)' : 'var(--text-primary)',
+                fontWeight: isDictating ? 'bold' : 'normal',
+                fontStyle: isDictating ? 'italic' : 'normal',
+                resize: 'none', overflowY: 'auto',
+                minHeight: '48px', maxHeight: '150px', lineHeight: '24px'
+              }}
+            />
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '4px', paddingBottom: '2px' }}>
+              <button 
+                onClick={toggleDictation}
+                disabled={isProcessingVoice || (inputValue.trim().length > 0 && !isDictating)}
+                style={{ 
+                  width: (inputValue.trim() && !isDictating) ? '0px' : '44px',
+                  height: '44px',
+                  borderRadius: '16px', 
+                  cursor: (isProcessingVoice || (inputValue.trim() && !isDictating)) ? 'default' : 'pointer',
+                  border: 'none',
+                  background: isDictating ? 'var(--accent-rose)' : 'var(--bg-secondary)',
+                  color: isDictating ? 'white' : 'var(--text-muted)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                  opacity: (inputValue.trim() && !isDictating) ? 0 : 1,
+                  overflow: 'hidden',
+                  boxShadow: isDictating ? '0 4px 12px rgba(244, 63, 94, 0.3)' : 'none',
+                  transform: isDictating ? 'scale(1.05)' : 'scale(1)'
+                }}
+                title={isDictating ? 'Stop Listening' : 'Start Dictation'}
+              >
+                {isProcessingVoice ? <Loader2 size={20} className="spin" /> : <Mic size={20} className={isDictating ? "pulse" : ""} />}
+              </button>
+
+              <button 
+                onClick={() => handleSend(inputValue)}
+                disabled={isLoading || !inputValue.trim()}
+                className="btn-glow" 
+                style={{ 
+                  width: inputValue.trim() ? '52px' : '44px',
+                  height: '44px',
+                  borderRadius: inputValue.trim() ? '16px' : '50%',
+                  opacity: (!inputValue.trim() || isLoading) ? 0.3 : 1,
+                  padding: 0, margin: 0, border: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: inputValue.trim() ? 'var(--accent-emerald)' : 'var(--bg-glass)',
+                  color: inputValue.trim() ? 'white' : 'var(--text-muted)',
+                  transform: inputValue.trim() ? 'scale(1.05)' : 'scale(1)',
+                  cursor: (!inputValue.trim() || isLoading) ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                }}
+              >
+                {isLoading ? <Loader2 size={20} className="spin" /> : <Send size={20} style={{ marginLeft: inputValue.trim() ? '2px' : '0' }} />}
+              </button>
             </div>
           </div>
+        </div>
         </AgriCard>
       </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Search, Loader2, Shield, Calendar, Mail, User, Trash2, AlertTriangle, X, ShieldAlert, Plus, ShieldCheck, UserCog } from 'lucide-react';
+import { Users, Search, Loader2, Shield, Calendar, Mail, User, Trash2, AlertTriangle, X, ShieldAlert, Plus, ShieldCheck, UserCog, ArrowUpCircle } from 'lucide-react';
 import { getAllUsers, deleteUser, provisionAdmin, updateUserRole } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';

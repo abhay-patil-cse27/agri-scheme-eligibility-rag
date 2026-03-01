@@ -166,13 +166,13 @@ function AnimatedRoutes() {
           {/* Authenticated Eligibility Check renders INSIDE the Sidebar layout */}
           <Route path="check" element={<PageWrapper><EligibilityCheck /></PageWrapper>} />
           <Route path="schemes" element={<PageWrapper><Schemes /></PageWrapper>} />
-          <Route path="farmers" element={<PageWrapper><Farmers /></PageWrapper>} />
+          <Route path="farmers" element={<ProtectedRoute requiredRole="admin"><PageWrapper><Farmers /></PageWrapper></ProtectedRoute>} />
           <Route path="history" element={<PageWrapper><HistoryPage /></PageWrapper>} />
           <Route path="settings" element={<PageWrapper><Settings /></PageWrapper>} />
-          <Route path="users" element={<PageWrapper><UsersPage /></PageWrapper>} />
-          <Route path="graph" element={<PageWrapper><GraphExplorer /></PageWrapper>} />
+          <Route path="users" element={<ProtectedRoute requiredRole="admin"><PageWrapper><UsersPage /></PageWrapper></ProtectedRoute>} />
+          <Route path="graph" element={<ProtectedRoute requiredRole="admin"><PageWrapper><GraphExplorer /></PageWrapper></ProtectedRoute>} />
           <Route path="chat" element={<PageWrapper><ChatDashboard /></PageWrapper>} />
-          <Route path="resources" element={<PageWrapper><ResourceManagement /></PageWrapper>} />
+          <Route path="resources" element={<ProtectedRoute requiredRole="admin"><PageWrapper><ResourceManagement /></PageWrapper></ProtectedRoute>} />
         </Route>
       </Routes>
     </AnimatePresence>

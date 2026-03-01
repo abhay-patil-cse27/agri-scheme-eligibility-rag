@@ -459,13 +459,20 @@ async function transcribeAudio(filePath, language = "en", usageCategory = "regis
     const whisperLanguage = language
       ? language.substring(0, 2).toLowerCase()
       : "en";
+      
+    // Enhanced prompt for regional Indian agriculture
+    const whisperPrompt = `Agricultural assistant for Indian farmers. 
+    Main dialects: Hindi (हिंदी), Marathi (मराठी). 
+    IMPORTANT: Do NOT translate. Transcribe exactly as spoken in regional language or Hinglish/Marathighlish. 
+    Preserve local farming terms: सात-बारा (7/12), पिक विमा (Crop Insurance), कर्ज (Loan), खत (Fertilizer), एकर (Acre), हेक्टर (Hectare), बिघा (Bigha), पाऊस (Rain), पेरणी (Sowing). 
+    If the user uses English words in the middle of regional speech, transcribe them as English words.`;
+
     const transcription = await runQueued(() =>
       withRetry(() =>
         groqInstances[currentGroqIndex].audio.transcriptions.create({
           file: fs.createReadStream(filePath),
-          model: "whisper-large-v3", // upgraded from turbo for much better Indian language accuracy
-          prompt:
-            "Agricultural scheme app. Transcribe exactly as spoken in regional language. Do NOT translate. Preserve regional number words and land unit words (e.g., एकर, हेक्टर, bigha, acre, hectare).",
+          model: "whisper-large-v3", 
+          prompt: whisperPrompt,
           response_format: "json",
           language: whisperLanguage,
         }),
@@ -715,11 +722,63 @@ Omit any keys where the data is not found in the image. DO NOT output markdown, 
   }
 }
 
+/**
+ * Phase 6: High-Fidelity Chat Translation (NIFTY-RAG Engine)
+ * Uses Llama 3.3 70B for nuanced, non-literal regional translation of agricultural context.
+ */
+const translateChatMessages = async (messages, targetLanguage = 'hi') => {
+  if (!messages || messages.length === 0) return [];
+  if (targetLanguage === 'en') return messages;
+
+  const langName = languageMap[targetLanguage] || 'Hindi';
+  
+  const payload = messages.map(m => ({ 
+    role: m.role || (m.sender === 'ai' ? 'assistant' : 'user'),
+    content: m.content || m.text 
+  }));
+
+  const prompt = `You are a high-fidelity Transcreation Expert specializing in Indian Agriculture.
+  Translate the following conversation between a Farmer and 'Krishi Mitra' (AI Assistant) into ${langName}.
+
+  CRITICAL GUIDELINES:
+  1. NO LITERAL TRANSLATIONS: Do not perform word-for-word translation. If a phrase sounds "robotic" or "foreign" in ${langName}, rewrite it to sound like a local farmer speaking to a helpful village official.
+  2. SCHEME PRESERVATION: Keep official scheme names (e.g., "PM-Kisan", "PMFBY", "KCC", "7/12 Extract") as they are usually spoken, or use their widely recognized local names. 
+  3. TONE: Warm, empathetic, and respectful. Use appropriate honorifics in ${langName} (e.g., using 'aap' instead of 'tum' in Hindi/Marathi).
+  4. GREETINGS: Convert generic "Hello" to culturally appropriate greetings like "Namaste", "Namaskar", or "Ram Ram".
+  5. CONTEXTUAL ACCURACY: Ensure agricultural terms (Soil Testing, Harvest, Subsidy, Irrigation) are translated into common farming terminology used in ${langName}.
+
+  Return ONLY a valid JSON object with the key "translated_messages" containing the array of results.
+  
+  CONVERSATION TO TRANSLATE (JSON): ${JSON.stringify(payload)}`;
+
+  try {
+    const completion = await groqInstances[currentGroqIndex].chat.completions.create({
+      messages: [
+        { 
+          role: "system", 
+          content: "You are a master of regional Indian dialects and agriculture. You convert dry English text into natural, warm, and professional local languages." 
+        },
+        { role: "user", content: prompt }
+      ],
+      model: "llama-3.3-70b-versatile", // High intelligence for nuanced translation
+      temperature: 0.1,
+      response_format: { type: "json_object" }
+    });
+    
+    const response = JSON.parse(completion.choices[0].message.content);
+    return response.translated_messages || payload;
+  } catch (error) {
+    logger.error('High-Fidelity Translation Error:', error.message);
+    return payload; 
+  }
+};
+
 module.exports = {
   checkEligibility,
   extractProfileFromTranscript,
   transcribeAudio,
   translateEligibilityResult,
   chatWithKrishiMitra,
-  extractProfileFromDocument
+  extractProfileFromDocument,
+  translateChatMessages
 };

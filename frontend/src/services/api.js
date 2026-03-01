@@ -15,6 +15,30 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Response interceptor to handle role synchronization and errors
+api.interceptors.response.use(
+  (response) => {
+    // Industry Standard: Check if backend provided a role update in headers
+    const serverRole = response.headers['x-user-role'];
+    if (serverRole) {
+      // Dispatch a custom event that AuthContext will listen to
+      const event = new CustomEvent('nitisetu:role-sync', { detail: { role: serverRole } });
+      window.dispatchEvent(event);
+    }
+    return response;
+  },
+  (error) => {
+    // Global unauthorized handler
+    if (error.response?.status === 401) {
+      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register') && window.location.pathname !== '/') {
+        localStorage.removeItem('token');
+        window.location.href = '/login?expired=true';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // ── Auth ──────────────────────────────────
 export const login = (email, password) => api.post('/auth/login', { email, password }).then(r => r.data);
 export const sendOTP = (email, purpose) => api.post('/auth/send-otp', { email, purpose }).then(r => r.data);
@@ -112,6 +136,11 @@ export const getSessionMessages = async (sessionId) => {
 
 export const deleteChatSession = async (sessionId) => {
   const { data } = await api.delete(`/chat/sessions/${sessionId}`);
+  return data;
+};
+
+export const translateChatHistory = async (messages, targetLanguage) => {
+  const { data } = await api.post('/chat/translate', { messages, targetLanguage });
   return data;
 };
 

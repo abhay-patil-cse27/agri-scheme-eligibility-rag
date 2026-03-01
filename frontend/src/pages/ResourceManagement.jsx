@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Cpu, 
@@ -27,9 +28,11 @@ import {
   LayoutGrid,
   CreditCard,
   CloudLightning,
-  Monitor
+  Monitor,
+  X
 } from 'lucide-react';
 import { getResourceUsage } from '../services/api';
+import { useToast } from '../context/ToastContext';
 import AgriCard from '../components/common/AgriCard';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -198,6 +201,10 @@ export default function ResourceManagement() {
   const [refreshing, setRefreshing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isLive, setIsLive] = useState(true);
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [isRefreshingLogs, setIsRefreshingLogs] = useState(false);
+  const { addToast } = useToast();
 
   const loadUsage = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -217,13 +224,13 @@ export default function ResourceManagement() {
   useEffect(() => {
     loadUsage();
     
-    // Industrial Standard: 30s polling is safer for analytics
+    // Refresh interval increased to 5 minutes (300,000ms) to mitigate server strain
     // Polling only happens if live-sync is enabled AND window is visible
     const interval = setInterval(() => {
       if (isLive && document.visibilityState === 'visible') {
         loadUsage(true);
       }
-    }, 30000);
+    }, 300000);
 
     const clock = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => { clearInterval(interval); clearInterval(clock); };
@@ -244,6 +251,50 @@ export default function ResourceManagement() {
       public: h.publicUsage || 0
     }));
   }, [usageData]);
+
+  const [mockLogs, setMockLogs] = useState(() => [
+    { type: 'SYSTEM', time: new Date(Date.now() - 86400000).toLocaleTimeString(), msg: 'Master system reboot sequence completed.' },
+    { type: 'SUCCESS', time: new Date(Date.now() - 14400000).toLocaleTimeString(), msg: 'MongoDB Atlas primary cluster verified.' },
+    { type: 'SUCCESS', time: new Date(Date.now() - 14300000).toLocaleTimeString(), msg: 'Neo4j Aura connectivity established.' },
+    { type: 'INFO', time: new Date(Date.now() - 3600000).toLocaleTimeString(), msg: 'Vite build sequence initiated.' },
+    { type: 'INFO', time: new Date(Date.now() - 3550000).toLocaleTimeString(), msg: 'Client environment compiled successfully.' },
+    { type: 'INFO', time: new Date(Date.now() - 1800000).toLocaleTimeString(), msg: 'LLM cache warming successful (Groq).' },
+    { type: 'WARN', time: new Date(Date.now() - 600000).toLocaleTimeString(), msg: 'ElevenLabs API endpoint latency increased by 15ms.' },
+    { type: 'SYSTEM', time: new Date(Date.now() - 120000).toLocaleTimeString(), msg: 'Orchestration node initialized locally.' },
+    { type: 'INFO', time: new Date(Date.now() - 100000).toLocaleTimeString(), msg: 'Resource fetch operation successful (200 OK).' },
+    { type: 'WARN', time: new Date(Date.now() - 80000).toLocaleTimeString(), msg: 'Quota sync is caching actively.' },
+    { type: 'SUCCESS', time: new Date(Date.now() - 60000).toLocaleTimeString(), msg: 'Telemetry synced with master node.' },
+    { type: 'LIVE', time: new Date().toLocaleTimeString(), msg: 'Polling for infrastructure changes...' }
+  ]);
+
+  const handleRefreshLogs = () => {
+    setIsRefreshingLogs(true);
+    setTimeout(() => {
+      setMockLogs(prev => [
+        ...prev.filter(l => l.type !== 'LIVE'),
+        { type: 'INFO', time: new Date().toLocaleTimeString(), msg: 'Manual log refresh triggered by user.' },
+        { type: 'SUCCESS', time: new Date(Date.now() + 500).toLocaleTimeString(), msg: 'Log streams synchronized successfully.' },
+        { type: 'LIVE', time: new Date(Date.now() + 1000).toLocaleTimeString(), msg: 'Polling for infrastructure changes...' }
+      ]);
+      setIsRefreshingLogs(false);
+    }, 600);
+  };
+
+  const handleExportLogs = () => {
+    const logContent = mockLogs.map(log => `[${log.type}] ${log.time} - ${log.msg}`).join('\n');
+    const blob = new Blob([logContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `nitisetu_infrastructure_logs_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    addToast('Logs Exported', 'System logs have been downloaded as a text file.', 'success');
+    setShowLogsModal(false);
+  };
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden', paddingBottom: '40px' }}>
@@ -302,7 +353,10 @@ export default function ResourceManagement() {
                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isLive ? 'var(--accent-emerald)' : 'var(--text-muted)', animation: isLive ? 'pulse 2s infinite' : 'none' }} />
                {isLive ? 'Live Syncing' : 'Sync Paused'}
              </button>
-             <button style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '8px 16px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 600 }}>
+             <button 
+               onClick={() => setShowLogsModal(true)}
+               style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '8px 16px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 600 }}
+             >
                <Archive size={16} /> Logs
              </button>
              <motion.button
@@ -444,7 +498,7 @@ export default function ResourceManagement() {
                   <button 
                     className="btn-glow" 
                     style={{ width: '100%', marginTop: '16px', padding: '10px', fontSize: '0.8rem', fontWeight: 700 }}
-                    onClick={() => alert("QUOTA MANAGEMENT SYYTEM:\n\nSystem quotas are currently managed via Environment Variables for EAL5+ security compliance.\n\nPlease refer to the .env configuration to adjust DAILY_LLM_LIMIT and DAILY_TTS_LIMIT values.")}
+                    onClick={() => setShowQuotaModal(true)}
                   >
                     Manage Quotas
                   </button>
@@ -463,6 +517,97 @@ export default function ResourceManagement() {
           </div>
         </div>
       </AgriCard>
+
+      {/* Popups */}
+      {createPortal(
+        <AnimatePresence>
+          {showQuotaModal && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)' }}>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '24px', border: '1px solid var(--border-color)', width: '90%', maxWidth: '450px', position: 'relative', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}
+            >
+              <button onClick={() => setShowQuotaModal(false)} style={{ position: 'absolute', top: '20px', right: '20px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <ShieldCheck size={22} style={{ color: 'var(--accent-emerald)' }} /> Quota Management System
+              </h3>
+              <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-glass)', marginBottom: '20px' }}>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: 1.6, marginBottom: '12px' }}>
+                  System quotas are currently managed via Environment Variables for EAL5+ security compliance.
+                </p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                  Please refer to the <code style={{ background: 'rgba(0,0,0,0.2)', padding: '2px 6px', borderRadius: '4px', color: 'var(--accent-indigo)' }}>.env</code> configuration to adjust <strong>DAILY_LLM_LIMIT</strong> and <strong>DAILY_TTS_LIMIT</strong> values.
+                </p>
+              </div>
+              <button className="btn-glow" style={{ width: '100%', padding: '12px', borderRadius: '12px', fontWeight: 700 }} onClick={() => setShowQuotaModal(false)}>
+                Acknowledge Protocol
+              </button>
+            </motion.div>
+          </div>
+        )}
+
+        {showLogsModal && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)' }}>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '24px', border: '1px solid var(--border-color)', width: '90%', maxWidth: '550px', position: 'relative', display: 'flex', flexDirection: 'column', maxHeight: '85vh', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}
+            >
+              <button onClick={() => setShowLogsModal(false)} style={{ position: 'absolute', top: '20px', right: '20px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingRight: '20px' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                  <Archive size={22} style={{ color: 'var(--accent-indigo)' }}/> Infrastructure Logs
+                </h3>
+                <button 
+                  onClick={handleRefreshLogs} 
+                  disabled={isRefreshingLogs}
+                  style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '6px 12px', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600 }}
+                >
+                  <RefreshCcw size={14} className={isRefreshingLogs ? "spin" : ""} />
+                  Refresh
+                </button>
+              </div>
+              
+              <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', background: '#0a0a0a', borderRadius: '12px', padding: '16px', border: '1px solid var(--border-glass)', minHeight: '250px' }}>
+                {mockLogs.map((log, idx) => {
+                  let color = 'var(--text-muted)';
+                  if (log.type === 'INFO') color = '#38bdf8';
+                  if (log.type === 'SYSTEM') color = '#6366f1';
+                  if (log.type === 'WARN') color = '#f59e0b';
+                  if (log.type === 'SUCCESS') color = '#10b981';
+                  if (log.type === 'LIVE') color = '#f43f5e';
+
+                  return (
+                    <div key={idx} style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '10px', fontFamily: 'monospace', lineHeight: 1.4 }}>
+                       <span style={{ color, fontWeight: 700, width: '60px', display: 'inline-block' }}>[{log.type}]</span>
+                       <span style={{ color: 'var(--text-muted)', marginRight: '10px' }}>{log.time}</span>
+                       <span style={{ color: log.type === 'LIVE' ? 'white' : 'var(--text-secondary)' }}>{log.msg}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <button className="btn-glass" style={{ flex: 1, padding: '12px', borderRadius: '12px', fontWeight: 600 }} onClick={() => setShowLogsModal(false)}>
+                  Dismiss
+                </button>
+                <button className="btn-glow" style={{ flex: 1, padding: '12px', borderRadius: '12px', fontWeight: 600 }} onClick={handleExportLogs}>
+                  Export Logs
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

@@ -5,11 +5,15 @@ import {
   getSessionMessages, 
   clearChatHistory, 
   chatWithKrishiMitra, 
-  generateSpeech 
+  generateSpeech,
+  translateChatHistory 
 } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { useVoice } from '../../hooks/useVoice';
+import { useToast } from '../../context/ToastContext';
 import ConfirmDeleteModal from '../common/ConfirmDeleteModal';
+import LanguageSwitcher from './LanguageSwitcher';
 import { 
   MessageSquare, X, Send, Sprout, Leaf, User, Bot, HelpCircle, 
   LayoutDashboard, Search, Volume2, VolumeX, Loader2, Home, 
@@ -33,55 +37,140 @@ const KrishiMitra = () => {
   const audioRef = useRef(null);
   const messagesEndRef = useRef(null);
   const { i18n } = useTranslation();
+  const [chatLanguage, setChatLanguage] = useState(() => localStorage.getItem('chat_language') || 'en');
+  const { addToast } = useToast();
   
-  // New States for Home/Chat Views and Dictation
+  // New States for Home/Chat Views and Dictation (using useVoice hook for Whisper STT)
   const [activeTab, setActiveTab] = useState('home');
-  const [isDictating, setIsDictating] = useState(false);
-  const recognitionRef = useRef(null);
+  const { isListening: isDictating, transcript: voiceTranscript, startListening, stopListening: stopDictation, resetTranscript } = useVoice(chatLanguage || 'hi-IN');
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+  const audioCache = useRef({}); // In-memory cache for generated audio URLs
+  const [speakingMsgId, setSpeakingMsgId] = useState(null);
+  const [currentSessionId, setCurrentSessionId] = useState(() => localStorage.getItem('current_session_id'));
+  const [sessions, setSessions] = useState([]);
 
-  // Initialize Speech Recognition
+  // Sync session ID to localStorage
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      
-      recognition.onresult = (event) => {
-        const tr = event.results[0][0].transcript;
-        setInputValue(prev => prev ? prev + ' ' + tr : tr);
-      };
-
-      recognition.onerror = (event) => {
-        console.error('Dictation Error:', event.error);
-        setIsDictating(false);
-      };
-
-      recognition.onend = () => setIsDictating(false);
-      recognitionRef.current = recognition;
+    if (currentSessionId) {
+      localStorage.setItem('current_session_id', currentSessionId);
+    } else {
+      localStorage.removeItem('current_session_id');
     }
+  }, [currentSessionId]);
+
+  // Sync language to localStorage
+  useEffect(() => {
+    localStorage.setItem('chat_language', chatLanguage);
+  }, [chatLanguage]);
+
+  // Listen for sync events from dashboard
+  useEffect(() => {
+    const handleSync = () => loadHistory();
+    window.addEventListener('nitisetu:chat-sync', handleSync);
+    return () => window.removeEventListener('nitisetu:chat-sync', handleSync);
   }, []);
 
-  // Update language dynamically
+  // Sync voice transcript to input value
   useEffect(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.lang = i18n.language || 'en-IN';
+    if (voiceTranscript) {
+      setInputValue(voiceTranscript);
+      resetTranscript();
     }
-  }, [i18n.language]);
+  }, [voiceTranscript, resetTranscript]);
 
-  const [currentSessionId, setCurrentSessionId] = useState(null);
+  // Persistent multi-lingual cache for the current session's messages
+  const [messageCache, setMessageCache] = useState({ 'en': [] });
+
+  // Initialize/Update cache ground truth when messages change from AI/User input
+  useEffect(() => {
+    if (messages.length > 0 && !isLoading) {
+      setMessageCache(prev => ({
+        ...prev,
+        [chatLanguage]: messages
+      }));
+    }
+  }, [messages, isLoading, chatLanguage]);
+
+  // Update language dynamically with Caching logic
+  useEffect(() => {
+    const handleTranslateHistory = async () => {
+      // 1. Check if we already have this translation in cache
+      if (messageCache[chatLanguage] && messageCache[chatLanguage].length === messages.length) {
+        setMessages(messageCache[chatLanguage]);
+        return;
+      }
+
+      // 2. Identify source for translation (prefer 'en' as ground truth)
+      const sourceMessages = messageCache['en'].length > 0 ? messageCache['en'] : messages;
+      
+      const historyToTranslate = sourceMessages.filter(m => m.text).map(m => ({
+        role: m.sender === 'ai' ? 'assistant' : 'user',
+        content: m.text
+      }));
+
+      if (historyToTranslate.length === 0) return;
+      
+      try {
+        setIsLoading(true);
+        addToast('Translation Layer', `Syncing chat into ${chatLanguage.toUpperCase()}...`, 'info');
+        
+        let translated;
+        if (chatLanguage === 'en') {
+           // If switching back to English, use our original 'en' cache
+           translated = messageCache['en'].map(m => ({ role: m.sender === 'ai' ? 'assistant' : 'user', content: m.text }));
+        } else {
+           translated = await translateChatHistory(historyToTranslate, chatLanguage);
+        }
+        
+        const formatted = translated.map((msg, index) => ({
+          ...sourceMessages[index],
+          text: msg.content,
+          sender: msg.role === 'assistant' ? 'ai' : 'user'
+        }));
+        
+        setMessages(formatted);
+        setMessageCache(prev => ({
+          ...prev,
+          [chatLanguage]: formatted
+        }));
+      } catch (err) {
+        console.error('Floating sync failed:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (messages.length > 0 && chatLanguage) {
+      handleTranslateHistory();
+    }
+  }, [chatLanguage]);
+
+
+  useEffect(() => {
+    if (activeTab === 'home') {
+      loadHistory();
+    }
+  }, [activeTab]);
 
   const loadHistory = async () => {
     try {
       // 1. Get all sessions
-      const sessions = await getChatSessions();
+      const sessionList = await getChatSessions();
+      const validSessions = sessionList || [];
+      setSessions(validSessions);
       
-      if (sessions && sessions.length > 0) {
-        const latestSession = sessions[0]; // List is sorted by updatedAt desc
-        setCurrentSessionId(latestSession._id);
+      // Use stored session ID if available, otherwise latest
+      const savedSessionId = localStorage.getItem('current_session_id');
+      const targetSession = (savedSessionId && validSessions.find(s => s._id === savedSessionId)) 
+        ? validSessions.find(s => s._id === savedSessionId)
+        : validSessions[0];
+
+      if (targetSession) {
+        setCurrentSessionId(targetSession._id);
+        setMessageCache({ 'en': [] }); 
         
         // 2. Load messages for this session
-        const history = await getSessionMessages(latestSession._id);
+        const history = await getSessionMessages(targetSession._id);
         if (history && history.length > 0) {
           const formatted = history.map(msg => ({
             id: msg._id,
@@ -115,18 +204,28 @@ const KrishiMitra = () => {
   };
 
   useEffect(() => {
-    if (isOpen && !isHistoryLoaded) {
+    if (isOpen) {
       loadHistory();
     }
-  }, [isOpen, isHistoryLoaded]);
+  }, [isOpen]);
 
-  const toggleDictation = () => {
-    if (!recognitionRef.current) return alert("Speech Recognition is not supported in this browser.");
+  const toggleDictation = async () => {
     if (isDictating) {
-      recognitionRef.current.stop();
+      setIsProcessingVoice(true);
+      try {
+        await stopDictation();
+        addToast('Voice Processed', 'Message transcribed successfully', 'success');
+      } catch (err) {
+        addToast('Transcription Failed', 'Could not process audio', 'error');
+      } finally {
+        setIsProcessingVoice(false);
+      }
     } else {
-      recognitionRef.current.start();
-      setIsDictating(true);
+      try {
+        await startListening();
+      } catch (err) {
+        addToast('Microphone Error', 'Could not access microphone', 'error');
+      }
     }
   };
 
@@ -166,30 +265,17 @@ const KrishiMitra = () => {
         content: m.text
       }));
 
-      const res = await chatWithKrishiMitra(text, historyItems, i18n.language, currentSessionId);
+      const res = await chatWithKrishiMitra(text, historyItems, chatLanguage, currentSessionId);
       
       if (!currentSessionId && res.sessionId) {
         setCurrentSessionId(res.sessionId);
+        localStorage.setItem('current_session_id', res.sessionId);
+        window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
       }
 
       setMessages(prev => [...prev, { id: Date.now() + 1, text: res.response, sender: 'ai' }]);
       
-      if (isAutoSpeech) {
-        speakResponse(res.response);
-      }
-      
-      setTimeout(() => {
-        setMessages(prev => [
-          ...prev, 
-          { 
-            id: Date.now() + 2, 
-            text: t('chat_follow_up', "Would you like to ask anything else?"), 
-            sender: 'ai', 
-            showSuggestions: true 
-          }
-        ]);
-      }, 1500);
-
+      // Auto-Voice removed as per user request
     } catch (error) {
       setMessages(prev => [...prev, { 
         id: Date.now() + 1, 
@@ -198,6 +284,8 @@ const KrishiMitra = () => {
       }]);
     } finally {
       setIsLoading(false);
+      // Dispatch sync event so floating bot knows we switched sessions
+      window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
     }
   };
 
@@ -254,31 +342,56 @@ const KrishiMitra = () => {
     }
   };
   
-  const speakResponse = async (text) => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
-    
-    setIsSpeaking(true);
-    try {
-      const lang = i18n.language.split('-')[0];
-      const audioBlob = await generateSpeech(text, lang);
-      const url = URL.createObjectURL(audioBlob);
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      
-      audio.onended = () => setIsSpeaking(false);
-      audio.play();
-    } catch (err) {
-      console.error("Speech error:", err);
-      setIsSpeaking(false);
-    }
-  };
-
   const stopSpeaking = () => {
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsSpeaking(false);
+    setSpeakingMsgId(null);
+  };
+
+  const speakMessage = async (text, msgId) => {
+    if (isSpeaking && speakingMsgId === msgId) {
+      stopSpeaking();
+      return;
+    }
+
+    stopSpeaking();
+    setIsSpeaking(true);
+    setSpeakingMsgId(msgId);
+
+    try {
+      const lang = chatLanguage.split('-')[0];
+      const cacheKey = `${lang}::${msgId}`;
+      
+      let url;
+      if (audioCache.current[cacheKey]) {
+        url = audioCache.current[cacheKey];
+      } else {
+        addToast(t('sb_history'), 'Fetching natural AI voice...', 'info');
+        const audioBlob = await generateSpeech(text, lang);
+        url = URL.createObjectURL(audioBlob);
+        audioCache.current[cacheKey] = url;
+      }
+
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => {
+        setIsSpeaking(false);
+        setSpeakingMsgId(null);
+      };
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        setSpeakingMsgId(null);
+        addToast('Audio Error', 'Failed to play speech', 'error');
+      };
+      audio.play();
+    } catch (err) {
+      console.error("Floating TTS Error:", err);
       setIsSpeaking(false);
+      setSpeakingMsgId(null);
+      addToast('Audio Error', 'Failed to generate voice', 'error');
     }
   };
 
@@ -348,18 +461,25 @@ const KrishiMitra = () => {
         {isOpen && (
           <motion.div 
             className="chat-window"
-            initial={{ opacity: 0, scale: 0.9, y: 40, x: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 40, x: 20 }}
+            drag
+            dragMomentum={false}
+            dragConstraints={{ left: -window.innerWidth + 500, right: 0, top: 0, bottom: window.innerHeight - 300 }}
+            initial={{ opacity: 0, scale: 0.9, x: 100 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.95, x: 100 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            style={{ cursor: 'auto' }}
           >
+
             {/* Header */}
             <div className="chat-header" style={{ 
               background: 'var(--gradient-primary)', 
               padding: '24px 20px', 
               borderBottom: '1px solid rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(10px)'
+              backdropFilter: 'blur(10px)',
+              cursor: 'move'
             }}>
+
               <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                 <Leaf size={20} className="text-white" />
               </div>
@@ -367,12 +487,19 @@ const KrishiMitra = () => {
                 <h4 className="font-bold text-sm">Krishi Mitra</h4>
                 <div className="flex items-center gap-1.5">
                   {isSpeaking ? (
-                    <div className="waveform">
-                      <div className="waveform-bar"></div>
-                      <div className="waveform-bar"></div>
-                      <div className="waveform-bar"></div>
-                      <div className="waveform-bar"></div>
-                      <div className="waveform-bar"></div>
+                    <div 
+                      onClick={stopSpeaking}
+                      style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      title="Stop Audio"
+                    >
+                      <div className="waveform">
+                        <div className="waveform-bar" style={{ background: 'white' }}></div>
+                        <div className="waveform-bar" style={{ background: 'white' }}></div>
+                        <div className="waveform-bar" style={{ background: 'white' }}></div>
+                        <div className="waveform-bar" style={{ background: 'white' }}></div>
+                        <div className="waveform-bar" style={{ background: 'white' }}></div>
+                      </div>
+                      <span style={{ fontSize: '9px', fontWeight: 800, color: 'white' }}>Speaking...</span>
                     </div>
                   ) : (
                     <>
@@ -382,7 +509,14 @@ const KrishiMitra = () => {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-1 ml-auto">
+              <div className="flex items-center gap-2 ml-auto">
+                <div style={{ marginRight: '8px' }}>
+                  <LanguageSwitcher 
+                    placement="down" 
+                    currentLanguage={chatLanguage}
+                    onSelect={(code) => setChatLanguage(code)}
+                  />
+                </div>
                 <button 
                   onClick={() => setShowClearConfirm(true)}
                   className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors text-white/70"
@@ -391,15 +525,8 @@ const KrishiMitra = () => {
                   <Trash2 size={16} />
                 </button>
                 <button 
-                  onClick={() => setIsAutoSpeech(!isAutoSpeech)}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isAutoSpeech ? 'bg-white/20 text-yellow-300' : 'hover:bg-white/10 text-white/70'}`}
-                  title={isAutoSpeech ? "Disable Auto-Speech" : "Enable Auto-Speech"}
-                >
-                  {isAutoSpeech ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                </button>
-                <button 
                   onClick={() => setIsOpen(false)}
-                  className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+                  className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors text-white"
                 >
                   <X size={18} />
                 </button>
@@ -437,14 +564,18 @@ const KrishiMitra = () => {
             {activeTab === 'home' ? (
               <div className="chat-messages" style={{ padding: '0', background: 'var(--bg-primary)' }}>
                 {/* Hero Greeting */}
-                <div style={{ padding: '24px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-glass)' }}>
-                  <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
-                    Hello {user?.name ? user.name.split(' ')[0] : 'Farmer'}!
-                    <br />How can we help?
+                <div style={{ padding: '28px 24px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-glass)', position: 'relative', overflow: 'hidden' }}>
+                  {/* Decorative background circle */}
+                  <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '120px', height: '120px', background: 'var(--gradient-primary)', opacity: 0.1, borderRadius: '50%', filter: 'blur(30px)' }}></div>
+                  
+                  <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--text-primary)', marginBottom: '10px', lineHeight: 1.2, position: 'relative', zIndex: 1 }}>
+                    {t('chat_home_greet', "Namaste")} {user?.name ? user.name.split(' ')[0] : 'Farmer'}!
+                    <br />
+                    <span style={{ opacity: 0.8, fontSize: '0.9rem', fontWeight: 600 }}>{t('chat_home_help', "How can I assist you today?") }</span>
                   </h2>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(34, 197, 94, 0.1)', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
-                    <CheckCircle2 size={16} color="var(--accent-emerald)" />
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Status: All Systems Operational</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-glass)', padding: '10px 14px', borderRadius: '12px', border: '1px solid var(--border-glass)', width: 'fit-content', position: 'relative', zIndex: 1 }}>
+                    <div className="pulse-dot"></div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('sb_system_online', "AI Support Online")}</span>
                   </div>
                 </div>
 
@@ -468,6 +599,91 @@ const KrishiMitra = () => {
                   </div>
                 </div>
 
+                {/* Recent Chats Section */}
+                 <div style={{ padding: '20px 20px 0' }}>
+                    <div className="flex items-center justify-between mb-3">
+                       <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recent Conversations</h3>
+                       <button 
+                        onClick={() => { 
+                          setCurrentSessionId(null); 
+                          localStorage.removeItem('current_session_id');
+                          setMessages([]); 
+                          showGreeting(); 
+                          setActiveTab('chat'); 
+                          window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
+                        }} 
+                        className="text-[11px] text-emerald-500 font-bold hover:underline px-3 py-1 rounded-lg bg-emerald-500/10 transition-colors"
+                       >
+                         {t('chat_new_chat', 'New Chat')}
+                       </button>
+                    </div>
+                    <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto pr-1 custom-scrollbar">
+                       {isHistoryLoaded && sessions.length > 0 ? (
+                         sessions.slice(0, 5).map((session, idx) => (
+                          <button 
+                            key={session._id}
+                            onClick={async () => {
+                              setCurrentSessionId(session._id);
+                              localStorage.setItem('current_session_id', session._id);
+                              const history = await getSessionMessages(session._id);
+                              if (history) {
+                                setMessages(history.map(msg => ({
+                                  id: msg._id,
+                                  text: msg.content,
+                                  sender: msg.role === 'assistant' ? 'ai' : 'user'
+                                })));
+                                setActiveTab('chat');
+                                // Dispatch sync event so dashboard knows we switched sessions
+                                window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
+                              }
+                            }}
+                            style={{ 
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              padding: '12px',
+                              borderRadius: '16px',
+                              background: currentSessionId === session._id ? 'var(--bg-glass)' : 'var(--bg-secondary)',
+                              border: currentSessionId === session._id ? '1px solid var(--accent-indigo)' : '1px solid var(--border-glass)',
+                              width: '100%',
+                              textAlign: 'left',
+                              transition: 'all 0.3s ease'
+                            }}
+                          >
+                            <div style={{ 
+                              width: '32px', 
+                              height: '32px', 
+                              borderRadius: '8px', 
+                              background: currentSessionId === session._id ? 'var(--accent-indigo)' : 'var(--gradient-primary)', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              color: 'white',
+                              flexShrink: 0
+                            }}>
+                              <MessageSquare size={14} />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {session.title || `Conversation ${idx + 1}`}
+                              </p>
+                              <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: 0, opacity: 0.7 }}>
+                                {new Date(session.updatedAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} />
+                          </button>
+                         ))
+                       ) : (
+                         <div className="py-10 text-center w-full">
+                            <p className="text-[13px] text-muted-foreground opacity-60 font-medium">No past conversations found</p>
+                            <p className="text-[10px] text-muted-foreground opacity-40 mt-1 italic">Start your first chat with Krishi Mitra!</p>
+                         </div>
+                       )}
+                       {!isHistoryLoaded && <div className="p-4 text-center"><Loader2 size={16} className="animate-spin mx-auto text-emerald-500" /></div>}
+                    </div>
+                 </div>
+
                 {/* FAQ List */}
                 <div style={{ padding: '20px' }}>
                   <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quick Help</h3>
@@ -490,17 +706,20 @@ const KrishiMitra = () => {
                           width: '100%', 
                           textAlign: 'left', 
                           cursor: 'pointer', 
-                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.borderColor = 'var(--accent-indigo)';
-                          e.currentTarget.style.transform = 'translateX(6px)';
+                          e.currentTarget.style.transform = 'translateY(-4px)';
                           e.currentTarget.style.background = 'var(--bg-glass)';
+                          e.currentTarget.style.boxShadow = '0 10px 20px rgba(74, 222, 128, 0.1)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.borderColor = 'var(--border-glass)';
-                          e.currentTarget.style.transform = 'translateX(0)';
+                          e.currentTarget.style.transform = 'translateY(0)';
                           e.currentTarget.style.background = 'var(--bg-secondary)';
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
                         }}
                       >
                         {s.text}
@@ -516,17 +735,63 @@ const KrishiMitra = () => {
                 <div className="chat-messages">
                   {messages.map(msg => (
                     <div key={msg.id} className="flex flex-col gap-2">
-                      <div className={`message ${msg.sender === 'ai' ? 'message-ai' : 'message-user'}`}>
+                      <div className={`message ${msg.sender === 'ai' ? 'message-ai' : 'message-user'}`} style={{ 
+                        position: 'relative',
+                        padding: '16px 20px',
+                        borderRadius: '24px',
+                        boxShadow: msg.sender === 'ai' ? '0 4px 15px rgba(0,0,0,0.1)' : '0 8px 25px rgba(22, 163, 74, 0.25)',
+                        border: msg.sender === 'ai' ? '1px solid var(--border-glass)' : 'none',
+                        background: msg.sender === 'ai' ? 'var(--bg-card)' : 'var(--gradient-primary)'
+                      }}>
                         {msg.text}
+                        
+                        {msg.sender === 'ai' && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-glass)' }}>
+                              <motion.button 
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => speakMessage(msg.text, msg.id || msg.text.substring(0,20))}
+                                style={{ 
+                                  background: speakingMsgId === (msg.id || msg.text.substring(0,20)) ? 'var(--accent-emerald)' : 'var(--bg-secondary)',
+                                  color: speakingMsgId === (msg.id || msg.text.substring(0,20)) ? 'white' : 'var(--accent-emerald)',
+                                  border: '1px solid var(--border-glass)', 
+                                  padding: '6px 14px', 
+                                  borderRadius: '20px',
+                                  fontSize: '0.75rem', 
+                                  fontWeight: 700,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                  boxShadow: speakingMsgId === (msg.id || msg.text.substring(0,20)) ? '0 4px 12px rgba(16, 185, 129, 0.3)' : 'none'
+                                }}
+                              >
+                                {speakingMsgId === (msg.id || msg.text.substring(0,20)) ? (
+                                  <>
+                                    <Volume2 size={12} className="animate-pulse" /> 
+                                    <div className="waveform ml-1">
+                                      <div className="waveform-bar" style={{ background: 'white', opacity: 0.8 }} />
+                                      <div className="waveform-bar" style={{ background: 'white', opacity: 0.8 }} />
+                                      <div className="waveform-bar" style={{ background: 'white', opacity: 0.8 }} />
+                                    </div>
+                                  </>
+                                ) : (
+                                  <><Volume2 size={12} /> {t('chat_listen', "Listen")}</>
+                                )}
+                              </motion.button>
+                          </div>
+                        )}
                       </div>
                       
                       {msg.showSuggestions && (
-                        <div className="flex flex-wrap gap-2 mt-1 mb-2">
-                          {suggestions.map((s, i) => (
+                        <div className="flex flex-wrap gap-2 mt-2 mb-4">
+                          {suggestions.slice(0, 3).map((s, i) => (
                             <button 
-                              key={i} 
+                              key={`inline-${i}`} 
                               onClick={() => handleSuggestion(s)}
                               className="chat-btn-suggestion-inline"
+                              style={{ padding: '8px 14px', borderRadius: '12px', fontSize: '0.75rem' }}
                             >
                               {s.text}
                             </button>
@@ -546,30 +811,91 @@ const KrishiMitra = () => {
                 </div>
 
                 {/* Input Area */}
-                <div className="chat-input-area border-t border-[var(--border-glass)]">
-                  <div className="chat-input-wrapper flex items-center bg-[var(--bg-secondary)] border border-[var(--border-color)] p-1 rounded-2xl w-full">
-                    <input 
-                      type="text" 
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSend(inputValue)}
-                      placeholder="Ask me anything..."
-                      className="flex-1 bg-transparent border-none outline-none text-[var(--text-primary)] px-3 py-2 text-sm"
+                <div className="chat-input-area" style={{ padding: '16px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-glass)' }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'flex-end', background: 'var(--bg-card)', 
+                    border: '1px solid var(--border-glass)', borderRadius: '20px', 
+                    padding: '6px', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)',
+                    transition: 'all 0.3s ease',
+                    boxShadow: inputValue.trim() ? '0 4px 12px rgba(16, 185, 129, 0.08)' : 'inset 0 2px 4px rgba(0,0,0,0.05)',
+                    borderColor: inputValue.trim() ? 'rgba(16, 185, 129, 0.2)' : 'var(--border-glass)'
+                  }}>
+                    <textarea 
+                      value={isDictating ? "I'm listening..." : (isProcessingVoice ? "Transcribing..." : inputValue)} 
+                      onChange={(e) => {
+                        setInputValue(e.target.value);
+                        e.target.style.height = 'auto';
+                        e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          if (inputValue.trim() && !isLoading) {
+                            handleSend(inputValue);
+                            e.target.style.height = 'auto'; // Reset after sending
+                          }
+                        }
+                      }}
+                      rows={1}
+                      placeholder={isDictating ? "Listening..." : "Ask me anything..."}
+                      disabled={isDictating || isProcessingVoice}
+                      className="custom-scrollbar"
+                      style={{
+                        flex: 1, background: 'transparent', border: 'none', outline: 'none', 
+                        padding: '10px 16px', fontSize: '0.95rem', 
+                        color: isDictating ? 'var(--accent-rose)' : 'var(--text-primary)',
+                        fontWeight: isDictating ? 'bold' : 'normal',
+                        fontStyle: isDictating ? 'italic' : 'normal',
+                        resize: 'none', overflowY: 'auto',
+                        minHeight: '44px', maxHeight: '120px', lineHeight: '24px'
+                      }}
                     />
-                    <button 
-                      onClick={toggleDictation}
-                      className={`p-2 rounded-xl transition ${isDictating ? 'text-rose-500 bg-rose-500/10' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-                      title={isDictating ? 'Stop Listening' : 'Start Dictation'}
-                    >
-                      {isDictating ? <span className="animate-pulse"><Mic size={18} /></span> : <MicOff size={18} />}
-                    </button>
-                    <button 
-                      onClick={() => handleSend(inputValue)}
-                      disabled={isLoading || !inputValue.trim()}
-                      className="p-2 ml-1 text-white bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-xl disabled:opacity-50"
-                    >
-                      <Send size={18} />
-                    </button>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingRight: '4px', paddingBottom: '3px' }}>
+                      <button 
+                        onClick={toggleDictation}
+                        disabled={isProcessingVoice || (inputValue.trim().length > 0 && !isDictating)}
+                        style={{ 
+                          width: (inputValue.trim() && !isDictating) ? '0px' : '38px',
+                          height: '38px',
+                          borderRadius: '14px', 
+                          cursor: (isProcessingVoice || (inputValue.trim() && !isDictating)) ? 'default' : 'pointer',
+                          border: 'none',
+                          background: isDictating ? 'var(--accent-rose)' : 'var(--bg-secondary)',
+                          color: isDictating ? 'white' : 'var(--text-muted)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                          opacity: (inputValue.trim() && !isDictating) ? 0 : 1,
+                          overflow: 'hidden',
+                          boxShadow: isDictating ? '0 4px 12px rgba(244, 63, 94, 0.3)' : 'none',
+                          transform: isDictating ? 'scale(1.05)' : 'scale(1)'
+                        }}
+                        title={isDictating ? 'Stop Listening' : 'Start Dictation'}
+                      >
+                        {isProcessingVoice ? <Loader2 size={16} className="spin" /> : <Mic size={16} className={isDictating ? "pulse" : ""} />}
+                      </button>
+
+                      <button 
+                        onClick={() => handleSend(inputValue)}
+                        disabled={isLoading || !inputValue.trim()}
+                        className="btn-glow" 
+                        style={{ 
+                          width: inputValue.trim() ? '45px' : '38px',
+                          height: '38px',
+                          borderRadius: inputValue.trim() ? '14px' : '50%',
+                          opacity: (!inputValue.trim() || isLoading) ? 0.3 : 1,
+                          padding: 0, margin: 0, border: 'none',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: inputValue.trim() ? 'var(--accent-emerald)' : 'var(--bg-glass)',
+                          color: inputValue.trim() ? 'white' : 'var(--text-muted)',
+                          transform: inputValue.trim() ? 'scale(1.05)' : 'scale(1)',
+                          cursor: (!inputValue.trim() || isLoading) ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                        }}
+                      >
+                        {isLoading ? <Loader2 size={16} className="spin" /> : <Send size={16} style={{ marginLeft: inputValue.trim() ? '2px' : '0' }} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </>

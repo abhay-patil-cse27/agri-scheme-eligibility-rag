@@ -17,7 +17,12 @@ export const languageMap = {
   pa: 'Punjabi (ਪੰਜਾਬੀ)'
 };
 
-export default function LanguageSwitcher({ placement = 'down', isCollapsed = false }) {
+export default function LanguageSwitcher({ 
+  placement = 'down', 
+  isCollapsed = false, 
+  onSelect = null, 
+  currentLanguage = null 
+}) {
   const { i18n } = useTranslation();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -36,12 +41,16 @@ export default function LanguageSwitcher({ placement = 'down', isCollapsed = fal
   }, []);
 
   const handleSelect = (code) => {
-    i18n.changeLanguage(code);
+    if (onSelect) {
+      onSelect(code);
+    } else {
+      i18n.changeLanguage(code);
+      // Mandatory reload to ensure all UI elements translate
+      // We can omit this if the whole app uses useTranslation hook correctly everywhere, 
+      // but often deep components need a refresh for i18n changes to propagate perfectly.
+      window.location.reload(); 
+    }
     setIsOpen(false);
-    // Mandatory reload to ensure all UI elements translate
-    // We can omit this if the whole app uses useTranslation hook correctly everywhere, 
-    // but often deep components need a refresh for i18n changes to propagate perfectly.
-    window.location.reload(); 
   };
 
   const bgGlass = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255,255,255,0.6)';
@@ -51,7 +60,8 @@ export default function LanguageSwitcher({ placement = 'down', isCollapsed = fal
   const accentHover = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.04)';
   const dropdownBg = isDark ? '#0f172a' : '#ffffff';
   
-  const currentLang = languageMap[i18n.language] || 'English';
+  const activeCode = currentLanguage || i18n.language;
+  const currentLangName = languageMap[activeCode] || 'English';
 
   return (
     <div className="relative" ref={dropdownRef} style={{ width: isCollapsed ? 'auto' : '100%' }}>
@@ -68,12 +78,12 @@ export default function LanguageSwitcher({ placement = 'down', isCollapsed = fal
         }}
         onMouseOver={(e) => e.currentTarget.style.background = accentHover}
         onMouseOut={(e) => e.currentTarget.style.background = bgGlass}
-        title={isCollapsed ? currentLang : ''}
+        title={isCollapsed ? currentLangName : ''}
       >
         <Globe size={isCollapsed ? 18 : 16} color={textSecondary} style={{ flexShrink: 0 }} />
         {!isCollapsed && (
           <span style={{ fontSize: '0.82rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {currentLang.split(' ')[0]}
+            {currentLangName.split(' ')[0]}
           </span>
         )}
       </button>
@@ -95,7 +105,7 @@ export default function LanguageSwitcher({ placement = 'down', isCollapsed = fal
             }}
           >
             {Object.entries(languageMap).map(([code, name]) => {
-               const isActive = i18n.language === code;
+               const isActive = activeCode === code;
                return (
                   <button
                     key={code}

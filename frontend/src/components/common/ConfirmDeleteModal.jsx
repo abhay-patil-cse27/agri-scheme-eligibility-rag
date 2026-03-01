@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -14,19 +15,15 @@ const ConfirmDeleteModal = ({
   isDeleting = false 
 }) => {
   const { t } = useTranslation();
-  const [inputValue, setInputValue] = useState('');
-  const confirmText = 'confirm'; // We keep the keyword consistent for security stability
 
   if (!isOpen) return null;
 
   const handleConfirm = (e) => {
     e.preventDefault();
-    if (inputValue.toLowerCase() === confirmText) {
-      onConfirm();
-    }
+    onConfirm();
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -79,56 +76,39 @@ const ConfirmDeleteModal = ({
               {itemName && <strong style={{ color: 'var(--accent-rose)', display: 'block', marginTop: '8px' }}>"{itemName}"</strong>}
             </p>
 
-            <form onSubmit={handleConfirm}>
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)', marginBottom: '8px' }}>
-                  {t('cm_confirm_delete_type_msg').replace('{{confirmText}}', confirmText)}
-                </label>
-                <input 
-                  autoFocus
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder={t('cm_confirm_delete_placeholder')}
-                  className="input-dark"
-                  style={{ 
-                    borderColor: inputValue.toLowerCase() === confirmText ? 'var(--accent-emerald)' : 'var(--border-glass)',
-                    transition: 'all 0.2s'
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button 
-                  type="button" 
-                  onClick={onClose} 
-                  className="btn-secondary"
-                  style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)' }}
-                >
-                  {t('cm_cancel')}
-                </button>
-                <button 
-                  type="submit"
-                  disabled={inputValue.toLowerCase() !== confirmText || isDeleting}
-                  className="btn-glow"
-                  style={{ 
-                    flex: 1.5, 
-                    padding: '12px', 
-                    borderRadius: '12px', 
-                    background: inputValue.toLowerCase() === confirmText ? 'var(--accent-rose)' : 'rgba(244,63,94,0.1)',
-                    color: inputValue.toLowerCase() === confirmText ? '#fff' : 'rgba(244,63,94,0.4)',
-                    boxShadow: inputValue.toLowerCase() === confirmText ? '0 8px 20px rgba(244,63,94,0.3)' : 'none',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
-                  }}
-                >
-                  <Trash2 size={18} />
-                  {isDeleting ? '...' : t('cm_confirm_delete_btn')}
-                </button>
-              </div>
-            </form>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
+              <button 
+                type="button" 
+                onClick={onClose} 
+                className="btn-secondary"
+                style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)' }}
+              >
+                {t('cm_cancel')}
+              </button>
+              <button 
+                type="button"
+                onClick={handleConfirm}
+                disabled={isDeleting}
+                className="btn-glow"
+                style={{ 
+                  flex: 1.5, 
+                  padding: '12px', 
+                  borderRadius: '12px', 
+                  background: 'var(--accent-rose)',
+                  color: '#fff',
+                  boxShadow: '0 8px 20px rgba(244,63,94,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                }}
+              >
+                <Trash2 size={18} />
+                {isDeleting ? '...' : t('cm_confirm_delete_btn')}
+              </button>
+            </div>
           </AgriCard>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

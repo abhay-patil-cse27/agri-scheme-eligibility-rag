@@ -111,8 +111,10 @@ router.post(
  * Proxy text to ElevenLabs API and stream back the MP3
  * Added: In-memory LRU caching to heavily save expensive TTS API calls.
  */
+const config = require('../config/env');
+const axios = require('axios');
 const crypto = require('crypto');
-const fetch = require('node-fetch');
+
 // Set up a simple in-memory cache for audio buffers. 
 // In a highly-scaled production environment, Redis would replace this.
 const ttsCache = new Map();
@@ -123,7 +125,6 @@ router.post(
     const { text, language = 'hi' } = req.body;
     if (!text) return res.status(400).json({ success: false, error: 'No text provided' });
 
-    const config = require('../config/env');
     if (!config.elevenlabsApiKey) {
        return res.status(500).json({ success: false, error: 'ElevenLabs API key is not configured' });
     }
@@ -143,16 +144,15 @@ router.post(
       }
 
       const voiceMapping = {
-        'hi': 'cgSbaPmcP2lUWs9G8CuK', // Warm, clear Hindi female
-        'mr': 'Lcf7uRWjS0D1IogJ_0A_', // High quality Marathi female
-        'en': '21m00Tcm4TlvDq8ikWAM'  // Default Rachel for English
+        'hi': '21m00Tcm4TlvDq8ikWAM', // Rachel (Multi-lingual v2 supports Hindi perfectly)
+        'mr': '21m00Tcm4TlvDq8ikWAM', // Rachel (Multi-lingual v2 supports Marathi perfectly)
+        'en': '21m00Tcm4TlvDq8ikWAM'  // Rachel
       };
       
       const voiceId = voiceMapping[language] || voiceMapping['en'];
       
       logger.info(`TTS Cache MISS: Generating new audio for language: ${language} using voice: ${voiceId}`);
 
-      const axios = require('axios');
       const response = await axios.post(
         `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
         {
@@ -200,8 +200,28 @@ router.post(
       res.send(buffer);
 
     } catch (err) {
-      logger.error('TTS route error:', err.message);
-      res.status(500).json({ success: false, error: err.message || 'Failed to generate speech audio' });
+      logger.error('TTS route error detail:', {
+        message: err.message,
+        stack: err.stack,
+        textSnippet: text?.substring(0, 50),
+        language
+      });
+      
+      // If axios error, get response detail
+      if (err.response && err.response.data) {
+        try {
+          const errorDetail = JSON.parse(Buffer.from(err.response.data).toString());
+          logger.error('ElevenLabs API Error Detail:', errorDetail);
+        } catch (e) {
+          logger.error('Could not parse ElevenLabs error detail');
+        }
+      }
+
+      res.status(500).json({ 
+        success: false, 
+        error: err.message || 'Failed to generate speech audio',
+        detail: err.response?.data ? 'ElevenLabs API reported an error' : 'Internal processing error'
+      });
     }
   })
 );

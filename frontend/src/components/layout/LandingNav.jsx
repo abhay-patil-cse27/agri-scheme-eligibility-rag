@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sprout, Sun, Moon, Menu, X, Globe } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../common/LanguageSwitcher';
 
@@ -10,6 +11,7 @@ const GREEN_GRAD = 'linear-gradient(135deg, #166534 0%, #16a34a 50%, #4ade80 100
 
 export default function LandingNav() {
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -83,25 +85,40 @@ export default function LandingNav() {
             {isDark ? <Sun size={15} color="#fbbf24" /> : <Moon size={15} color="#166534" />}
           </motion.button>
 
-          <Link to="/login" style={{ textDecoration: 'none' }}>
-            <button style={{
-              background: glass, color: isDark ? '#4ade80' : '#166534',
-              border: `1px solid ${border}`, borderRadius: '9px',
-              padding: '8px 18px', fontSize: '0.87rem', fontWeight: 600, cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-              onMouseOver={e => { e.currentTarget.style.background = 'rgba(22,163,74,0.12)'; }}
-              onMouseOut={e => { e.currentTarget.style.background = glass; }}
-            >{t('btn_signin')}</button>
-          </Link>
+          {user ? (
+            <Link to="/dashboard" style={{ textDecoration: 'none' }}>
+              <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} style={{
+                background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '10px',
+                padding: '9px 22px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(22,163,74,0.4)',
+                whiteSpace: 'nowrap',
+              }}>{t('lp_go_dashboard')}</motion.button>
+            </Link>
+          ) : (
+            <>
+              <Link to="/login" style={{ textDecoration: 'none' }}>
+                <button style={{
+                  background: glass, color: isDark ? '#4ade80' : '#166534',
+                  border: `1px solid ${border}`, borderRadius: '9px',
+                  padding: '8px 18px', fontSize: '0.87rem', fontWeight: 600, cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap',
+                }}
+                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(22,163,74,0.12)'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = glass; }}
+                >{t('btn_signin')}</button>
+              </Link>
 
-          <Link to="/check" style={{ textDecoration: 'none' }}>
-            <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} style={{
-              background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '9px',
-              padding: '8px 18px', fontSize: '0.87rem', fontWeight: 700, cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(22,163,74,0.4)',
-            }}>{t('btn_free_check')}</motion.button>
-          </Link>
+              <Link to="/check" style={{ textDecoration: 'none' }}>
+                <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} style={{
+                  background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '9px',
+                  padding: '8px 18px', fontSize: '0.87rem', fontWeight: 700, cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(22,163,74,0.4)',
+                  whiteSpace: 'nowrap',
+                }}>{t('btn_free_check')}</motion.button>
+              </Link>
+            </>
+          )}
 
           {/* Hamburger (mobile) */}
           <button onClick={() => setOpen(!open)} style={{

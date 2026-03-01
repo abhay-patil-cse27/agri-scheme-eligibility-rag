@@ -8,6 +8,7 @@ import { getProfiles, getEligibilityHistory, deleteEligibilityCheck, deleteProfi
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import AgriCard from '../components/common/AgriCard';
+import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -110,7 +111,7 @@ function HistoryCard({ check, index, onDelete }) {
 
           <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
             <button 
-              onClick={(e) => { e.stopPropagation(); onDelete(check._id); }}
+              onClick={(e) => { e.stopPropagation(); onDelete(check._id, check.schemeName); }}
               style={{
                 background: 'none', border: 'none', color: 'var(--accent-rose)', 
                 display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem',
@@ -134,6 +135,7 @@ export default function HistoryPage() {
   const [checks, setChecks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingProfiles, setLoadingProfiles] = useState(true);
+  const [itemToDelete, setItemToDelete] = useState(null);
   const { addToast } = useToast();
 
   useEffect(() => {
@@ -155,14 +157,21 @@ export default function HistoryPage() {
       .finally(() => setLoading(false));
   }, [selectedProfile]);
 
-  const handleDelete = async (id) => {
+  const handleDeleteRequest = (id, schemeName) => {
+    setItemToDelete({ type: 'record', id, name: schemeName || t('hs_scheme_fallback') });
+  };
+
+  const confirmDeleteRecord = async () => {
+    if (!itemToDelete || itemToDelete.type !== 'record') return;
     try {
-      await deleteEligibilityCheck(id);
-      setChecks(checks.filter((c) => c._id !== id));
-      addToast(t('us_error_title'), t('toast_record_deleted_desc'), 'info');
+      await deleteEligibilityCheck(itemToDelete.id);
+      setChecks(checks.filter((c) => c._id !== itemToDelete.id));
+      addToast(t('success') || 'Success', t('toast_record_deleted_desc'), 'success');
     } catch (e) {
       console.error('Failed to delete check', e);
       addToast(t('us_error_title'), t('us_error_fetch'), 'error');
+    } finally {
+      setItemToDelete(null);
     }
   };
 
@@ -173,31 +182,32 @@ export default function HistoryPage() {
     }
   };
 
-  const handleDeleteProfile = async () => {
-    if (!window.confirm(t('toast_confirm_profile_delete'))) {
-      return;
-    }
-    
+  const handleDeleteProfileRequest = () => {
+    const profile = profiles.find(p => p._id === selectedProfile);
+    setItemToDelete({ type: 'profile', id: selectedProfile, name: profile ? profile.name : 'Unknown Farmer' });
+  };
+
+  const confirmDeleteProfile = async () => {
+    if (!itemToDelete || itemToDelete.type !== 'profile') return;
     setLoading(true);
     try {
-      await deleteProfile(selectedProfile);
-      // Remove from local list
-      const remainingProfiles = profiles.filter(p => p._id !== selectedProfile);
+      await deleteProfile(itemToDelete.id);
+      const remainingProfiles = profiles.filter(p => p._id !== itemToDelete.id);
       setProfiles(remainingProfiles);
       
-      // Auto select next available
       if (remainingProfiles.length > 0) {
         setSelectedProfile(remainingProfiles[0]._id);
       } else {
         setSelectedProfile('');
         setChecks([]);
       }
-      addToast(t('sb_farmers'), t('toast_profile_deleted_desc'), 'success');
+      addToast(t('success') || 'Success', t('toast_profile_deleted_desc'), 'success');
     } catch (e) {
       console.error('Failed to delete profile', e);
-      addToast('Deletion Failed', 'Could not delete the farmer profile', 'error');
+      addToast(t('us_error_title'), 'Could not delete the farmer profile', 'error');
     } finally {
       setLoading(false);
+      setItemToDelete(null);
     }
   };
 
@@ -248,7 +258,7 @@ export default function HistoryPage() {
         {!loadingProfiles && profiles.length > 0 && selectedProfile && (
           <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
             <button
-              onClick={handleDeleteProfile}
+              onClick={handleDeleteProfileRequest}
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px', 
                 padding: '8px 16px', fontSize: '0.85rem',
@@ -296,9 +306,22 @@ export default function HistoryPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {checks.map((check, i) => (
-            <HistoryCard key={check._id} check={check} index={i} onDelete={handleDelete} />
+            <HistoryCard key={check._id} check={check} index={i} onDelete={handleDeleteRequest} />
           ))}
         </div>
+      )}
+
+      {itemToDelete && (
+        <ConfirmDeleteModal
+          isOpen={!!itemToDelete}
+          onClose={() => setItemToDelete(null)}
+          onConfirm={itemToDelete.type === 'record' ? confirmDeleteRecord : confirmDeleteProfile}
+          title={itemToDelete.type === 'record' ? "Delete Eligibility Record?" : "Delete Profile & History?"}
+          message={itemToDelete.type === 'record' 
+            ? "Are you sure you want to delete this eligibility check result? This action cannot be undone."
+            : "Are you sure you want to permanently delete this profile and its entire request history? This action cannot be undone."}
+          itemName={itemToDelete.name}
+        />
       )}
     </AgriCard>
   );

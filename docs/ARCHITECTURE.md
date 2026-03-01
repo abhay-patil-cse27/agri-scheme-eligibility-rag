@@ -19,35 +19,22 @@ scalability and security.
 
 ### Key Layers
 
-1.  **Frontend (React 19 + Vite):** A modern, responsive dashboard with a custom
-    **Glassmorphic Design System**. Features advanced UI components: `Aurora`,
-    `Plasma`, `Silk`, and `FluidGlass` for high-end aesthetics.
-2.  **API Gateway (Express.js):** Handles security (JWT, Google OAuth 2.0),
-    **Identity Verification Gates** (account existence checks for resets),
-    **Strict Password Strategy** (regex-based complexity), and request routing.
-3.  **Intelligence Orchestrators:**
-    - **Pro RAG Engine:** Custom implementation featuring **Reciprocal Rank
-      Fusion (RRF)** to combine Vector and Keyword results.
-    - **Llama 3.2 Vision:** Ephemeral document analysis for PII-safe profile
-      extraction.
-    - **Whisper V3 & Web Speech API:** Dual transcription layer for
-      high-accuracy regional voice input.
-    - **Neo4j Engine:** Graph-based conflict detection (via `EXCLUSIVE_OF`
-      relationships) and scheme recommendation.
-4.  **Data Persistence:**
-    - **MongoDB Atlas:** Vector-indexed storage with `$vectorSearch`. Includes a
-      **PublicCheckCache** for deterministic demographic queries and persists
-      **Multi-session Chat History** with rich metadata.
-    - **Neo4j Aura:** Knowledge graph for taxonomic relationships and
-      multi-scheme complementary modeling.
-    - **Groq Cloud:** Ultra-fast Llama 3.3 70B inference for core reasoning.
+- **Frontend UI:** React 19, Vite, Framer Motion, **React Bits** - Premium **Glassmorphic** design system, interactive animations, and responsive layouts.
+- **Auth & Security:** **OTP**, **Google OAuth**, **JWT** - Secure 2-step registration, social login, stateless session management, and DDOS protection.
+- **API Gateway:** Express.js, Node.js - Secure orchestration, file uploading (Multer), and caching (`apicache`).
+- **Intelligence:** **Groq Cloud** (Llama 3.3/3.2) - Core reasoning, RAG analysis, and Vision processing with ultra-fast inference speeds.
+- **Embeddings:** **Xenova/all-MiniLM-L6-v2** - Local, zero-cost vector embeddings processed via Transformers.js.
+- **Vector DB:** **MongoDB Atlas** - Stores users, scheme data, and 1000-character document chunks with rich metadata for `$vectorSearch`.
+- **Graph DB:** **Neo4j Aura (Free)** - Relationship mapping for scheme constraints to detect conflicting eligibility (Knowledge Graph).
+- **Voice Ops:** Web Speech API, **ElevenLabs** - Multilingual Speech-to-Text (native) and high-fidelity Text-to-Speech synthesis.
+- **Email/Comms:** Nodemailer, **Mailtrap** - SMTP for reliable transactional delivery of **OTPs**, welcome notices, and alerts.
 
 ---
 
-## Technical Deep Dive: Native Hybrid RAG Engine
+## Technical Deep Dive: Native Multi-Path Retrieval Engine
 
-Niti Setu employs a custom-built, native RAG pipeline specifically optimized for
-legal and policy documentation.
+Niti Setu employs a custom-built, native retrieval pipeline specifically optimized for
+legal and policy documentation. We purposely avoid high-level frameworks like **LangChain** or **LlamaIndex** to maintain absolute control over the prompt context and token costs.
 
 ### 1. Advanced Ingestion & Chunking Strategy
 
@@ -129,21 +116,24 @@ pipeline.
 
 ![RAG Sequence](architecture/master-rag-sequence.png)
 
-### The Two-Phase Pipeline
+### The Two-Phase Pipeline (100% Native implementation)
 
-1.  **Ingestion Phase (Admin):**
-    - PDFs are parsed and split into **Recursive Character Chunks**.
-    - Embeddings are generated **locally** using `Transformers.js` to avoid
-      cloud costs and latency.
-    - Chunks are stored with metadata in MongoDB; Category taxonomy is mirrored
-      in Neo4j.
+Niti Setu achieves high performance by bypassing high-level RAG frameworks (LangChain/LlamaIndex) and pre-built hybrid libraries. This native approach ensures:
+- **Low Latency:** No framework-overhead between query and inference.
+- **Data Sovereignty:** Full control over PII handling without third-party telemetry.
+- **Granular Control:** Custom MMR and RRF algorithms specifically tuned for policy text.
 
-2.  **Reasoning Phase (Farmer):**
-    - The user's query is vectorized.
-    - **Hybrid Search:** Vector similarity + Keyword matching.
-    - **MMR Diversification:** Ensures a broad set of criteria is evaluated.
-    - **Graph Conflict Injection:** Neo4j checks for scheme incompatibilities.
-    - **LLM Synthesis:** Groq Llama 3.3 generates the verdict with citations.
+- **Ingestion Phase (Admin):**
+  - PDFs are parsed and split into **Recursive Character Chunks**.
+  - Embeddings are generated **locally** using `Transformers.js` to avoid cloud costs and latency.
+  - Chunks are stored with metadata in MongoDB; Category taxonomy is mirrored in Neo4j.
+
+- **Reasoning Phase (Farmer):**
+  - The user's query is vectorized.
+  - **Native Multi-Path Search:** Vector similarity + Keyword matching.
+  - **Bespoke MMR Diversification:** Ensures a broad set of criteria is evaluated.
+  - **Direct Graph Conflict Injection:** Neo4j checks for scheme incompatibilities.
+  - **LLM Synthesis:** Groq Llama 3.3 generates the verdict with citations.
 
 ---
 
@@ -156,14 +146,10 @@ sensitive documents like Aadhaar or land records.
 
 ### Zero-Storage Protocol (Multer Implementation)
 
-1.  **Ephemeral Uploads:** Using Multer disk-storage, documents are stored in a
-    local `tmp` directory.
-2.  **Stream-Only Processing:** Files are read as a buffer, sent as a base64
-    binary stream to the Vision model, and **never stored in a database**.
-3.  **PII Stripping:** Logic specifically extracts land/demographic data while
-    ignoring identity-specific numbers.
-4.  **Secure Wipe:** The `finally` block in `scanRoutes.js` executes `fs.unlink`
-    to permanently purge the file within milliseconds of analysis.
+- **Ephemeral Uploads:** Using Multer disk-storage, documents are stored in a local `tmp` directory.
+- **Stream-Only Processing:** Files are read as a buffer, sent as a base64 binary stream to the Vision model, and **never stored in a database**.
+- **PII Stripping:** Logic specifically extracts land/demographic data while ignoring identity-specific numbers.
+- **Secure Wipe:** The `finally` block in `scanRoutes.js` executes `fs.unlink` to permanently purge the file within milliseconds of analysis.
 
 ---
 

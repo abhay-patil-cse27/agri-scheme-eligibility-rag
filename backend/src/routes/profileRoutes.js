@@ -3,9 +3,11 @@ const router = express.Router();
 
 const FarmerProfile = require('../models/FarmerProfile');
 const EligibilityCheck = require('../models/EligibilityCheck');
+const User = require('../models/User'); // Import User for email retrieval
 const { asyncHandler } = require('../middleware/errorHandler');
 const { validateProfile, validateObjectId } = require('../middleware/validators');
 const { protect, authorize } = require('../middleware/auth');
+const sendEmail = require('../utils/sendEmail'); // Import sendEmail utility
 
 /**
  * POST /api/profiles
@@ -156,23 +158,67 @@ router.delete(
   protect,
   validateObjectId,
   asyncHandler(async (req, res) => {
-    const profile = await FarmerProfile.findById(req.params.id);
+    const profile = await FarmerProfile.findById(req.params.id).populate('userId', 'email name');
 
     if (!profile) {
       return res.status(404).json({ success: false, error: 'Profile not found' });
     }
 
     if (req.user.role === 'farmer') {
-      if (!profile.userId || profile.userId.toString() !== req.user.id) {
+      if (!profile.userId || profile.userId._id.toString() !== req.user.id) {
         return res.status(403).json({ success: false, error: 'Not authorized to delete this profile' });
       }
     }
+
+    const userEmail = profile.userId?.email;
+    const userName = profile.name || req.user.name;
 
     // Delete associated eligibility checks first
     await EligibilityCheck.deleteMany({ farmerId: req.params.id });
     
     // Delete the profile
     await FarmerProfile.findByIdAndDelete(req.params.id);
+
+    // Send security email if deleted by admin/superadmin
+    if (userEmail && (req.user.role === 'admin' || req.user.role === 'superadmin')) {
+      try {
+        const emailContent = `
+          <h2 style="color: #991b1b; margin-top: 0;">Profile Security Termination</h2>
+          <p>Dear <strong>${userName}</strong>,</p>
+          
+          <p>This is an official notice that your Niti-Setu farmer profile has been <strong>deleted</strong> by the system administration effective immediately.</p>
+          
+          <div style="background-color: #fee2e2; border-left: 4px solid #b91c1c; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0; color: #991b1b; font-weight: 600;">Status: Mandatory Account Action</p>
+            <p style="margin: 5px 0 0; font-size: 14px; color: #7f1d1d;">
+              Regulatory Basis: <strong>Information Technology Act, 2000 (India)</strong> & Associated Cyber Laws
+            </p>
+          </div>
+          
+          <p>As per Niti-Setu's security framework, the administration holds the authority to remove accounts that are flagged during routine audits for potential <strong>security vulnerabilities, malicious patterns, or compliance violations</strong>.</p>
+          
+          <p>This measure is taken to maintain the integrity of the Digital India agricultural ecosystem and prevent unauthorized data manipulation.</p>
+          
+          <h3 style="color: #334155; font-size: 16px;">Formal Appeal Process</h3>
+          <p>If you wish to contest this deletion, you must file a formal appeal within 7 business days. Please reply to this email or send a detailed clarification to: 
+          <a href="mailto:patil.abhay214@gmail.com" style="color: #166534; font-weight: 600; text-decoration: none;">patil.abhay214@gmail.com</a></p>
+          
+          <p style="font-size: 13px; color: #64748b; font-style: italic;">
+            Note: System-level terminations are irreversible without formal verification. New registration attempts with the same credentials may be subject to additional verification.
+          </p>
+          
+          <p>Regards,<br><strong>Security Operations Center</strong><br>Niti-Setu Systems</p>
+        `;
+
+        await sendEmail({
+          email: userEmail,
+          subject: "Security Notification: Profile Termination (IT Act Compliance)",
+          html: emailContent
+        });
+      } catch (emailErr) {
+        console.error('Failed to send deletion notice email:', emailErr);
+      }
+    }
 
     res.json({ success: true, data: { message: 'Profile and history deleted successfully' } });
   })

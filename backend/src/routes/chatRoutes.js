@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { chatWithKrishiMitra } = require('../services/llmService');
+const { chatWithKrishiMitra, translateChatMessages } = require('../services/llmService');
 const ChatMessage = require('../models/ChatMessage');
 const ChatSession = require('../models/ChatSession');
 const { protect } = require('../middleware/auth');
@@ -187,6 +187,26 @@ router.post('/', protect, async (req, res) => {
       message: 'Failed to chat with Krishi Mitra',
       error: error.message 
     });
+  }
+});
+
+/**
+ * @route   POST /api/chat/translate
+ * @desc    Translate chat history to a new language
+ * @access  Private
+ */
+router.post('/translate', protect, async (req, res) => {
+  try {
+    const { messages, targetLanguage } = req.body;
+    if (!messages || !targetLanguage) {
+      return res.status(400).json({ message: 'Messages and targetLanguage are required' });
+    }
+
+    const translated = await translateChatMessages(messages, targetLanguage);
+    res.json(translated);
+  } catch (error) {
+    logger.error('Chat Translation API Error:', error.message);
+    res.status(500).json({ message: 'Failed to translate chat history' });
   }
 });
 
