@@ -1,6 +1,7 @@
 const Groq = require("groq-sdk");
 const config = require("../config/env");
 const logger = require("../config/logger");
+const ResourceUsage = require("../models/ResourceUsage");
 
 const groqInstances = [new Groq({ apiKey: config.groqApiKey })];
 let currentGroqIndex = 0;
@@ -198,6 +199,7 @@ async function checkEligibility(
   schemeName,
   language = "en",
   graphConflicts = [],
+  usageCategory = "registered"
 ) {
   const startTime = Date.now();
   const cleanLang = language.split('-')[0].toLowerCase();
@@ -264,6 +266,11 @@ You MUST translate the values for 'reason', 'actionSteps' (array of strings), 'b
     );
 
     rawResponse = completion.choices[0]?.message?.content;
+    
+    // Track usage with category
+    if (completion.usage) {
+      ResourceUsage.recordUsage('Groq-LLM', completion.usage.total_tokens, usageCategory).catch(e => logger.error('Usage track error:', e));
+    }
   } catch (error) {
     logger.error(`Groq LLM error for ${schemeName}:`, error.message);
     throw new Error(`LLM eligibility check failed: ${error.message}`);
@@ -353,7 +360,7 @@ function parseResponse(rawResponse) {
 /**
  * Extract structured profile from a voice transcript using LLM.
  */
-async function extractProfileFromTranscript(transcript) {
+async function extractProfileFromTranscript(transcript, usageCategory = "registered") {
   const systemPrompt = `You are an expert AI data extractor for an Indian agricultural platform.
 Your ONLY job is to extract farmer profile details from a raw, conversational voice transcript (which may be in Hindi, Marathi, English, Telugu, Bengali, Tamil etc.) and output strict JSON.
 
@@ -426,6 +433,12 @@ Extract whatever information is available from the actual provided transcript. S
     );
 
     const result = JSON.parse(completion.choices[0]?.message?.content || "{}");
+    
+    // Track usage with category
+    if (completion.usage) {
+      ResourceUsage.recordUsage('Groq-LLM', completion.usage.total_tokens, usageCategory).catch(e => logger.error('Usage track error:', e));
+    }
+
     logger.info("Profile extracted from transcript successfully");
     return result;
   } catch (error) {
@@ -440,7 +453,7 @@ Extract whatever information is available from the actual provided transcript. S
  * @param {string} [language='en'] - Regional language code (e.g. 'hi', 'mr')
  * @returns {string} Trancribed text
  */
-async function transcribeAudio(filePath, language = "en") {
+async function transcribeAudio(filePath, language = "en", usageCategory = "registered") {
   const fs = require("fs");
   try {
     const whisperLanguage = language
@@ -459,6 +472,10 @@ async function transcribeAudio(filePath, language = "en") {
       ),
     );
 
+    // Track usage (Whisper usually reports duration)
+    const duration = transcription.duration || 1; 
+    ResourceUsage.recordUsage('Groq-Whisper', Math.ceil(duration), usageCategory).catch(e => logger.error('Usage track error:', e));
+
     logger.info("Audio transcribed successfully");
     return transcription.text;
   } catch (error) {
@@ -470,7 +487,7 @@ async function transcribeAudio(filePath, language = "en") {
 /**
  * Translate an eligibility result JSON natively into the target language.
  */
-async function translateEligibilityResult(resultObj, targetLanguage = "hi") {
+async function translateEligibilityResult(resultObj, targetLanguage = "hi", usageCategory = "registered") {
   const cleanLang = targetLanguage.split('-')[0].toLowerCase();
   const targetLangString = languageMap[cleanLang] || cleanLang;
 
@@ -521,6 +538,11 @@ Output benefitAmount: "₹६,००० प्रति वर्ष"`;
       completion.choices[0]?.message?.content || "{}",
     );
 
+    // Track usage with category
+    if (completion.usage) {
+      ResourceUsage.recordUsage('Groq-LLM', completion.usage.total_tokens, usageCategory).catch(e => logger.error('Usage track error:', e));
+    }
+
     const finalTranslatedObj = {
       ...resultObj,
       reason: translated.reason || resultObj.reason,
@@ -560,7 +582,14 @@ Output benefitAmount: "₹६,००० प्रति वर्ष"`;
  * @param {string} language - Target language code (default 'en')
  * @returns {string} The AI's response text
  */
-async function chatWithKrishiMitra(query, history = [], profile = {}, language = 'en') {
+async function chatWithKrishiMitra(
+  userQuery,
+  history = [],
+  profile = {}, // Kept profile as it's used in systemPrompt
+  language = "en",
+  usageCategory = "registered"
+) {
+  const startTime = Date.now();
   const systemPrompt = `You are "Krishi Mitra", a helpful and knowledgeable agricultural assistant for the Niti Setu platform.
   
   YOUR PERSONALITY:
@@ -604,6 +633,11 @@ async function chatWithKrishiMitra(query, history = [], profile = {}, language =
       ),
     );
 
+    // Track usage
+    if (completion.usage) {
+      ResourceUsage.recordUsage('Groq-LLM', completion.usage.total_tokens).catch(e => logger.error('Usage track error:', e));
+    }
+
     return completion.choices[0]?.message?.content || "I'm sorry, I couldn't process that request.";
   } catch (error) {
     logger.error("Krishi Mitra chat failed:", error.message);
@@ -620,7 +654,7 @@ async function chatWithKrishiMitra(query, history = [], profile = {}, language =
  * @param {string} documentType - Type of document (e.g. '7/12', 'Aadhaar', 'KCC')
  * @returns {Promise<Object>} - Parsed profile object
  */
-async function extractProfileFromDocument(base64Image, documentType) {
+async function extractProfileFromDocument(base64Image, documentType, usageCategory = "registered") {
   const systemPrompt = `You are a strict, secure OCR and data extraction AI for a government agricultural platform.
 Your job is to read the provided document (type: ${documentType}) and extract ONLY the agricultural and core demographic data required for scheme eligibility.
 
@@ -668,6 +702,12 @@ Omit any keys where the data is not found in the image. DO NOT output markdown, 
     );
 
     const extractedText = completion.choices[0]?.message?.content || '{}';
+    
+    // Track usage
+    if (completion.usage) {
+      ResourceUsage.recordUsage('Groq-Vision', completion.usage.total_tokens, usageCategory).catch(e => logger.error('Usage track error:', e));
+    }
+
     return JSON.parse(extractedText);
   } catch (error) {
     logger.error('Document extraction failed:', error);

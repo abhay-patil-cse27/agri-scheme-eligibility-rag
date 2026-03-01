@@ -86,6 +86,14 @@ const eligibilityCheckSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    latencies: {
+      graph: { type: Number, default: 0 },
+      embedding: { type: Number, default: 0 },
+      vectorSearch: { type: Number, default: 0 },
+      llm: { type: Number, default: 0 },
+      suggestion: { type: Number, default: 0 },
+      total: { type: Number, default: 0 }
+    },
   },
   {
     timestamps: true,

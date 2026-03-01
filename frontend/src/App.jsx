@@ -13,6 +13,7 @@ const EligibilityCheck = lazy(() => import('./pages/EligibilityCheck'));
 const GraphExplorer = lazy(() => import('./pages/GraphExplorer'));
 const FAQ = lazy(() => import('./pages/FAQ'));
 const LegalPolicy = lazy(() => import('./pages/LegalPolicy'));
+const ResourceManagement = lazy(() => import('./pages/ResourceManagement'));
 
 import Sidebar from './components/layout/Sidebar';
 import LandingNav from './components/layout/LandingNav';
@@ -162,6 +163,7 @@ function AnimatedRoutes() {
           <Route path="users" element={<PageWrapper><UsersPage /></PageWrapper>} />
           <Route path="graph" element={<PageWrapper><GraphExplorer /></PageWrapper>} />
           <Route path="chat" element={<PageWrapper><ChatDashboard /></PageWrapper>} />
+          <Route path="resources" element={<PageWrapper><ResourceManagement /></PageWrapper>} />
         </Route>
       </Routes>
     </AnimatePresence>

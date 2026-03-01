@@ -60,16 +60,22 @@ router.post(
         email,
         subject,
         html: `
-          <p style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 8px;">Authentication Code Required</p>
-          <p style="margin-bottom: 32px; color: #4b5563;">Use the high-security verification code below to authorize <strong>${action}</strong> on the Niti-Setu Portal. This code is unique to your session.</p>
+          <h2 style="color: #0f172a; font-size: 24px; font-weight: 800; margin: 0 0 16px;">Action Required: Verification Code</h2>
+          <p style="margin: 0 0 32px; color: #475569; font-size: 16px;">To proceed with <strong>${action}</strong> on the Niti-Setu portal, please use the secure 6-digit verification code provided below. This code is unique to your current request.</p>
           
-          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; text-align: center; margin: 32px 0;">
-            <span style="font-size: 38px; font-weight: 800; letter-spacing: 12px; color: #059669; font-family: monospace;">${otp}</span>
+          <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 20px; padding: 40px; text-align: center; margin-bottom: 32px;">
+            <div style="font-size: 12px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;">Your Secure Code</div>
+            <div style="font-size: 48px; font-weight: 800; letter-spacing: 16px; color: #166534; font-family: 'Courier New', Courier, monospace; margin-left: 16px;">${otp}</div>
           </div>
 
-          <p style="font-size: 14px; color: #9ca3af; line-height: 1.5;">
-            <strong>Validity:</strong> 10 Minutes<br/>
-            If you did not initiate this request, please disregard this email. Your account remains protected.
+          <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin-bottom: 32px;">
+            <p style="margin: 0; font-size: 14px; color: #92400e;">
+              <strong>Security Protocol:</strong> This code is valid for 10 minutes. Do not share this code with anyone. Niti-Setu representatives will never ask for your code via phone or chat.
+            </p>
+          </div>
+
+          <p style="margin: 0; font-size: 14px; color: #94a3b8; line-height: 1.5;">
+            If you did not initiate this request, no further action is required. Your account remains secure.
           </p>
         `
       });
@@ -134,14 +140,24 @@ router.post(
         email: user.email,
         subject: 'Welcome to Niti-Setu',
         html: `
-          <p style="font-size: 20px; font-weight: 700; color: #111827; margin-top: 0;">Welcome to Niti-Setu, ${user.name}</p>
-          <p style="margin-bottom: 24px;">We are pleased to confirm that your account has been successfully provisioned. You now have full access to our agricultural intelligence engine, including personalized scheme matching and historical analytics.</p>
+          <h2 style="color: #0f172a; font-size: 26px; font-weight: 800; margin: 0 0 16px;">Welcome to the Future of Farming, ${user.name.split(' ')[0]}!</h2>
+          <p style="margin: 0 0 24px; color: #475569; font-size: 16px; line-height: 1.6;">We are thrilled to confirm that your account has been successfully provisioned. You now have full access to Niti-Setu — your AI-powered companion for agricultural intelligence.</p>
           
-          <div style="background-color: #059669; color: #ffffff; padding: 16px 24px; border-radius: 8px; display: inline-block; font-weight: 600;">
-            Account Verified & Active
+          <div style="background-color: #ecfdf5; border: 1px solid #b7e4c7; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+            <p style="margin: 0 0 12px; font-size: 14px; font-weight: 700; color: #065f46; text-transform: uppercase; letter-spacing: 0.05em;">Your Access Highlights:</p>
+            <ul style="margin: 0; padding: 0 0 0 20px; color: #064e3b; font-size: 15px; line-height: 1.8;">
+              <li>Personalized Government Scheme Matching</li>
+              <li>Real-time Agricultural AI Assistance (Krishi Mitra)</li>
+              <li>Mobile-first Document Management</li>
+              <li>Historical Analytics and Performance Insights</li>
+            </ul>
           </div>
 
-          <p style="margin-top: 32px; font-size: 15px; color: #64748b;">Visit your dashboard to begin exploring eligible agricultural welfare programs.</p>
+          <div style="text-align: center; margin-bottom: 32px;">
+            <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard" style="background-color: #166534; color: #ffffff; padding: 16px 32px; border-radius: 12px; display: inline-block; font-weight: 700; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">Explore Your Dashboard</a>
+          </div>
+
+          <p style="margin: 0; font-size: 15px; color: #64748b;">Our mission is to bridge the gap between farmers and government opportunities through state-of-the-art technology. We're glad to have you with us.</p>
         `
       });
     } catch (err) {
@@ -224,12 +240,15 @@ router.put(
         email: user.email,
         subject: 'Security Alert: Profile Updated',
         html: `
-          <p style="font-size: 18px; font-weight: 700; color: #111827; margin-top: 0;">Identity Notification: Profile Updated</p>
-          <p style="margin-bottom: 16px;">Hello, ${user.name}. This is a professional notification to confirm that your profile attributes (Name/Email) have been successfully modified on the Niti-Setu platform.</p>
+          <h2 style="color: #0f172a; font-size: 24px; font-weight: 800; margin: 0 0 16px;">Security Alert: Profile Update</h2>
+          <p style="margin: 0 0 24px; color: #475569; font-size: 16px;">Hello, ${user.name}. This is an automated security notification to inform you that several attributes of your Niti-Setu profile (Name/Email) have been modified.</p>
           
-          <p style="font-size: 14px; padding: 12px; background-color: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b;">
-            <strong>Immediate Action:</strong> If you did not authorize this modification, please contact our security team immediately to prevent unauthorized access.
-          </p>
+          <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+            <p style="margin: 0; font-size: 14px; font-weight: 700; color: #9f1239; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Suspicious Activity?</p>
+            <p style="margin: 0; font-size: 15px; color: #b91c1c; line-height: 1.5;">
+              If you did not authorize this change, your account security may be at risk. Please contact our security operations center immediately or reset your credentials.
+            </p>
+          </div>
         `
       });
     } catch (err) {
@@ -266,12 +285,15 @@ router.put(
         email: user.email,
         subject: 'Security Alert: Password Changed',
         html: `
-          <p style="font-size: 18px; font-weight: 700; color: #111827; margin-top: 0;">Identity Security: Password Modification</p>
-          <p style="margin-bottom: 16px;">Hello, ${user.name}. We are writing to confirm that the security credentials (password) for your Niti-Setu account were recently updated.</p>
+          <h2 style="color: #0f172a; font-size: 24px; font-weight: 800; margin: 0 0 16px;">Security Alert: Password Changed</h2>
+          <p style="margin: 0 0 24px; color: #475569; font-size: 16px;">Hello, ${user.name}. We are writing to confirm that the security credentials (password) for your Niti-Setu account were successfully changed.</p>
           
-          <p style="font-size: 14px; padding: 12px; background-color: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b;">
-            <strong>Security Warning:</strong> High-risk activity detected. If this credential update was not performed by you, your account security may be compromised. Take immediate action to secure your portal access.
-          </p>
+          <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+            <p style="margin: 0; font-size: 14px; font-weight: 700; color: #9f1239; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Critical Alert</p>
+            <p style="margin: 0; font-size: 15px; color: #b91c1c; line-height: 1.5;">
+              This is a high-priority security event. If this password reset was not performed by you, please take immediate steps to secure your account.
+            </p>
+          </div>
         `
       });
     } catch (err) {

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, KeyRound, Loader2, Save, Plus, X } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { updateDetails, updatePassword } from '../services/api';
+import { updateDetails, updatePassword, sendOTP } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import AgriCard from '../components/common/AgriCard';
@@ -11,6 +12,7 @@ export default function Settings() {
   const { user, setUser } = useAuth();
   const { addToast } = useToast();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const [details, setDetails] = useState({ 
     name: user?.name || '', 
@@ -69,6 +71,22 @@ export default function Settings() {
       setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err) {
       addToast(t('toast_analysis_failed'), err.response?.data?.error || t('toast_analysis_failed'), 'error');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setPasswordLoading(true);
+    addToast(t('otp_sent_title', 'Sending Code'), t('pf_loading', 'Initiating password reset...'), 'info');
+    try {
+      const res = await sendOTP(user.email, 'password_reset');
+      if (res.success) {
+        addToast(t('otp_sent_title', 'Code Sent'), t('otp_sent_desc', 'Please check your email for the reset code.'), 'success');
+        navigate('/resetpassword', { state: { email: user.email } });
+      }
+    } catch (err) {
+      addToast(t('toast_system_error'), err.response?.data?.error || t('toast_system_error'), 'error');
     } finally {
       setPasswordLoading(false);
     }
@@ -261,7 +279,16 @@ export default function Settings() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
             <div>
-              <label style={labelStyle}>{t('st_current_password')}</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label style={labelStyle}>{t('st_current_password')}</label>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  style={{ background: 'none', border: 'none', color: 'var(--accent-indigo)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', marginBottom: '8px' }}
+                >
+                  {t('login_forgot', 'Forgot your password?')}
+                </button>
+              </div>
               <div style={{ position: 'relative' }}>
                 <KeyRound size={16} style={{ position: 'absolute', top: '12px', left: '12px', color: 'var(--text-muted)' }} />
                 <input required type="password" value={passwords.currentPassword} onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })} className="input-dark" style={{ paddingLeft: '36px' }} placeholder={t('st_current_password')} />

@@ -810,7 +810,7 @@ function ProofCard({ result }) {
               >
                 {isTranslating ? <Loader2 size={14} className="spin" /> : <Globe size={14} />}
                 {isTranslating ? t('pf_btn_loading') : translateLabel}
-                {!isTranslating && <ChevronDown size={12} style={{ opacity: 0.6, transform: showLangMenu ? '180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />}
+                {!isTranslating && <ChevronDown size={12} style={{ opacity: 0.6, transform: showLangMenu ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />}
               </motion.button>
 
               <AnimatePresence>
@@ -851,11 +851,9 @@ function ProofCard({ result }) {
 
             {isSpeaking && (
                <div className="waveform" style={{ marginRight: '8px' }}>
-                 <div className="waveform-bar" style={{ background: 'var(--accent-indigo)' }}></div>
-                 <div className="waveform-bar" style={{ background: 'var(--accent-indigo)' }}></div>
-                 <div className="waveform-bar" style={{ background: 'var(--accent-indigo)' }}></div>
-                 <div className="waveform-bar" style={{ background: 'var(--accent-indigo)' }}></div>
-                 <div className="waveform-bar" style={{ background: 'var(--accent-indigo)' }}></div>
+                 {[...Array(5)].map((_, i) => (
+                   <div key={i} className="waveform-bar" style={{ background: 'var(--accent-indigo)' }}></div>
+                 ))}
                </div>
             )}
 
@@ -970,6 +968,60 @@ function ProofCard({ result }) {
         </div>
       )}
 
+      {/* 5. System Latency & Performance (Requested) */}
+      <div style={{ 
+        marginTop: '20px', padding: '16px 20px', borderRadius: '16px', 
+        background: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
+        display: 'flex', flexDirection: 'column', gap: '12px'
+      }} data-html2canvas-ignore="true">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Clock size={14} style={{ color: 'var(--text-muted)' }} />
+            <h5 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+              System Performance Metrics
+            </h5>
+          </div>
+          <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>
+            ⚡ Optimized RAG Pipeline
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+          <LatencyItem 
+            label="Total RAG Latency" 
+            value={`${(displayResult.latencies?.total || 0) / 1000}s`} 
+            icon={<Brain size={12} />} 
+            color="var(--accent-indigo)"
+          />
+          <LatencyItem 
+            label="LLM (Groq API)" 
+            value={`${(displayResult.latencies?.llm || 0) / 1000}s`} 
+            icon={<Sparkles size={12} />} 
+            color="var(--accent-violet)"
+          />
+          <LatencyItem 
+            label="Vector Search" 
+            value={`${(displayResult.latencies?.vectorSearch || 0) / 1000}s`} 
+            icon={<Search size={12} />} 
+            color="var(--accent-cyan)"
+          />
+          <LatencyItem 
+            label="Embeddings" 
+            value={`${(displayResult.latencies?.embedding || 0) / 1000}s`} 
+            icon={<Ruler size={12} />} 
+            color="var(--accent-emerald)"
+          />
+          {displayResult.latencies?.graph > 0 && (
+            <LatencyItem 
+              label="Graph Logic" 
+              value={`${(displayResult.latencies?.graph || 0) / 1000}s`} 
+              icon={<Shield size={12} />} 
+              color="var(--accent-amber)"
+            />
+          )}
+        </div>
+      </div>
+
       {/* 4. High-Priority Action Section */}
       <div style={{ 
         marginTop: '32px', padding: '24px', borderRadius: '20px', 
@@ -1020,6 +1072,25 @@ function ProofCard({ result }) {
     </motion.div>
   );
 }
+
+/**
+ * Helper component for latency items
+ */
+function LatencyItem({ label, value, icon, color }) {
+  return (
+    <div style={{ 
+      padding: '10px 14px', borderRadius: '12px', background: 'var(--bg-secondary)', 
+      border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '4px' 
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <span style={{ color }}>{icon}</span>
+        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{label}</span>
+      </div>
+      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>{value}</span>
+    </div>
+  );
+}
+
 
 /* ── Main Page ──────────────────────────── */
 export default function EligibilityCheck() {
@@ -1081,7 +1152,21 @@ export default function EligibilityCheck() {
         const eligibility = await checkEligibility(profile.data._id, selectedScheme, i18n.language, selectedCategory);
         if (eligibility.success) {
           setResult(eligibility.data);
-          addToast('Check Complete', 'AI analysis finished successfully', 'success');
+          
+          // Show performance notification
+          const data = eligibility.data;
+          const perf = Array.isArray(data) ? data[0]?.latencies : data.latencies;
+          if (perf) {
+            const totalS = (perf.total / 1000).toFixed(2);
+            const otherApis = ((perf.graph + perf.llm) / 1000).toFixed(2);
+            addToast(
+              'Check Complete', 
+              `AI analysis finished in ${totalS}s (External APIs: ${otherApis}s)`, 
+              'success'
+            );
+          } else {
+            addToast('Check Complete', 'AI analysis finished successfully', 'success');
+          }
         } else {
           addToast('Analysis Failed', eligibility.error || 'Eligibility check failed', 'error');
         }
@@ -1093,8 +1178,23 @@ export default function EligibilityCheck() {
           const newCount = publicChecksUsed + 1;
           setPublicChecksUsed(newCount);
           localStorage.setItem('niti_setu_public_checks', newCount.toString());
-          addToast('Check Complete', `Free check used. Please login next time.`, 'success');
+          
+          // Show performance notification
+          const data = eligibility.data;
+          const perf = Array.isArray(data) ? data[0]?.latencies : data.latencies;
+          if (perf) {
+            const totalS = (perf.total / 1000).toFixed(2);
+            const otherApis = (perf.llm / 1000).toFixed(2);
+            addToast(
+              'Check Complete', 
+              `Free check used in ${totalS}s (AI Latency: ${otherApis}s)`, 
+              'success'
+            );
+          } else {
+            addToast('Check Complete', `Free check used. Please login next time.`, 'success');
+          }
         } else {
+
           if (eligibility.message?.requiresLogin) {
             addToast('Limit Reached', eligibility.error, 'error');
             setPublicChecksUsed(1);

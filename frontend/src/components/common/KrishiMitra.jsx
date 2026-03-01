@@ -292,19 +292,53 @@ const KrishiMitra = () => {
       {/* Floating Action Button */}
       <motion.div 
         className="krishi-mitra-fab"
-        whileHover={{ scale: 1.1 }}
+        initial={{ scale: 0, rotate: -30 }}
+        animate={{ scale: 1, rotate: 0 }}
+        whileHover={{ scale: 1.15 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}
       >
-        {isOpen ? <X size={28} /> : <Sprout size={32} />}
+        <AnimatePresence mode="wait">
+          {isOpen ? (
+            <motion.div
+              key="close"
+              initial={{ rotate: -90, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              exit={{ rotate: 90, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <X size={30} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="open"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Sprout size={32} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {!isOpen && (
           <motion.div 
-            className="absolute -top-2 -right-2 bg-accent-amber text-xs font-bold px-2 py-1 rounded-full text-black shadow-lg"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 1 }}
+            className="absolute -top-3 -right-3 px-3 py-1.5 rounded-2xl shadow-xl border border-[var(--border-glow)] flex items-center justify-center"
+            style={{ 
+              background: 'var(--gradient-primary)', 
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
+              color: 'white',
+              fontSize: '0.75rem',
+              fontWeight: 800,
+              zIndex: 10
+            }}
+            initial={{ scale: 0, y: 10 }}
+            animate={{ scale: 1, y: 0 }}
+            transition={{ delay: 1, type: 'spring', stiffness: 260, damping: 20 }}
           >
-            Hi!
+            Hi! {user?.name ? user.name.split(' ')[0] : ''}
           </motion.div>
         )}
       </motion.div>
@@ -314,13 +348,18 @@ const KrishiMitra = () => {
         {isOpen && (
           <motion.div 
             className="chat-window"
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
+            initial={{ opacity: 0, scale: 0.9, y: 40, x: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 40, x: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           >
             {/* Header */}
-            <div className="chat-header">
+            <div className="chat-header" style={{ 
+              background: 'var(--gradient-primary)', 
+              padding: '24px 20px', 
+              borderBottom: '1px solid rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(10px)'
+            }}>
               <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                 <Leaf size={20} className="text-white" />
               </div>
@@ -437,12 +476,35 @@ const KrishiMitra = () => {
                       <button 
                         key={i}
                         onClick={() => handleSuggestion(s)}
-                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)', fontSize: '0.9rem', width: '100%', textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s' }}
-                        onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--accent-indigo)'}
-                        onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-glass)'}
+                        style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center', 
+                          padding: '14px 18px', 
+                          background: 'var(--bg-secondary)', 
+                          borderRadius: '16px', 
+                          border: '1px solid var(--border-glass)', 
+                          color: 'var(--text-secondary)', 
+                          fontSize: '0.92rem', 
+                          fontWeight: 500,
+                          width: '100%', 
+                          textAlign: 'left', 
+                          cursor: 'pointer', 
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = 'var(--accent-indigo)';
+                          e.currentTarget.style.transform = 'translateX(6px)';
+                          e.currentTarget.style.background = 'var(--bg-glass)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = 'var(--border-glass)';
+                          e.currentTarget.style.transform = 'translateX(0)';
+                          e.currentTarget.style.background = 'var(--bg-secondary)';
+                        }}
                       >
                         {s.text}
-                        <ChevronRight size={16} color="var(--accent-indigo)" />
+                        <ChevronRight size={18} color="var(--accent-indigo)" />
                       </button>
                     ))}
                   </div>
@@ -496,7 +558,7 @@ const KrishiMitra = () => {
                     />
                     <button 
                       onClick={toggleDictation}
-                      className={`p-2 rounded-xl transition ${isDictating ? 'text-rose-500 bg-rose-500/10' : 'text-[var(--text-muted)] hover:text-white'}`}
+                      className={`p-2 rounded-xl transition ${isDictating ? 'text-rose-500 bg-rose-500/10' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                       title={isDictating ? 'Stop Listening' : 'Start Dictation'}
                     >
                       {isDictating ? <span className="animate-pulse"><Mic size={18} /></span> : <MicOff size={18} />}

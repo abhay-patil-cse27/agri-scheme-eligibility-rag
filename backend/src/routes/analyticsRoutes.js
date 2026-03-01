@@ -6,6 +6,7 @@ const EligibilityCheck = require('../models/EligibilityCheck');
 const FarmerProfile = require('../models/FarmerProfile');
 const Scheme = require('../models/Scheme');
 const AuditLog = require('../models/AuditLog');
+const ResourceUsage = require('../models/ResourceUsage');
 const { protect, authorize } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 
@@ -148,6 +149,23 @@ router.get(
         avgAiResponseTime: avgResponse.length > 0 ? avgResponse[0].avg : 0,
         activeConnections: mongoose.connection.states[mongoose.connection.readyState]
       },
+    });
+  })
+);
+
+/**
+ * GET /api/analytics/resources
+ * Returns external API usage metrics (tokens, characters, etc.)
+ */
+router.get(
+  '/resources',
+  protect,
+  authorize('admin'),
+  asyncHandler(async (req, res) => {
+    const usage = await ResourceUsage.find().sort('serviceName').lean();
+    res.json({
+      success: true,
+      data: usage,
     });
   })
 );

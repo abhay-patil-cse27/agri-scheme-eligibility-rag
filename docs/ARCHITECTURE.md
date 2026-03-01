@@ -26,21 +26,21 @@ scalability and security.
     **Identity Verification Gates** (account existence checks for resets),
     **Strict Password Strategy** (regex-based complexity), and request routing.
 3.  **Intelligence Orchestrators:**
-    *   **Pro RAG Engine:** Custom implementation featuring **Reciprocal Rank
-        Fusion (RRF)** to combine Vector and Keyword results.
-    *   **Llama 3.2 Vision:** Ephemeral document analysis for PII-safe profile
-        extraction.
-    *   **Whisper V3 & Web Speech API:** Dual transcription layer for
-        high-accuracy regional voice input.
-    *   **Neo4j Engine:** Graph-based conflict detection (via `EXCLUSIVE_OF`
-        relationships) and scheme recommendation.
+    - **Pro RAG Engine:** Custom implementation featuring **Reciprocal Rank
+      Fusion (RRF)** to combine Vector and Keyword results.
+    - **Llama 3.2 Vision:** Ephemeral document analysis for PII-safe profile
+      extraction.
+    - **Whisper V3 & Web Speech API:** Dual transcription layer for
+      high-accuracy regional voice input.
+    - **Neo4j Engine:** Graph-based conflict detection (via `EXCLUSIVE_OF`
+      relationships) and scheme recommendation.
 4.  **Data Persistence:**
-    *   **MongoDB Atlas:** Vector-indexed storage with `$vectorSearch`. Includes a
-        **PublicCheckCache** for deterministic demographic queries and persists 
-        **Multi-session Chat History** with rich metadata.
-    *   **Neo4j Aura:** Knowledge graph for taxonomic relationships and
-        multi-scheme complementary modeling.
-    *   **Groq Cloud:** Ultra-fast Llama 3.3 70B inference for core reasoning.
+    - **MongoDB Atlas:** Vector-indexed storage with `$vectorSearch`. Includes a
+      **PublicCheckCache** for deterministic demographic queries and persists
+      **Multi-session Chat History** with rich metadata.
+    - **Neo4j Aura:** Knowledge graph for taxonomic relationships and
+      multi-scheme complementary modeling.
+    - **Groq Cloud:** Ultra-fast Llama 3.3 70B inference for core reasoning.
 
 ---
 
@@ -52,31 +52,34 @@ legal and policy documentation.
 ### 1. Advanced Ingestion & Chunking Strategy
 
 Unlike standard splitters, we use a **Recursive Character Chunking** strategy:
-*   **Chunk Size:** 1000 characters.
-*   **Overlap:** 200 characters (20%).
-*   **Logic:** The system recursively attempts to split at logical boundaries
-    (paragraphs, sentences, then spaces) to maintain context "glue."
-*   **Uniqueness:** Every chunk is assigned a unique SHA-256 hash to prevent
-    duplicate indices even across multiple document versions.
+
+- **Chunk Size:** 1000 characters.
+- **Overlap:** 200 characters (20%).
+- **Logic:** The system recursively attempts to split at logical boundaries
+  (paragraphs, sentences, then spaces) to maintain context "glue."
+- **Uniqueness:** Every chunk is assigned a unique SHA-256 hash to prevent
+  duplicate indices even across multiple document versions.
 
 ### 2. Hybrid Search & Retrieval
 
 We implement a dual-path retrieval strategy to capture both semantic meaning and
 specific keyword terms (like scheme codes or state names):
-*   **Vector Path:** Uses `all-MiniLM-L6-v2` (via Transformers.js running
-    locally) for 384-dimensional semantic similarity.
-*   **Keyword Path:** Uses MongoDB Atlas Text Search (BM25) for literal matches.
-*   **Fusion Mixer:** We use **Reciprocal Rank Fusion (RRF)** to combine these
-    results, ensuring that if a chunk is relevant in both paths, it is boosted
-    to the top.
+
+- **Vector Path:** Uses `all-MiniLM-L6-v2` (via Transformers.js running
+  locally) for 384-dimensional semantic similarity.
+- **Keyword Path:** Uses MongoDB Atlas Text Search (BM25) for literal matches.
+- **Fusion Mixer:** We use **Reciprocal Rank Fusion (RRF)** to combine these
+  results, ensuring that if a chunk is relevant in both paths, it is boosted
+  to the top.
 
 ### 3. Diversity Filtering (MMR)
 
 To prevent the LLM from seeing redundant information, we apply **Maximal
 Marginal Relevance (MMR)**:
-*   It penalizes chunks that are too similar to already selected chunks.
-*   This ensures the context window contains a diverse range of criteria (e.g.,
-    one chunk about age, one about land size, one about crop type).
+
+- It penalizes chunks that are too similar to already selected chunks.
+- This ensures the context window contains a diverse range of criteria (e.g.,
+  one chunk about age, one about land size, one about crop type).
 
 ---
 
@@ -90,29 +93,32 @@ transform static government policies into actionable intelligence.
 The KB is seeded with a curated collection of **35+ verified Agricultural
 Policy PDFs** spanning **9 priority categories**. These documents serve as the
 absolute "Ground Truth." To ensure maximum factual integrity:
-*   **Direct Ingestion:** Documents are parsed directly from source PDFs to
-    prevent manual transcription errors.
-*   **Version Control:** The system tracks `uploadDates` to ensure farmers are
-    checked against the most recent policy revisions.
+
+- **Direct Ingestion:** Documents are parsed directly from source PDFs to
+  prevent manual transcription errors.
+- **Version Control:** The system tracks `uploadDates` to ensure farmers are
+  checked against the most recent policy revisions.
 
 ### 2. Multilingual Facility
 
 Niti Setu is a **Native Multilingual** application, not just translated text:
-*   **Core Languages:** Hindi, Marathi, Malayalam, Punjabi, Bengali, and
-    English.
-*   **Processing:** Query translation happens at the service layer before
-    retrieval, ensuring the RAG engine understands the intent regardless of the
-    user's input language.
-*   **Output:** The LLM generates the eligibility verdict in the user's selected
-    language while citing the English/Local source document.
+
+- **Core Languages:** Hindi, Marathi, Malayalam, Punjabi, Bengali, and
+  English.
+- **Processing:** Query translation happens at the service layer before
+  retrieval, ensuring the RAG engine understands the intent regardless of the
+  user's input language.
+- **Output:** The LLM generates the eligibility verdict in the user's selected
+  language while citing the English/Local source document.
 
 ### 3. Factuality & Verifiability
 
 Unlike standard chatbots, Niti Setu follows a **"No Citation, No Answer"** rule.
 Every eligibility response is backed by:
-*   **Verbatim Quotes:** Snippets directly from the KB.
-*   **Page References:** Exact page numbers from the source PDF.
-*   **Verified Mirrors:** Links to the primary source file for verification.
+
+- **Verbatim Quotes:** Snippets directly from the KB.
+- **Page References:** Exact page numbers from the source PDF.
+- **Verified Mirrors:** Links to the primary source file for verification.
 
 ---
 
@@ -126,18 +132,18 @@ pipeline.
 ### The Two-Phase Pipeline
 
 1.  **Ingestion Phase (Admin):**
-    *   PDFs are parsed and split into **Recursive Character Chunks**.
-    *   Embeddings are generated **locally** using `Transformers.js` to avoid
-        cloud costs and latency.
-    *   Chunks are stored with metadata in MongoDB; Category taxonomy is mirrored
-        in Neo4j.
+    - PDFs are parsed and split into **Recursive Character Chunks**.
+    - Embeddings are generated **locally** using `Transformers.js` to avoid
+      cloud costs and latency.
+    - Chunks are stored with metadata in MongoDB; Category taxonomy is mirrored
+      in Neo4j.
 
 2.  **Reasoning Phase (Farmer):**
-    *   The user's query is vectorized.
-    *   **Hybrid Search:** Vector similarity + Keyword matching.
-    *   **MMR Diversification:** Ensures a broad set of criteria is evaluated.
-    *   **Graph Conflict Injection:** Neo4j checks for scheme incompatibilities.
-    *   **LLM Synthesis:** Groq Llama 3.3 generates the verdict with citations.
+    - The user's query is vectorized.
+    - **Hybrid Search:** Vector similarity + Keyword matching.
+    - **MMR Diversification:** Ensures a broad set of criteria is evaluated.
+    - **Graph Conflict Injection:** Neo4j checks for scheme incompatibilities.
+    - **LLM Synthesis:** Groq Llama 3.3 generates the verdict with citations.
 
 ---
 
@@ -171,22 +177,31 @@ four distinct caching layers:
 1.  **Model Cache (Local):** `Transformers.js` caches the 80MB embedding model
     locally.
 2.  **In-Memory LRU Cache:**
-    *   `embeddingCache`: Stores vectors for repeated queries.
-    *   `translationCache`: Stores LLM translation results.
+    - `embeddingCache`: Stores vectors for repeated queries.
+    - `translationCache`: Stores LLM translation results.
 3.  **Database-Level Result Cache:**
-    *   **Private:** Recent results (24h) for same profile/scheme pair bypass AI.
-    *   **Public:** Deterministic profile hash instantly returns results for
-        common demographic queries.
+    - **Private:** Recent results (24h) for same profile/scheme pair bypass AI.
+    - **Public:** Deterministic profile hash instantly returns results for
+      common demographic queries.
 4.  **HTTP Middleware Cache:** Uses `apicache` for scheme catalog delivery.
+
+### Resource Tracking & Quota Management
+
+To monitor infrastructure sustainability and costs, Niti Setu implements a **Real-time Quota Monitoring System**:
+
+- **Dual-Category Accounting:** Differentiates between **Registered** (authenticated farmers/admins) and **Public** (anonymous guest) usage for all AI services.
+- **Granular Metrics:** Tracks LLM tokens (Groq), Whisper duration (Voice), Vision tokens (OCR), and TTS characters (ElevenLabs) independently.
+- **Daily Reset Cycle:** Counters reset at `00:00 UTC` to stay synchronized with external provider billing cycles, while maintaining permanent lifetime registers.
+- **Visibility:** Admin-only **Resource Dashboard** provides real-time saturational trend analysis using stacked charts.
 
 ### Business & UI Details
 
-*   **Freemium Model:** Implements a **1-free public check** limit for anonymous
-    users, tracked via `localStorage` and profile hashes.
-*   **Premium Branding:** System-generated emails feature a **premium,
-    independent styled HTML template** with modern tricolor accents.
-*   **Audit Logger:** Centralized `auditLogger.js` records all administrative
-    actions for transparency.
+- **Freemium Model:** Implements a **1-free public check** limit for anonymous
+  users, tracked via `localStorage` and profile hashes.
+- **Premium Branding:** System-generated emails feature a **premium,
+  independent styled HTML template** with modern tricolor accents.
+- **Audit Logger:** Centralized `auditLogger.js` records all administrative
+  actions for transparency.
 
 ---
 
@@ -197,11 +212,11 @@ maintenance.
 
 ![Backend Component Map](architecture/backend-component-map.png)
 
-*   **Routes (`/routes`):** Clean API surface (Auth, Eligibility, Voice, Scan,
-    Analytics, Graph).
-*   **Services (`/services`):** The "Brains" where LLM logic, Graph traversal,
-    and Embeddings live.
-*   **Models (`/models`):** MongoDB schemas for Users, Profiles, Schemes, Chunks,
-    **OTPs**, **ChatSessions**, **ChatMessages**, and Logs.
-*   **Middleware (`/middleware`):** Rate limiters, Joi-based validators, and
-    high-security Auth checks.
+- **Routes (`/routes`):** Clean API surface (Auth, Eligibility, Voice, Scan,
+  Analytics, Graph).
+- **Services (`/services`):** The "Brains" where LLM logic, Graph traversal,
+  and Embeddings live.
+- **Models (`/models`):** MongoDB schemas for Users, Profiles, Schemes, Chunks,
+  **OTPs**, **ChatSessions**, **ChatMessages**, and Logs.
+- **Middleware (`/middleware`):** Rate limiters, Joi-based validators, and
+  high-security Auth checks.

@@ -123,7 +123,7 @@ export const getHealth = () => api.get('/health').then((r) => r.data);
 
 // ── Analytics ─────────────────────────────
 export const getAnalytics = () => api.get('/analytics').then((r) => r.data);
-
+export const getResourceUsage = () => api.get('/analytics/resources').then((r) => r.data);
 export const getGraphData = () => api.get('/graph/explorer').then((r) => r.data);
 
 // ── Scanning ──────────────────────────────

@@ -77,6 +77,7 @@ Specialized endpoints for high-accessibility feature extraction.
 
 *   `GET /api/analytics` - Dashboard statistics (Total checks, Success rates, Demographic splits).
 *   `GET /api/analytics/system-health` - Cache hit rates and AI response latency.
+*   `GET /api/analytics/resources` (**Admin Only**) - Detailed breakdown of external API usage (LLM, TTS, Voice, Vision) split by Registered and Public categories.
 *   `GET /api/graph/explorer` - Full Neo4j graph data for taxonomic visualization.
 
 ---

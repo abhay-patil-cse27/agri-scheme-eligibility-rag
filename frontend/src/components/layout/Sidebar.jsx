@@ -20,7 +20,8 @@ import {
   Sun,
   Moon,
   Network,
-  MessageSquare
+  MessageSquare,
+  Server
 } from 'lucide-react';
 
 const navItems = [
@@ -32,6 +33,7 @@ const navItems = [
   { to: '/dashboard/history', icon: History, label: 'history' },
   { to: '/dashboard/chat', icon: MessageSquare, label: 'krishi_mitra' },
   { to: '/dashboard/graph', icon: Network, label: 'knowledge_graph' },
+  { to: '/dashboard/resources', icon: Server, label: 'resources' },
   { to: '/dashboard/settings', icon: Settings, label: 'settings' },
 ];
 
@@ -44,8 +46,9 @@ export default function Sidebar() {
   
   // Filter navigation items based on role
   const filteredNavItems = navItems.filter(item => {
-    // Only hide the Farmers and Users admin pages from farmer accounts
-    if (user?.role === 'farmer' && (item.label === 'farmers' || item.label === 'users' || item.label === 'knowledge_graph')) {
+    // Only hide admin pages from farmer accounts
+    if (user?.role === 'farmer' && 
+       (item.label === 'farmers' || item.label === 'users' || item.label === 'knowledge_graph' || item.label === 'resources')) {
       return false;
     }
     return true;

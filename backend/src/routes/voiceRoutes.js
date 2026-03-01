@@ -9,6 +9,7 @@ const { asyncHandler }        = require('../middleware/errorHandler');
 const { validateVoiceTranscript } = require('../middleware/validators');
 const { protect } = require('../middleware/auth');
 const logger = require('../config/logger');
+const ResourceUsage = require('../models/ResourceUsage');
 
 // ── Make sure uploads dir always exists (absolute path from project root) ──
 const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
@@ -43,7 +44,7 @@ router.post(
     const { transcript } = req.body;
     logger.info(`Voice process request – transcript length: ${transcript?.length}`);
 
-    const extractedProfile = await llmService.extractProfileFromTranscript(transcript);
+    const extractedProfile = await llmService.extractProfileFromTranscript(transcript, 'registered');
 
     const extractedFields = Object.entries(extractedProfile)
       .filter(([, value]) => value !== null && value !== undefined)
@@ -80,8 +81,8 @@ router.post(
 
     try {
       const { language = 'en' } = req.body;
-      const transcript     = await llmService.transcribeAudio(newPath, language);
-      const extractedProfile = await llmService.extractProfileFromTranscript(transcript);
+      const transcript     = await llmService.transcribeAudio(newPath, language, 'registered');
+      const extractedProfile = await llmService.extractProfileFromTranscript(transcript, 'registered');
 
       const extractedFields = Object.entries(extractedProfile)
         .filter(([, v]) => v !== null && v !== undefined)
@@ -176,6 +177,10 @@ router.post(
 
       // Convert downloaded stream to Buffer
       const buffer = Buffer.from(response.data);
+
+      // Track usage
+      const usageCategory = (req.headers.authorization || req.cookies?.token) ? 'registered' : 'public';
+      ResourceUsage.recordUsage('ElevenLabs-TTS', text.length, usageCategory).catch(e => logger.error('Usage track error:', e));
 
       // 3. Save to cache
       ttsCache.set(cacheKey, buffer);

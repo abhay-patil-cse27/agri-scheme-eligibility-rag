@@ -65,11 +65,16 @@ router.post(
     }
 
     // New: Get matching categories from Graph
+    const graphStart = Date.now();
     const matchingCategories = await graphService.getRecommendedCategories(profile);
+    const graphLatency = Date.now() - graphStart;
     logger.info(`Matching categories for ${profile.name}: ${matchingCategories.join(', ')}`);
 
     // Step 2: Determine which schemes to check
     let schemesToCheck = [];
+    let preFilterEmbeddingLatency = 0;
+    let preFilterVectorSearchLatency = 0;
+
     if (schemeName && schemeName !== 'all') {
       const scheme = await Scheme.findOne({ name: schemeName, isActive: true }).lean();
       if (!scheme) {
@@ -93,8 +98,14 @@ router.post(
       if (schemesToCheck.length > 3) {
         logger.info(`Pre-filtering category from ${schemesToCheck.length} down to Top 3 to save LLM tokens.`);
         const userQuery = `farmer from ${profile.state || ''} ${profile.district || ''} with ${profile.landHolding || 0} acres land, income ${profile.annualIncome || 0}, crop ${profile.cropType || ''}`;
+        
+        const embStart = Date.now();
         const queryEmbedding = await embeddingService.generateEmbedding(userQuery);
+        preFilterEmbeddingLatency = Date.now() - embStart;
+
+        const vsStart = Date.now();
         const topChunks = await vectorSearchService.searchSimilarChunks(userQuery, queryEmbedding, null, 30, req.body.category);
+        preFilterVectorSearchLatency = Date.now() - vsStart;
         
         const topSchemeIds = [...new Set(topChunks.map(c => c.schemeId.toString()))];
         const rankedSchemes = topSchemeIds
@@ -110,6 +121,15 @@ router.post(
     // Process schemes in parallel (subject to LLM service internal concurrency limit)
     const results = await Promise.all(
       schemesToCheck.map(async (scheme) => {
+        const perf = {
+          graph: graphLatency,
+          embedding: preFilterEmbeddingLatency,
+          vectorSearch: preFilterVectorSearchLatency,
+          llm: 0,
+          suggestion: 0,
+          total: 0
+        };
+
         try {
           // Calculate a deterministic profile hash so cache invalidates if user changes active schemes or land size
           const profileStringForHash = JSON.stringify({
@@ -148,14 +168,19 @@ router.post(
               chunksAnalyzed: 0,
               isCached: true,
               category: scheme.category,
+              latencies: { ...perf, total: Date.now() - startTime }
             };
           }
 
           // Use a generic search query aimed at retrieving the RULES
           const searchQuery = `eligibility criteria, beneficiary conditions, who is eligible, age limit, land holding limit, income limit, exclusions for ${scheme.name}`;
+          
+          const embStart2 = Date.now();
           const queryEmbedding = await embeddingService.generateEmbedding(searchQuery);
+          perf.embedding += (Date.now() - embStart2);
 
           // Pass scheme category for optimized filtering
+          const vsStart2 = Date.now();
           const relevantChunks = await vectorSearchService.searchSimilarChunks(
             searchQuery,
             queryEmbedding,
@@ -163,25 +188,34 @@ router.post(
             8,
             scheme.category
           );
+          perf.vectorSearch += (Date.now() - vsStart2);
 
           if (relevantChunks.length === 0) {
-            return { scheme: scheme.name, error: 'No relevant document sections found.' };
+            return { scheme: scheme.name, error: 'No relevant document sections found.', latencies: perf };
           }
 
           // New: Check for Graph Conflicts (Exclusive schemes)
+          const graphStart2 = Date.now();
           const graphConflicts = await graphService.checkConflicts(profile.activeSchemes || [], scheme.name);
+          perf.graph += (Date.now() - graphStart2);
+
           if (graphConflicts.length > 0) {
             logger.info(`Graph CONFLICT detected for ${profile.name} on ${scheme.name}: ${graphConflicts.map(c => c.scheme).join(', ')}`);
           }
 
-          const llmResult = await llmService.checkEligibility(profile, relevantChunks, scheme.name, language, graphConflicts);
+          const llmStart = Date.now();
+          const llmResult = await llmService.checkEligibility(profile, relevantChunks, scheme.name, language, graphConflicts, 'registered');
+          perf.llm = Date.now() - llmStart;
 
           let suggestions = [];
           if (!llmResult.eligible && schemesToCheck.length === 1) {
+            const sugStart = Date.now();
             suggestions = await suggestionEngine.findAlternatives(profile, scheme._id, language);
+            perf.suggestion = Date.now() - sugStart;
           }
 
-          const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+          perf.total = Date.now() - startTime;
+          const totalResponseTimeFloat = parseFloat((perf.total / 1000).toFixed(2));
 
           const officialWebsiteUrl = scheme.officialWebsite || llmResult.officialWebsite;
           // IMPORTANT: Rely on actual DB file path, ignore hallucinated file names from LLM
@@ -203,7 +237,8 @@ router.post(
             benefitAmount: llmResult.benefitAmount,
             requiredDocuments: llmResult.requiredDocuments,
             suggestions: suggestions,
-            responseTime: totalResponseTime,
+            responseTime: totalResponseTimeFloat,
+            latencies: perf,
           });
 
           return {
@@ -219,13 +254,14 @@ router.post(
             benefitAmount: llmResult.benefitAmount,
             requiredDocuments: llmResult.requiredDocuments,
             suggestions: suggestions,
-            responseTime: totalResponseTime,
+            responseTime: totalResponseTimeFloat,
             chunksAnalyzed: relevantChunks.length,
             category: scheme.category,
+            latencies: perf
           };
         } catch (err) {
           logger.error(`Error processing scheme ${scheme.name}:`, err.message);
-          return { scheme: scheme.name, error: err.message };
+          return { scheme: scheme.name, error: err.message, latencies: perf };
         }
       })
     );
@@ -237,6 +273,7 @@ router.post(
       success: true,
       data: responseData,
     });
+
   })
 );
 
@@ -300,9 +337,21 @@ router.post(
 
     const profileHash = hashProfile(profileData);
 
+    // Track pre-filtering latencies
+    let preFilterEmbeddingLatency = 0;
+    let preFilterVectorSearchLatency = 0;
+
     // Process schemes in parallel (subject to LLM service internal concurrency limit)
     const results = await Promise.all(
       schemesToCheck.map(async (scheme) => {
+        const perf = {
+          embedding: 0,
+          vectorSearch: 0,
+          llm: 0,
+          suggestion: 0,
+          total: 0
+        };
+
         try {
           // Public Caching Logic: Check for identical profile + scheme
           const cachedResult = await PublicCheckCache.findOne({
@@ -315,11 +364,17 @@ router.post(
             return {
               ...cachedResult.result,
               isCached: true,
+              latencies: { ...perf, total: Date.now() - startTime }
             };
           }
 
           const searchQuery = `eligibility criteria, beneficiary conditions, who is eligible, age limit, land holding limit, income limit, exclusions for ${scheme.name}`;
+          
+          const embStart = Date.now();
           const queryEmbedding = await embeddingService.generateEmbedding(searchQuery);
+          perf.embedding = Date.now() - embStart;
+
+          const vsStart = Date.now();
           const relevantChunks = await vectorSearchService.searchSimilarChunks(
             searchQuery,
             queryEmbedding,
@@ -327,19 +382,25 @@ router.post(
             8,
             scheme.category
           );
+          perf.vectorSearch = Date.now() - vsStart;
 
           if (relevantChunks.length === 0) {
-            return { scheme: scheme.name, error: 'No relevant document sections found.' };
+            return { scheme: scheme.name, error: 'No relevant document sections found.', latencies: perf };
           }
 
-          const llmResult = await llmService.checkEligibility(profileData, relevantChunks, scheme.name, language);
+          const llmStart = Date.now();
+          const llmResult = await llmService.checkEligibility(profileData, relevantChunks, scheme.name, language, [], 'public');
+          perf.llm = Date.now() - llmStart;
 
           let suggestions = [];
           if (!llmResult.eligible && schemesToCheck.length === 1) {
+            const sugStart = Date.now();
             suggestions = await suggestionEngine.findAlternatives(profileData, scheme._id, language);
+            perf.suggestion = Date.now() - sugStart;
           }
 
-          const totalResponseTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
+          perf.total = Date.now() - startTime;
+          const totalResponseTimeFloat = parseFloat((perf.total / 1000).toFixed(2));
 
           const officialWebsiteUrl = scheme.officialWebsite || llmResult.officialWebsite;
           // IMPORTANT: Rely on actual DB file path, ignore hallucinated file names from LLM
@@ -353,10 +414,11 @@ router.post(
             officialWebsite: officialWebsiteUrl,
             documentUrl: documentUrl,
             suggestions: suggestions,
-            responseTime: totalResponseTime,
+            responseTime: totalResponseTimeFloat,
             chunksAnalyzed: relevantChunks.length,
             isPublicCheck: true,
             category: scheme.category,
+            latencies: perf
           };
 
           // Save to Public Cache
@@ -369,13 +431,14 @@ router.post(
           return result;
         } catch (err) {
           logger.error(`Error processing public scheme check ${scheme.name}:`, err.message);
-          return { scheme: scheme.name, error: err.message };
+          return { scheme: scheme.name, error: err.message, latencies: perf };
         }
       })
     );
 
     const responseData = (schemesToCheck.length === 1 && schemeName !== 'all') ? results[0] : results;
     res.json({ success: true, data: responseData });
+
   })
 );
 
