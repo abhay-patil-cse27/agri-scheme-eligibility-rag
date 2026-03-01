@@ -21,44 +21,48 @@ const sendEmail = async (options) => {
         <title>Niti-Setu Notification</title>
         <style>
           /* RESET STYLES */
-          img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+          body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+          table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+          img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
           table { border-collapse: collapse !important; }
           body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #f8fafc; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important; }
-
+ 
           /* MOBILE STYLES */
           @media screen and (max-width: 600px) {
-            .content { width: 100% !important; }
-            .mobile-padding { padding: 24px 20px !important; }
-            .header { padding: 32px 20px !important; }
-            .footer { padding: 24px 20px !important; }
+            .mobile-wrapper { width: 100% !important; max-width: 100% !important; padding: 10px !important; }
+            .mobile-header { padding: 32px 20px !important; }
+            .mobile-body { padding: 32px 20px !important; }
+            .mobile-footer { padding: 24px 20px !important; }
+            .mobile-grid { display: block !important; width: 100% !important; }
+            .mobile-logo { font-size: 24px !important; }
           }
-
+ 
           /* INDUSTRY GRADE COMPONENTS */
-          .container { max-width: 600px; margin: 0 auto; width: 100%; border-collapse: collapse; }
-          .main-card { background-color: #ffffff; border-radius: 24px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
-          .header { background: linear-gradient(135deg, #065f46 0%, #166534 100%); padding: 48px 40px; text-align: center; }
+          .container { max-width: 600px; margin: 0 auto; width: 100%; }
+          .main-card { background-color: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+          .header { background: linear-gradient(135deg, #065f46 0%, #166534 100%); padding: 40px; text-align: center; }
           .logo-text { color: #ffffff; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
-          .body-content { padding: 48px 40px; color: #334155; font-size: 16px; line-height: 1.6; }
-          .footer { padding: 32px 40px; background-color: #f1f5f9; text-align: center; border-top: 1px solid #e2e8f0; }
-          .utility-text { color: #64748b; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 24px; display: block; }
-          .system-ref { color: #94a3b8; font-size: 12px; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 24px; }
+          .body-content { padding: 40px; color: #334155; font-size: 16px; line-height: 1.6; }
+          .footer { padding: 32px; background-color: #f1f5f9; text-align: center; border-top: 1px solid #e2e8f0; }
+          .utility-text { color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 24px; display: block; }
+          .system-ref { color: #94a3b8; font-size: 11px; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 24px; }
         </style>
       </head>
       <body>
         <center>
-          <table class="container" role="presentation">
+          <table border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;">
             <tr>
-              <td style="padding: 40px 0;">
-                <table class="main-card" role="presentation" width="100%">
+              <td align="center" style="padding: 24px 0;" class="mobile-wrapper">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" class="container main-card" role="presentation">
                   <!-- HEADER -->
                   <tr>
-                    <td class="header">
-                      <h1 class="logo-text">Niti-Setu</h1>
+                    <td align="center" class="header mobile-header">
+                      <h1 class="logo-text mobile-logo">Niti-Setu</h1>
                     </td>
                   </tr>
                   <!-- BODY -->
                   <tr>
-                    <td class="body-content">
+                    <td align="left" class="body-content mobile-body">
                       <span class="utility-text">Secure Identity Protocol</span>
                       ${options.html}
                       <div class="system-ref">
@@ -68,7 +72,7 @@ const sendEmail = async (options) => {
                   </tr>
                   <!-- FOOTER -->
                   <tr>
-                    <td class="footer">
+                    <td align="center" class="footer mobile-footer">
                       <p style="margin: 0; color: #475569; font-size: 14px; font-weight: 600;">&copy; ${new Date().getFullYear()} Niti-Setu Systems</p>
                       <p style="margin: 4px 0 0; color: #94a3b8; font-size: 12px;">Engineering Agricultural Equity &bull; Digital India</p>
                     </td>

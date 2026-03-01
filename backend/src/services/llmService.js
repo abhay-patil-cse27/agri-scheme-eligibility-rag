@@ -618,7 +618,7 @@ async function chatWithKrishiMitra(
   const messages = [
     { role: "system", content: systemPrompt },
     ...history.slice(-6), // Keep last 3 turns of context
-    { role: "user", content: query }
+    { role: "user", content: userQuery }
   ];
 
   try {

@@ -25,6 +25,8 @@ export const updateDetails = (data) => api.put('/auth/updatedetails', data).then
 export const updatePassword = (data) => api.put('/auth/updatepassword', data).then(r => r.data);
 export const forgotPassword = (email) => api.post('/auth/forgotpassword', { email }).then(r => r.data);
 export const resetPassword = (data) => api.put('/auth/resetpassword', data).then(r => r.data);
+export const provisionAdmin = (data) => api.post('/auth/admins', data).then(r => r.data);
+export const updateUserRole = (id, role) => api.put(`/auth/users/${id}/role`, { role }).then(r => r.data);
 export const getAllUsers = () => api.get('/auth/users').then((r) => r.data);
 export const deleteUser = (id) => api.delete(`/auth/users/${id}`).then((r) => r.data);
 

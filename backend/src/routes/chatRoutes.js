@@ -15,6 +15,7 @@ router.get('/sessions', protect, async (req, res) => {
   try {
     const sessions = await ChatSession.find({ user: req.user._id })
       .sort({ updatedAt: -1 });
+
     res.json(sessions);
   } catch (error) {
     logger.error('Fetch Chat Sessions Error:', error.message);
@@ -94,6 +95,28 @@ router.delete('/sessions/:sessionId', protect, async (req, res) => {
   } catch (error) {
     logger.error('Delete Session Error:', error.message);
     res.status(500).json({ message: 'Failed to delete session' });
+  }
+});
+
+/**
+ * @route   DELETE /api/chat/clear
+ * @desc    Clear all chat history for the authenticated user
+ * @access  Private
+ */
+router.delete('/clear', protect, async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Delete all messages for this user
+    await ChatMessage.deleteMany({ user: userId });
+    
+    // Delete all sessions for this user
+    await ChatSession.deleteMany({ user: userId });
+
+    res.json({ success: true, message: 'All chat history cleared' });
+  } catch (error) {
+    logger.error('Clear Chat History Error:', error.message);
+    res.status(500).json({ message: 'Failed to clear chat history' });
   }
 });
 

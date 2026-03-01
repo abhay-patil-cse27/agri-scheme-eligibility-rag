@@ -14,6 +14,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import AgriCard from "../components/common/AgriCard";
 import ShinyText from "../components/ShinyText";
+import { useAuth } from "../context/AuthContext";
 import { getSchemes, getProfiles, getHealth, getAnalytics } from "../services/api";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -208,6 +209,7 @@ function SchemeCard({ scheme, index }) {
 
 export default function Dashboard() {
   const { t } = useTranslation();
+  const { user: currentUser } = useAuth();
   const [schemes, setSchemes] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [health, setHealth] = useState(null);
@@ -262,8 +264,9 @@ export default function Dashboard() {
           {t('db_welcome')} 
           <ShinyText text={t('app_name')} disabled={false} speed={3} className="gradient-text !inline" />
         </h1>
-        <p style={{ fontSize: "0.95rem", color: "var(--text-secondary)" }}>
-          {t('db_subtitle')}
+        <p style={{ fontSize: "0.95rem", color: "var(--text-secondary)", display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {currentUser?.role === 'superadmin' ? 'Monitoring Platform as Central Admin' : 
+           (currentUser?.role === 'admin' ? 'Governing Schemes as Platform Administrator' : t('db_subtitle'))}
         </p>
       </div>
 
@@ -307,8 +310,8 @@ export default function Dashboard() {
       </div>
     </AgriCard>
 
-      {/* ── Analytics Visualizations ── */}
-      {analytics && (
+      {/* ── Analytics Visualizations (Admins Only) ── */}
+      {analytics && (currentUser?.role === 'admin' || currentUser?.role === 'superadmin') && (
         <motion.div
            initial="hidden" animate="visible" variants={fadeUp} custom={4}
            style={{ marginBottom: '40px', display: 'flex', flexDirection: 'column', gap: '24px' }}

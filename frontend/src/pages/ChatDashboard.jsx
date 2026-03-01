@@ -11,6 +11,7 @@ import {
   createChatSession, 
   getSessionMessages, 
   deleteChatSession, 
+  clearChatHistory,
   chatWithKrishiMitra, 
   generateSpeech 
 } from '../services/api';
@@ -203,6 +204,20 @@ const ChatDashboard = () => {
     }
   };
 
+  const handleClearAllHistory = async () => {
+    setIsDeleting(true);
+    try {
+      await clearChatHistory();
+      setSessions([]);
+      handleNewChat();
+      setShowClearConfirm(false);
+    } catch (error) {
+      alert("Failed to clear history");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const speakResponse = async (text) => {
     if (audioRef.current) audioRef.current.pause();
     setIsSpeaking(true);
@@ -325,6 +340,17 @@ const ChatDashboard = () => {
               ))
             )}
           </div>
+
+          <button 
+            onClick={() => {
+              setSessionToDelete(null); // Setting null signifies "Clear All"
+              setShowClearConfirm(true);
+            }}
+            className="text-rose-400 hover:text-rose-300 transition-colors py-3 mt-4 flex items-center justify-center gap-2 border-t border-[var(--border-glass)]"
+            style={{ fontSize: '0.8rem', fontWeight: 600, background: 'transparent' }}
+          >
+            <Trash2 size={14} /> {t('chat_clear_all', 'Clear All Conversations')}
+          </button>
         </div>
       </motion.div>
 
@@ -501,9 +527,11 @@ const ChatDashboard = () => {
       <ConfirmDeleteModal
         isOpen={showClearConfirm}
         onClose={() => setShowClearConfirm(false)}
-        onConfirm={handleDeleteSession}
-        title="Delete Conversation?"
-        message="This will permanently delete this conversation and all its messages."
+        onConfirm={sessionToDelete ? handleDeleteSession : handleClearAllHistory}
+        title={sessionToDelete ? "Delete Conversation?" : "Clear All History?"}
+        message={sessionToDelete 
+          ? "This will permanently delete this conversation and all its messages." 
+          : "This will permanently delete ALL your conversations and messages with Krishi Mitra. This action cannot be undone."}
         isDeleting={isDeleting}
       />
 

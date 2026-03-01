@@ -17,7 +17,7 @@ export const languageMap = {
   pa: 'Punjabi (ਪੰਜਾਬੀ)'
 };
 
-export default function LanguageSwitcher({ placement = 'down' }) {
+export default function LanguageSwitcher({ placement = 'down', isCollapsed = false }) {
   const { i18n } = useTranslation();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -38,7 +38,10 @@ export default function LanguageSwitcher({ placement = 'down' }) {
   const handleSelect = (code) => {
     i18n.changeLanguage(code);
     setIsOpen(false);
-    window.location.reload(); // Mandatory reload to ensure all UI elements translate
+    // Mandatory reload to ensure all UI elements translate
+    // We can omit this if the whole app uses useTranslation hook correctly everywhere, 
+    // but often deep components need a refresh for i18n changes to propagate perfectly.
+    window.location.reload(); 
   };
 
   const bgGlass = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255,255,255,0.6)';
@@ -48,25 +51,31 @@ export default function LanguageSwitcher({ placement = 'down' }) {
   const accentHover = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.04)';
   const dropdownBg = isDark ? '#0f172a' : '#ffffff';
   
-  const currentLang = languageMap[i18n.language] || 'English (EN)';
+  const currentLang = languageMap[i18n.language] || 'English';
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={dropdownRef} style={{ width: isCollapsed ? 'auto' : '100%' }}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          display: 'flex', alignItems: 'center', gap: '8px',
-          background: bgGlass, border: `1px solid ${border}`, borderRadius: '8px', 
-          padding: '6px 12px', cursor: 'pointer', transition: 'all 0.2s',
-          backdropFilter: 'blur(10px)', color: textPrimary
+          display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'flex-start', gap: '8px',
+          background: bgGlass, border: `1px solid ${border}`, borderRadius: isCollapsed ? '10px' : '8px', 
+          padding: isCollapsed ? '0' : '6px 12px', cursor: 'pointer', transition: 'all 0.3s ease',
+          backdropFilter: 'blur(10px)', color: textPrimary, 
+          width: isCollapsed ? '38px' : '100%', 
+          height: isCollapsed ? '38px' : 'auto',
+          minWidth: isCollapsed ? '38px' : '0'
         }}
         onMouseOver={(e) => e.currentTarget.style.background = accentHover}
         onMouseOut={(e) => e.currentTarget.style.background = bgGlass}
+        title={isCollapsed ? currentLang : ''}
       >
-        <Globe size={16} color={textSecondary} />
-        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-          {currentLang.split(' ')[0]} {/* Show short name */}
-        </span>
+        <Globe size={isCollapsed ? 18 : 16} color={textSecondary} style={{ flexShrink: 0 }} />
+        {!isCollapsed && (
+          <span style={{ fontSize: '0.82rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {currentLang.split(' ')[0]}
+          </span>
+        )}
       </button>
 
       <AnimatePresence>

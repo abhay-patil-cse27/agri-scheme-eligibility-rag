@@ -32,10 +32,25 @@ exports.protect = asyncHandler(async (req, res, next) => {
   }
 });
 
-// Grant access to specific roles
+// Grant access to specific roles (Hierarchical)
 exports.authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    // Define role priority
+    const roleHierarchy = {
+      'farmer': 1,
+      'admin': 2,
+      'superadmin': 3
+    };
+
+    const userRoleValue = roleHierarchy[req.user.role] || 0;
+    
+    // Check if user has ANY of the required roles OR a higher-level role
+    const isAuthorized = roles.some(role => {
+      const requiredRoleValue = roleHierarchy[role] || 0;
+      return userRoleValue >= requiredRoleValue;
+    });
+
+    if (!isAuthorized) {
       return res.status(403).json({
         success: false,
         error: `User role ${req.user.role} is not authorized to access this route`,

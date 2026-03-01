@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { BrowserRouter, Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -37,22 +37,31 @@ const ChatDashboard = lazy(() => import('./pages/ChatDashboard'));
 
 function AppShell() {
   const { theme } = useTheme();
-  const isDark = theme === 'dark';
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('sidebar_collapsed') === 'true';
+  });
+
+  const toggleSidebar = () => {
+    const nextValue = !isSidebarCollapsed;
+    setIsSidebarCollapsed(nextValue);
+    localStorage.setItem('sidebar_collapsed', nextValue);
+  };
   
   return (
     <ProtectedRoute>
       <div style={{ position: 'relative', display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
-        <Sidebar />
+        <Sidebar isCollapsed={isSidebarCollapsed} onToggle={toggleSidebar} />
         <main style={{
           position: 'relative',
           zIndex: 1,
           flex: 1,
-          marginLeft: '260px',
+          marginLeft: isSidebarCollapsed ? '80px' : '260px',
           padding: '32px 40px',
           minHeight: '100vh',
           background: 'var(--bg-primary)',
           minWidth: 0,
-          width: '100%'
+          width: '100%',
+          transition: 'margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
           <Outlet />
         </main>

@@ -138,26 +138,35 @@ router.post(
     try {
       await sendEmail({
         email: user.email,
-        subject: 'Welcome to Niti-Setu',
+        subject: 'Welcome to Niti-Setu Intelligence',
         html: `
-          <h2 style="color: #0f172a; font-size: 26px; font-weight: 800; margin: 0 0 16px;">Welcome to the Future of Farming, ${user.name.split(' ')[0]}!</h2>
-          <p style="margin: 0 0 24px; color: #475569; font-size: 16px; line-height: 1.6;">We are thrilled to confirm that your account has been successfully provisioned. You now have full access to Niti-Setu — your AI-powered companion for agricultural intelligence.</p>
-          
-          <div style="background-color: #ecfdf5; border: 1px solid #b7e4c7; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
-            <p style="margin: 0 0 12px; font-size: 14px; font-weight: 700; color: #065f46; text-transform: uppercase; letter-spacing: 0.05em;">Your Access Highlights:</p>
-            <ul style="margin: 0; padding: 0 0 0 20px; color: #064e3b; font-size: 15px; line-height: 1.8;">
-              <li>Personalized Government Scheme Matching</li>
-              <li>Real-time Agricultural AI Assistance (Krishi Mitra)</li>
-              <li>Mobile-first Document Management</li>
-              <li>Historical Analytics and Performance Insights</li>
-            </ul>
+          <div style="font-family: 'Inter', sans-serif; width: 100%; max-width: 600px; margin: 0 auto; border-radius: 20px; overflow: hidden; border: 1px solid #e2e8f0;">
+            <div style="background: linear-gradient(135deg, #065f46 0%, #166534 100%); padding: 40px 20px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">Protocol Initiated</h1>
+            </div>
+            
+            <div style="padding: 32px 20px; background: #ffffff;">
+              <h2 style="color: #0f172a; margin: 0 0 16px; font-size: 22px; font-weight: 800;">Welcome, ${user.name.split(' ')[0]}</h2>
+              <p style="color: #475569; line-height: 1.6; margin-bottom: 24px; font-size: 15px;">
+                Your account has been successfully provisioned within the Niti-Setu ecosystem. You now have full jurisdictional access to our AI-powered agricultural intelligence suite.
+              </p>
+              
+              <div style="margin-bottom: 30px;">
+                <div style="background-color: #f0fdf4; border: 1px solid #dcfce7; padding: 16px; border-radius: 12px; margin-bottom: 12px;">
+                  <h4 style="margin: 0 0 4px; color: #166534; font-size: 14px; font-weight: 700;">Scheme Matching</h4>
+                  <p style="margin: 0; font-size: 13px; color: #166534; opacity: 0.8;">Automated discovery of government incentives tailored to your profile.</p>
+                </div>
+                <div style="background-color: #f0fdf4; border: 1px solid #dcfce7; padding: 16px; border-radius: 12px; margin-bottom: 12px;">
+                  <h4 style="margin: 0 0 4px; color: #166534; font-size: 14px; font-weight: 700;">Krishi Mitra</h4>
+                  <p style="margin: 0; font-size: 13px; color: #166534; opacity: 0.8;">24/7 agricultural AI assistant for real-time problem solving.</p>
+                </div>
+              </div>
+ 
+              <div style="text-align: center;">
+                <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard" style="background-color: #166534; color: #ffffff; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: 800; display: inline-block; width: 100%; box-sizing: border-box;">Explore Dashboard</a>
+              </div>
+            </div>
           </div>
-
-          <div style="text-align: center; margin-bottom: 32px;">
-            <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard" style="background-color: #166534; color: #ffffff; padding: 16px 32px; border-radius: 12px; display: inline-block; font-weight: 700; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">Explore Your Dashboard</a>
-          </div>
-
-          <p style="margin: 0; font-size: 15px; color: #64748b;">Our mission is to bridge the gap between farmers and government opportunities through state-of-the-art technology. We're glad to have you with us.</p>
         `
       });
     } catch (err) {
@@ -415,6 +424,253 @@ router.delete(
     await user.deleteOne();
 
     res.status(200).json({ success: true, message: 'User deleted successfully' });
+  })
+);
+
+/**
+ * @desc    Update user role (Super Admin only)
+ * @route   PUT /api/auth/users/:id/role
+ * @access  Private/SuperAdmin
+ */
+router.put(
+  '/users/:id/role',
+  protect,
+  authorize('superadmin'),
+  asyncHandler(async (req, res) => {
+    const { role: targetRole } = req.body;
+    
+    console.log(`[AUTH] Jurisdictional Update Request - User: ${req.params.id}, Target Tier: ${targetRole}`);
+
+    if (!targetRole) {
+      return res.status(400).json({ success: false, error: 'Protocol violation: Target role tier not specified.' });
+    }
+
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'Entity trace failed: User not found in central directory.' });
+    }
+
+    // Conflict Check: Prevent redundant assignments
+    if (user.role === targetRole) {
+      return res.status(400).json({ success: false, error: `Conflict Detected: User is already provisioned as ${targetRole}.` });
+    }
+
+    // Prevent downgrading/modifying the primary super admin
+    if (user.email === 'admin@nitisetu.gov.in') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Authorization Breach: The primary system orchestrator cannot be modified by external protocols.' 
+      });
+    }
+
+    // Single Orchestrator Policy: Only admin@nitisetu.gov.in can be superadmin
+    if (targetRole === 'superadmin' && user.email !== 'admin@nitisetu.gov.in') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Strategic Violation: The Central Orchestrator tier is reserved exclusively for the primary system account.' 
+      });
+    }
+
+    const oldRole = user.role;
+    const roleRanks = { superadmin: 3, admin: 2, farmer: 1 };
+    const currentRank = roleRanks[oldRole] || 0;
+    const targetRank = roleRanks[targetRole] || 0;
+    const isUpgrade = targetRank > currentRank;
+
+    // Persist calibration
+    try {
+      user.role = targetRole;
+      await user.save();
+      console.log(`[AUTH] System Calibration Success: ${user.email} -> ${targetRole}`);
+    } catch (saveErr) {
+      console.error('[AUTH] Calibration Error:', saveErr.message);
+      return res.status(500).json({ success: false, error: 'Systemic failure during database persistence.' });
+    }
+
+    // Send Detailed Jurisdictional Notification
+    try {
+      const subject = isUpgrade 
+        ? 'Security Protocol: Administrative Elevation' 
+        : 'Jurisdictional Realignment Notice';
+      
+      const roleDetails = {
+        superadmin: {
+          title: 'Central System Orchestrator',
+          desc: 'Primary authority for platform governance and administrative orchestration.'
+        },
+        admin: {
+          title: 'Regional Administrator',
+          desc: 'Managed authority over localized schemes, demographics, and intelligence pipelines.'
+        },
+        farmer: {
+          title: 'Field Integrity Partner',
+          desc: 'Standard jurisdictional access focusing on personalized agricultural intelligence.'
+        }
+      };
+
+      const selected = roleDetails[targetRole] || { title: targetRole, desc: `Your access permissions have been recalibrated to the ${targetRole} tier.` };
+      const former = roleDetails[oldRole] || { title: oldRole };
+
+      await sendEmail({
+        email: user.email,
+        subject: subject,
+        html: `
+          <div style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; width: 100%; max-width: 600px; margin: 0 auto; border-radius: 20px; overflow: hidden; border: 1px solid #e2e8f0; background-color: #ffffff;">
+            <div style="background: ${isUpgrade ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' : '#fff1f2'}; padding: 40px 20px; text-align: center; border-bottom: 2px solid ${isUpgrade ? '#334155' : '#fecaca'};">
+              <h1 style="color: ${isUpgrade ? '#ffffff' : '#991b1b'}; margin: 0; font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">Authority Status Modified</h1>
+            </div>
+            
+            <div style="padding: 32px 20px;">
+              <h2 style="color: #0f172a; margin: 0 0 16px; font-size: 22px; font-weight: 700;">Hello, ${user.name}</h2>
+              <p style="color: #475569; line-height: 1.6; margin-bottom: 24px; font-size: 15px;">
+                This formal notification confirms a <strong>jurisdictional shift</strong> in your operational authority within the Niti-Setu ecosystem.
+              </p>
+              
+              <div style="display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 140px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 12px; text-align: center;">
+                  <span style="display: block; font-size: 10px; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; font-weight: 800;">Former Tier</span>
+                  <span style="color: #64748b; font-weight: 700; font-size: 13px;">${former.title}</span>
+                </div>
+                <div style="display: flex; align-items: center; color: #94a3b8; padding: 0 5px;">&rarr;</div>
+                <div style="flex: 1; min-width: 140px; background: ${isUpgrade ? '#f0fdf4' : '#fff1f2'}; border: 1px solid ${isUpgrade ? '#bcf0da' : '#fecaca'}; padding: 16px; border-radius: 12px; text-align: center;">
+                  <span style="display: block; font-size: 10px; color: ${isUpgrade ? '#166534' : '#991b1b'}; text-transform: uppercase; margin-bottom: 4px; font-weight: 800;">New Jurisdiction</span>
+                  <span style="color: ${isUpgrade ? '#15803d' : '#dc2626'}; font-weight: 700; font-size: 14px;">${selected.title}</span>
+                </div>
+              </div>
+
+              <div style="background-color: #f8fafc; border-left: 4px solid ${isUpgrade ? '#6366f1' : '#f43f5e'}; padding: 20px; border-radius: 4px 12px 12px 4px; margin-bottom: 30px;">
+                <h4 style="margin: 0 0 8px; color: #1e293b; font-size: 15px; font-weight: 800;">Mandatory Protocol Impact:</h4>
+                <p style="margin: 0; font-size: 14px; color: #475569; line-height: 1.5;">${selected.desc}</p>
+              </div>
+ 
+              <div style="text-align: center;">
+                <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard" style="background-color: #0f172a; color: #ffffff; padding: 16px; border-radius: 12px; text-decoration: none; font-weight: 700; display: inline-block; width: 100%; box-sizing: border-box;">Access platform</a>
+              </div>
+            </div>
+            
+            <div style="padding: 24px; background: #f8fafc; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="color: #94a3b8; font-size: 11px; margin: 0;">
+                System Signature: NS-IDENTITY-SECURE &bull; Audited by Central Command &bull; ${new Date().toUTCString()}
+              </p>
+            </div>
+          </div>
+        `
+      });
+      console.log(`[AUTH] Notification dispatched to ${user.email}`);
+    } catch (emailErr) {
+      console.error('[AUTH] Jurisdictional email failed:', emailErr.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `User protocol successfully updated to ${targetRole} tier. Notification dispatched.`,
+      data: user
+    });
+  })
+);
+
+/**
+ * POST /api/auth/admins
+ * Create a new admin or superadmin (Super Admin only)
+ * Access: Private (Super Admin)
+ */
+router.post(
+  '/admins',
+  protect,
+  authorize('superadmin'),
+  asyncHandler(async (req, res) => {
+    const { name, email, role } = req.body;
+
+    if (!name || !email || !role) {
+      return res.status(400).json({ success: false, error: 'Please provide name, email and role' });
+    }
+
+    if (!['admin', 'superadmin'].includes(role)) {
+      return res.status(400).json({ success: false, error: 'Invalid admin role tier.' });
+    }
+
+    // Single Orchestrator Policy: Only admin@nitisetu.gov.in can be superadmin
+    if (role === 'superadmin' && email !== 'admin@nitisetu.gov.in') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Strategic Violation: The Central Orchestrator tier is reserved exclusively for the primary system account.' 
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ success: false, error: 'User already exists' });
+    }
+
+    // Generate a secure temporary password
+    const tempPassword = crypto.randomBytes(12).toString('hex') + 'A1!';
+
+    // Create Admin
+    const user = await User.create({
+      name,
+      email,
+      password: tempPassword,
+      role
+    });
+
+    // Send welcome email with instructions
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Niti-Setu Administrative Onboarding',
+        html: `
+          <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 40px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">Admin Provisioning</h1>
+            </div>
+            <div style="padding: 40px; background-color: #ffffff;">
+              <h2 style="color: #0f172a; margin: 0 0 20px; font-size: 20px; font-weight: 700;">Welcome to the Orchestration Team, ${user.name}</h2>
+              <p style="color: #475569; line-height: 1.6; margin-bottom: 30px;">
+                You have been provisioned with <strong>${role.toUpperCase()}</strong> access to the Niti-Setu platform. Your account is now active and ready for governance.
+              </p>
+              
+              <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+                <p style="margin: 0 0 10px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Login Credentials</p>
+                <p style="margin: 5px 0; color: #1e293b;"><strong>Email:</strong> ${user.email}</p>
+                <p style="margin: 5px 0; color: #1e293b;"><strong>Temp Password:</strong> <code style="background-color: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${tempPassword}</code></p>
+              </div>
+
+              <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; margin-bottom: 30px;">
+                <h3 style="margin: 0 0 10px; font-size: 14px; color: #92400e;">Security Mandate:</h3>
+                <p style="margin: 0; font-size: 14px; color: #78350f; line-height: 1.5;">
+                  Upon your first login, you are <strong>required</strong> to navigate to Settings and reset your password to a private, high-entropy unique credential.
+                </p>
+              </div>
+
+              <div style="text-align: center; margin-bottom: 30px;">
+                <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/login" style="background-color: #0f172a; color: #ffffff; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; display: inline-block;">Access Admin Console</a>
+              </div>
+
+              <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 40px 0;">
+              
+              <p style="color: #94a3b8; font-size: 12px; line-height: 1.6; text-align: center;">
+                This account was provisioned by the Central Super Admin. If you have any questions regarding your access level or jurisdictional responsibilities, please refer to the internal Ops Guide.
+              </p>
+            </div>
+          </div>
+        `
+      });
+    } catch (err) {
+      console.error('Provisioning email failed:', err);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: `${role} account provisioned successfully. Instructions sent to ${email}`,
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   })
 );
 

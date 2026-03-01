@@ -104,6 +104,12 @@ export default function Settings() {
         <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
           <User size={24} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-indigo)' }} />
           {t('st_title')}
+          <span 
+            className={`badge ${user?.role === 'superadmin' ? 'badge-primary' : (user?.role === 'admin' ? 'badge-warning' : 'badge-success')}`}
+            style={{ marginLeft: '12px', fontSize: '0.65rem', padding: '4px 10px', verticalAlign: 'middle' }}
+          >
+            {user?.role === 'superadmin' ? 'Central Admin' : (user?.role === 'admin' ? t('sb_admin') : t('sb_farmer'))}
+          </span>
         </h1>
         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
           {t('st_profile_desc')}
