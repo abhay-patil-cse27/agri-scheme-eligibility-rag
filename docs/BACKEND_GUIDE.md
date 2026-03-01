@@ -65,10 +65,13 @@ The system implements a persistent tracking mechanism to monitor external API co
 *   **Mongoose Model (`ResourceUsage.js`):** Centralized schema that stores counters for each external service.
 *   **Split Benchmarking:** Every API hit is tagged as `registered` or `public` based on the request's authentication state. 
 *   **Automatic Handlers:** Services (LLM, TTS, Voice) automatically increment relevant counters during execution via the `recordUsage` static method.
-*   **Historical Aggregation:** Maintains a 30-day historical window of usage snapshots, allowing for precise trend analysis of public surges vs. registered user growth.
+*   **Historical Aggregation:** Maintains a 30-day historical window of usage snapshots.
+*   **Industrial Telemetry Orchestration:**
+    *   **Dynamic Resource Merging:** Automated injection of missing service nodes (Groq, ElevenLabs, Whisper, SMTP) ensures a 100% census on the frontend even before the first system action.
+    *   **Zero-Cache Delivery:** Employs strict `Cache-Control` headers (`no-store`, `no-cache`) for all resource endpoints to ensure real-time accuracy and prevent stale data.
 
----
 
+------
 ## 📂 Directory Structure
 
 * `/src/routes`: API endpoints (eligibility, scan, voice, auth)

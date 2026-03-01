@@ -15,6 +15,11 @@ and complex animations.
   access attempts (e.g., password reset for non-existent accounts).
 * **Dynamic Enrollment Opt-In:** An intelligent progressive disclosure UI ("Yes/No" toggle) that dynamically swaps colors based on the Light/Dark mode Tailwind variables (`var(--bg-glass)`, `var(--bg-primary)`) allowing bulk auto-selection of specific category schemes without overwhelming the user.
 * **Google OAuth 2.0:** Secure, one-click login via a customized callback flow.
+* **Resource Management Dashboard:** An enterprise-grade monitoring console featuring:
+  * **Industrial KPI Strip:** Real-time capacity load bars and Mean Latency (ms) tracking.
+  * **Multi-Pool Burn Rate Visualization:** Differentiates between `Registered` and `Public Guest` usage over a 7-day trailing history.
+  * **Live Syncing Controller:** Manual "Pause/Resume" mechanism for client-side performance optimization.
+  * **Adaptive Grid Layout:** Prevents layout overflow across various viewport sizes using a responsive card architecture.
 
 ## 🏗️ State Management & Data Flow
 
@@ -27,6 +32,8 @@ and complex animations.
   caching (localStorage) for public eligibility checks.
 * **Audio Pipeline:** Integrates the **Web Speech API** for real-time dictation
   and **ElevenLabs** for neural speech synthesis.
+* **Telemetry Polling:** Visibility-aware data synchronization (30s interval) that automatically pauses when the browser tab is inactive to save system resources.
+
 
 ## ⚡ Performance Optimizations
 
@@ -37,7 +44,6 @@ and complex animations.
   to minimize initial bundle size.
 
 ---
-
 ## 📂 Directory Structure
 
 * `/src/components`: UI building blocks (`GlassSurface`, `Aurora`, `Plasma`, `Silk`, `AgriCard`, etc.)

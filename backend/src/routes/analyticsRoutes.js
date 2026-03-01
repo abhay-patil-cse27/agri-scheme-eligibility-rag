@@ -162,12 +162,36 @@ router.get(
   protect,
   authorize('admin'),
   asyncHandler(async (req, res) => {
+    // Prevent caching for analytics
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     const usage = await ResourceUsage.find().sort('serviceName').lean();
+
+    
+    // Industrial Standard: Ensure UI is always populated with expected nodes
+    const defaultServices = [
+      { serviceName: 'Groq-LLM', provider: 'Groq', unit: 'tokens', todayRegisteredUsage: 0, todayPublicUsage: 0, dailyLimit: 100000, history: [] },
+      { serviceName: 'ElevenLabs-TTS', provider: 'ElevenLabs', unit: 'characters', todayRegisteredUsage: 0, todayPublicUsage: 0, dailyLimit: 50000, history: [] },
+      { serviceName: 'Groq-Whisper', provider: 'Groq', unit: 'seconds', todayRegisteredUsage: 0, todayPublicUsage: 0, dailyLimit: 3600, history: [] },
+      { serviceName: 'SMTP-Email', provider: 'SendGrid', unit: 'requests', todayRegisteredUsage: 0, todayPublicUsage: 0, dailyLimit: 100, history: [] }
+    ];
+
+    const mergedUsage = defaultServices.map(def => {
+      const actual = usage.find(u => u.serviceName === def.serviceName);
+      return actual ? actual : { ...def, _id: `temp_${def.serviceName.toLowerCase()}` };
+    });
+
+    console.log(`[Analytics] Returning ${mergedUsage.length} resource nodes.`);
+
     res.json({
       success: true,
-      data: usage,
+      data: mergedUsage,
     });
+
   })
 );
+
 
 module.exports = router;
