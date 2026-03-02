@@ -4,7 +4,7 @@ const path = require("path");
 // Load .env from backend root
 dotenv.config({ path: path.join(__dirname, "..", "..", ".env") });
 
-const requiredVars = ["MONGODB_URI", "GROQ_API_KEY"];
+const requiredVars = ["MONGODB_URI", "GROQ_API_KEY", "JWT_SECRET"];
 
 for (const varName of requiredVars) {
   if (!process.env[varName]) {
