@@ -27,7 +27,7 @@ scalability and security.
 - **Vector DB:** **MongoDB Atlas** - Stores users, scheme data, and 1000-character document chunks with rich metadata for `$vectorSearch`.
 - **Graph DB:** **Neo4j Aura (Free)** - Relationship mapping for scheme constraints to detect conflicting eligibility (Knowledge Graph).
 - **Voice Ops:** Web Speech API, **ElevenLabs** - Multilingual Speech-to-Text (native) and high-fidelity Text-to-Speech synthesis.
-- **Email/Comms:** Nodemailer, **Mailtrap** - SMTP for reliable transactional delivery of **OTPs**, welcome notices, and alerts.
+- **Email/Comms:** Nodemailer, **Gmail SMTP** - Google Workspace SMTP for reliable transactional delivery of **OTPs**, welcome notices, and alerts.
 
 ---
 

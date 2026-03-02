@@ -45,7 +45,7 @@ performance and strict data privacy.
 | **Vector DB** | **MongoDB Atlas** | Stores users, scheme data, and 1000-character document chunks with rich metadata for `$vectorSearch`. |
 | **Graph DB** | **Neo4j Aura (Free)** | Relationship mapping for scheme constraints to detect conflicting eligibility (Knowledge Graph). |
 | **Voice Ops** | Web Speech API, **ElevenLabs** | Multilingual Speech-to-Text (native) and high-fidelity Text-to-Speech synthesis. |
-| **Email/Comms** | Nodemailer, **Mailtrap** | SMTP for reliable transactional delivery of **OTPs**, welcome notices, and alerts. |
+| **Email/Comms** | Nodemailer, **Gmail SMTP** | Google Workspace SMTP for reliable transactional delivery of **OTPs**, welcome notices, and alerts. |
 
 ### Component Deep-Dive
 
@@ -54,7 +54,7 @@ performance and strict data privacy.
 - **Knowledge Graph (Neo4j):** Models complex scheme rules and exclusions, seeding 22+ hard mutual exclusion links to instantly reject overlapping scheme combinations (e.g. holding both PMFBY and WBCIS) before they even reach the LLM.
 - **Local Embeddings:** Uses the `Xenova/all-MiniLM-L6-v2` model executed entirely server-side via Transformers.js to map policy texts into zero-cost, privacy-preserving 384-dimensional vectors.
 - **Voice Engine (ElevenLabs):** Translates the LLM’s text responses into highly realistic, localized neural speech output for an accessibility-first experience.
-- **SMTP & Mailtrap:** Configured to manage secure **OTP verification** and transactional communications via a sandboxed testing environment.
+- **SMTP & Gmail API:** Configured to manage secure **OTP verification** and transactional communications via official Google SMTP services.
 - **Auth & Security Layer:** Integrates **OTP-based 2-step verification** for high-security registrations, combined with **Google OAuth** for frictionless 1-click logins.
 
 ### Native Intelligence Pipeline (Zero-Framework Architecture)
