@@ -6,11 +6,11 @@ Welcome to the Niti Setu documentation hub. To help you navigate our "Industry-G
 
 | If you are... | Recommended Starting Point |
 | :--- | :--- |
-| **A New Developer** | [🚀 Developer Guide](docs/DEVELOPER_GUIDE.md) |
-| **An Architect** | [🏗️ System Architecture](docs/ARCHITECTURE.md) |
-| **A Privacy Auditor** | [🛡️ Privacy Policy](docs/PRIVACY_POLICY.md) |
-| **A Frontend Engineer** | [✨ Frontend Guide](docs/FRONTEND_GUIDE.md) |
-| **An API Consumer** | [🔌 API Specification](docs/API_SPEC.md) |
+| **A New Developer** | [🚀 Developer Guide](DEVELOPER_GUIDE.md) |
+| **An Architect** | [🏗️ System Architecture](ARCHITECTURE.md) |
+| **A Privacy Auditor** | [🛡️ Privacy Policy](PRIVACY_POLICY.md) |
+| **A Frontend Engineer** | [✨ Frontend Guide](FRONTEND_GUIDE.md) |
+| **An API Consumer** | [🔌 API Specification](API_SPEC.md) |
 
 ---
 
@@ -40,9 +40,9 @@ Dive into the technical implementation of our most powerful features:
 
 ## ⚙️ Backend & Infrastructure
 
-* **[Backend Guide](docs/BACKEND_GUIDE.md)**: Deep dive into Node.js, Express, and AI service orchestration.
-* **[Performance & Optimization](docs/ARCHITECTURE.md#performance--optimization)**: Details on our 4-layer caching strategy and resource tracking.
-* **[Mobile Optimization](docs/MOBILE_OPTIMIZATION.md)**: How we scale high-fidelity visuals for mid-range smartphones.
+* **[Backend Guide](BACKEND_GUIDE.md)**: Deep dive into Node.js, Express, and AI service orchestration.
+* **[Performance & Optimization](ARCHITECTURE.md#performance--optimization)**: Details on our 4-layer caching strategy and resource tracking.
+* **[Mobile Optimization](MOBILE_OPTIMIZATION.md)**: How we scale high-fidelity visuals for mid-range smartphones.
 
 ---
 
