@@ -131,14 +131,42 @@ export default function LandingNav() {
       </div>
 
       {open && (
-        <div style={{ background: isDark ? 'rgba(6,13,6,0.98)' : 'rgba(246,250,242,0.98)', borderTop: `1px solid ${border}`, padding: '10px 28px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <div style={{ 
+          background: isDark ? 'rgba(6,13,6,0.98)' : 'rgba(246,250,242,0.98)', 
+          borderTop: `1px solid ${border}`, 
+          padding: '16px 28px', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '8px',
+          position: 'absolute',
+          top: '62px',
+          left: 0,
+          right: 0,
+          boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
+        }}>
           {LINKS.map(l => (
-            <Link key={l.label} to={l.href} onClick={() => setOpen(false)} style={{ textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500, color: textSec, padding: '12px 14px', borderRadius: '8px', display: 'block' }}>{l.label}</Link>
+            <Link key={l.label} to={l.href} onClick={() => setOpen(false)} style={{ textDecoration: 'none', fontSize: '1.05rem', fontWeight: 600, color: text, padding: '12px 14px', borderRadius: '12px', display: 'block', background: glass }}>{l.label}</Link>
           ))}
+          {!user && (
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px', paddingTop: '16px', borderTop: `1px solid ${border}` }}>
+                <Link to="/login" onClick={() => setOpen(false)} style={{ textDecoration: 'none' }}>
+                  <button style={{ width: '100%', padding: '12px', borderRadius: '12px', background: glass, color: isDark ? '#4ade80' : '#166534', border: `1px solid ${border}`, fontSize: '1rem', fontWeight: 600 }}>{t('btn_signin')}</button>
+                </Link>
+                <Link to="/check" onClick={() => setOpen(false)} style={{ textDecoration: 'none' }}>
+                  <button className="btn-glow" style={{ width: '100%', padding: '12px', borderRadius: '12px', fontSize: '1rem' }}>{t('btn_free_check')}</button>
+                </Link>
+             </div>
+          )}
         </div>
       )}
 
-      <style>{`@media(max-width:680px){.ln-hamburger{display:flex!important}nav>div>div:nth-child(2){display:none!important}}`}</style>
+      <style>{`
+        @media(max-width: 768px) {
+          .ln-hamburger { display: flex !important }
+          nav > div > div:nth-child(2) { display: none !important } /* Hide desktop links */
+          nav > div > div:nth-child(3) > a > button { display: none !important } /* Hide desktop login/check buttons */
+        }
+      `}</style>
     </nav>
   );
 }

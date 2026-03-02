@@ -107,6 +107,13 @@ html {
   transition:
     background-color 0.3s ease,
     color 0.2s ease;
+  font-size: 16px; /* Base font size */
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 15px; /* Slightly smaller base font for mobile */
+  }
 }
 
 body {
@@ -151,6 +158,12 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+@media (max-width: 768px) {
+  .agri-card {
+    border-radius: 16px;
+  }
+}
+
 .agri-card:hover {
   border-color: var(--border-glow);
   box-shadow: var(--shadow-glow);
@@ -165,6 +178,14 @@ body {
   border-radius: 16px;
   box-shadow: var(--shadow-card);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 768px) {
+  .glass-card {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
 }
 
 .glass-card:hover {
@@ -333,6 +354,23 @@ body {
   color: var(--text-muted);
 }
 
+@media (max-width: 768px) {
+  .shimmer, .animate-pulse {
+    animation-duration: 3s !important; /* Slow down animations on mobile */
+  }
+  
+  .agri-card:hover, .glass-card:hover {
+    transform: none !important; /* Disable lift effect on mobile touch */
+  }
+}
+
+@media (max-width: 768px) {
+  .input-dark, .select-dark {
+    font-size: 16px; /* Prevents auto-zoom on iOS Safari */
+    padding: 14px 16px; /* Slightly larger touch target */
+  }
+}
+
 /* ── Select Styles ─────────────────────── */
 .select-dark {
   background: var(--bg-glass);
@@ -442,6 +480,34 @@ body {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ── Dashboard Responsive Grids ────────── */
+.dashboard-stats-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.dashboard-charts-grid-main {
+  grid-template-columns: 2fr 1fr;
+}
+
+.dashboard-charts-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.dashboard-schemes-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 1024px) {
+  .dashboard-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .dashboard-charts-grid-main { grid-template-columns: 1fr; }
+  .dashboard-charts-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .dashboard-stats-grid { grid-template-columns: 1fr; }
+  .dashboard-schemes-grid { grid-template-columns: 1fr; }
+}
+
 /* ── Krishi Mitra Floating Chatbot ──────── */
 .krishi-mitra-fab {
   position: fixed;
@@ -462,6 +528,15 @@ body {
   border: 4px solid var(--bg-primary);
   backdrop-filter: blur(10px);
   animation: fab-breathe 4s ease-in-out infinite;
+}
+
+@media (max-width: 768px) {
+  .krishi-mitra-fab {
+    width: 56px;
+    height: 56px;
+    bottom: 16px;
+    right: 16px;
+  }
 }
 
 @keyframes fab-breathe {
@@ -513,6 +588,19 @@ body {
   will-change: transform, opacity;
 }
 
+@media (max-width: 768px) {
+  .chat-window {
+    top: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+    z-index: 2500;
+  }
+}
+
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -548,6 +636,13 @@ body {
   border-top-right-radius: 32px;
   position: relative;
   z-index: 10;
+}
+
+@media (max-width: 640px) {
+  .chat-header {
+    border-radius: 0;
+    padding: 16px 20px;
+  }
 }
 
 /* Premium Chat Bubbles */
@@ -601,6 +696,12 @@ body {
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
 }
 
+@media (max-width: 640px) {
+  .message {
+    max-width: 95%;
+  }
+}
+
 .message {
   max-width: 85%;
   padding: 12px 18px;
@@ -640,6 +741,12 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .chat-input-area {
+    padding: 12px;
+  }
 }
 
 .chat-input-wrapper {
@@ -797,5 +904,40 @@ body {
   }
   50% {
     transform: scaleY(1.2);
+  }
+}
+
+/* ── Specific Mobile Chat Modifications ── */
+@media (max-width: 768px) {
+  .chat-window {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100vh;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    border-radius: 0;
+  }
+}
+
+/* ── Chat Dashboard Mobile Layout ── */
+@media (max-width: 768px) {
+  .chat-dashboard-container {
+    flex-direction: column !important;
+    gap: 12px !important;
+    height: calc(100vh - 80px) !important;
+  }
+  
+  .chat-sidebar {
+    width: 100% !important;
+    max-height: 200px !important;
+    margin-right: 0 !important;
+  }
+  
+  .mobile-lang-switcher {
+    width: 100px !important;
   }
 }

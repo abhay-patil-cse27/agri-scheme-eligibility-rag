@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { User, Mail, Lock, KeyRound, Loader2, Save, Plus, X } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { updateDetails, updatePassword, sendOTP } from '../services/api';
+import { updateDetails, updatePassword, sendOTP, getSchemes } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import AgriCard from '../components/common/AgriCard';
@@ -38,7 +38,7 @@ export default function Settings() {
   }, [user]);
 
   useEffect(() => {
-    import('../services/api').then(m => m.getSchemes().then(r => setAllSchemes(r.data || [])));
+    getSchemes().then(r => setAllSchemes(r.data || []));
   }, []);
 
   const handleDetailsSubmit = async (e) => {

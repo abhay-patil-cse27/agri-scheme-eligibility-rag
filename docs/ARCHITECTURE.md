@@ -1,7 +1,7 @@
 # Niti Setu: System Architecture
 
 [![Status](https://img.shields.io/badge/Status-Architecture%20Design-yellow)](#high-level-system-architecture-hld)
-[![Stack](https://img.shields.io/badge/Stack-RAG%20%7C%20Groq%20%7C%20MongoDB-blue)](#technology-stack)
+[![Stack](https://img.shields.io/badge/Stack-RAG%20%7C%20Groq%20%7C%20MongoDB-blue)](#key-layers)
 [![License](https://img.shields.io/badge/License-MIT-orange)](#ephemeral-privacy-first-data-flow)
 [![DPDP Compliant](https://img.shields.io/badge/Security-DPDP%20Compliant-shield)](#ephemeral-privacy-first-data-flow)
 
@@ -119,6 +119,7 @@ pipeline.
 ### The Two-Phase Pipeline (100% Native implementation)
 
 Niti Setu achieves high performance by bypassing high-level RAG frameworks (LangChain/LlamaIndex) and pre-built hybrid libraries. This native approach ensures:
+
 - **Low Latency:** No framework-overhead between query and inference.
 - **Data Sovereignty:** Full control over PII handling without third-party telemetry.
 - **Granular Control:** Custom MMR and RRF algorithms specifically tuned for policy text.
@@ -153,6 +154,26 @@ sensitive documents like Aadhaar or land records.
 
 ---
 
+## Mobile & Device Optimization
+
+Niti Setu is designed with a **Mobile-First** philosophy to ensure farmers can access intelligence on low-bandwidth networks and mid-range smartphones.
+
+### 1. Dynamic Resource Scaling
+
+The platform maintains a high-fidelity desktop experience while automatically "shaving" resource-heavy elements for mobile users.
+
+- **WebGL/Three.js Pruning**: High-intensity background components (Aurora, Silk, Plasma) are strictly disabled on mobile devices to prevent GPU hanging.
+- **Animation Decoupling**: Framer Motion transitions and hover effects are bypassed on mobile for instant UI feedback.
+
+### 2. Native Mobile Shell
+
+- **AppShell Architecture**: Implements a slide-in drawer sidebar and a simplified Mobile Header for intuitive navigation on small screens.
+- **Touch-Optimized Form Factors**: Increased hit areas (44px+) and 16px font minimums to prevent auto-zooming and mis-taps.
+
+For a deep dive into our mobile optimization strategy, refer to [MOBILE_OPTIMIZATION.md](MOBILE_OPTIMIZATION.md).
+
+---
+
 ## Performance & Optimization
 
 ### Multi-Layer Caching
@@ -160,16 +181,16 @@ sensitive documents like Aadhaar or land records.
 To ensure sub-second interaction and reduce AI costs, Niti Setu implements
 four distinct caching layers:
 
-1.  **Model Cache (Local):** `Transformers.js` caches the 80MB embedding model
-    locally.
-2.  **In-Memory LRU Cache:**
-    - `embeddingCache`: Stores vectors for repeated queries.
-    - `translationCache`: Stores LLM translation results.
-3.  **Database-Level Result Cache:**
-    - **Private:** Recent results (24h) for same profile/scheme pair bypass AI.
-    - **Public:** Deterministic profile hash instantly returns results for
-      common demographic queries.
-4.  **HTTP Middleware Cache:** Uses `apicache` for scheme catalog delivery.
+1. **Model Cache (Local):** `Transformers.js` caches the 80MB embedding model
+   locally.
+2. **In-Memory LRU Cache:**
+   - `embeddingCache`: Stores vectors for repeated queries.
+   - `translationCache`: Stores LLM translation results.
+3. **Database-Level Result Cache:**
+   - **Private:** Recent results (24h) for same profile/scheme pair bypass AI.
+   - **Public:** Deterministic profile hash instantly returns results for
+     common demographic queries.
+4. **HTTP Middleware Cache:** Uses `apicache` for scheme catalog delivery.
 
 ### Resource Tracking & Quota Management
 

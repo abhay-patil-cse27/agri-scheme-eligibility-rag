@@ -15,6 +15,7 @@ import LandingNav from '../components/layout/LandingNav';
 import Plasma from '../components/Plasma';
 import Silk from '../components/Silk';
 import CircularText from '../components/CircularText';
+
 /* ─── Agricultural color system ─────────────────────────── */
 const C = (isDark) => ({
   bg:         isDark ? '#060d06'                      : '#faf7ee',
@@ -60,8 +61,6 @@ function Wave({ fill, flip }) {
   );
 }
 
-/* ─── Data (moved inside component for i18n) ────────────── */
-
 /* ─── Main Component ─────────────────────────────────────── */
 export default function Landing() {
   const { user }             = useAuth();
@@ -76,6 +75,24 @@ export default function Landing() {
 
   const isDark = theme === 'dark';
   const c      = C(isDark);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Landing page is accessible to all users (no auth redirect)
+  useEffect(() => {
+    const h = () => {
+      setScrolled(window.scrollY > 40);
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', h);
+    window.addEventListener('scroll', h);
+    h();
+    return () => {
+      window.removeEventListener('resize', h);
+      window.removeEventListener('scroll', h);
+    };
+  }, []);
+
+  const go = (id) => { setOpen(false); document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' }); };
 
   const WHY = [
     { icon: Clock,      val: t('lp_why_val1'),  label: t('lp_why_label1'),   sub: t('lp_why_sub1') },
@@ -100,15 +117,6 @@ export default function Landing() {
     { icon: HeartHandshake,g: GOLD_GRAD,  title: t('lp_aud4_title'), desc: t('lp_aud4_desc') },
   ];
 
-  // Landing page is accessible to all users (no auth redirect)
-  useEffect(() => {
-    const h = () => setScrolled(window.scrollY > 40);
-    window.addEventListener('scroll', h);
-    return () => window.removeEventListener('scroll', h);
-  }, []);
-
-  const go = (id) => { setOpen(false); document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' }); };
-
   const NAV = [
     { label: t('nav_features', 'Features'), id: '#features' },
     { label: t('nav_audience', 'Who We Serve'), id: '#audience' },
@@ -132,25 +140,30 @@ export default function Landing() {
       {/* ══ Hero ══ */}
       <div ref={heroRef} style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', alignItems: 'center' }}>
         <motion.div style={{ y: heroY, position: 'absolute', inset: 0, zIndex: 0 }}>
-          <Plasma 
-            color={isDark ? '#16a34a' : '#b47828'} 
-            speed={1.2} 
-            direction="forward" 
-            scale={1.5} 
-            opacity={isDark ? 0.35 : 0.15} 
-            mouseInteractive={true} 
-          />
+          {!isMobile ? (
+            <Plasma 
+              color={isDark ? '#16a34a' : '#b47828'} 
+              speed={1.2} 
+              direction="forward" 
+              scale={1.5} 
+              opacity={isDark ? 0.35 : 0.15} 
+              mouseInteractive={true} 
+            />
+          ) : (
+            <div style={{ position: 'absolute', inset: 0, background: HERO_GRAD(isDark), opacity: 0.8 }} />
+          )}
         </motion.div>
 
-        <div style={{ position: 'absolute', top: '15%', right: '8%', zIndex: 0, opacity: isDark ? 0.4 : 0.6 }}>
-          <CircularText 
-            text="SMART * SCHEMES * NITI * SETU * " 
-            onHover="goBonkers" 
-            spinDuration={15} 
-          />
-        </div>
+        {!isMobile && (
+          <div style={{ position: 'absolute', top: '15%', right: '8%', zIndex: 0, opacity: isDark ? 0.4 : 0.6 }}>
+            <CircularText 
+              text="SMART * SCHEMES * NITI * SETU * " 
+              onHover="goBonkers" 
+              spinDuration={15} 
+            />
+          </div>
+        )}
 
-        {/* decorative grain dots */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: `radial-gradient(circle, ${isDark ? 'rgba(34,197,94,0.06)' : 'rgba(22,101,52,0.05)'} 1px, transparent 1px)`, backgroundSize: '36px 36px', zIndex: 0, pointerEvents: 'none' }} />
 
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }} style={{ position: 'relative', zIndex: 1, maxWidth: '820px', margin: '0 auto', padding: '160px 28px 100px', textAlign: 'center' }}>
@@ -192,7 +205,6 @@ export default function Landing() {
             </button>
           </div>
 
-          {/* Stats strip */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: c.border, borderRadius: '18px', overflow: 'hidden', marginTop: '72px', border: `1px solid ${c.border}` }}>
             {WHY.map(w => (
               <div key={w.val} style={{ background: c.bgCard, padding: '20px 14px', textAlign: 'center', backdropFilter: 'blur(8px)' }}>
@@ -207,14 +219,12 @@ export default function Landing() {
 
       <Wave fill={c.bg2} />
 
-      {/* ══ Features ══ */}
       <InView id="features" style={{ ...sec(), background: c.bg2 }}>
         <motion.div variants={FU}>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534' }}>{t('lp_feat_tag')}</span>
           <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em', color: c.text, lineHeight: 1.15, marginTop: '10px', marginBottom: '12px' }}>{t('lp_feat_title')}</h2>
           <p style={{ fontSize: '1rem', color: c.textSec, maxWidth: '560px', lineHeight: 1.75, marginBottom: '48px' }}>{t('lp_feat_desc')}</p>
         </motion.div>
-
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
           {FEATURES.map((f, i) => (
             <motion.div key={f.label} variants={FU}
@@ -232,14 +242,12 @@ export default function Landing() {
 
       <Wave fill={c.bg} flip />
 
-      {/* ══ Who We Serve ══ */}
       <InView id="audience" style={{ ...sec(), background: c.bg }}>
         <motion.div variants={FU}>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534' }}>{t('lp_aud_tag')}</span>
           <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em', color: c.text, lineHeight: 1.15, marginTop: '10px', marginBottom: '12px' }}>{t('lp_aud_title')}</h2>
           <p style={{ fontSize: '1rem', color: c.textSec, maxWidth: '540px', lineHeight: 1.75, marginBottom: '48px' }}>{t('lp_aud_desc')}</p>
         </motion.div>
-
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
           {AUDIENCE.map(a => (
             <motion.div key={a.title} variants={FU}
@@ -257,7 +265,6 @@ export default function Landing() {
 
       <Wave fill={isDark ? '#060d06' : '#faf7ee'} />
 
-      {/* ══ Interactive Fluid Glass Section ══ */}
       <InView id="interactive" style={{ padding: '0', background: isDark ? '#060d06' : '#faf7ee', position: 'relative' }}>
         <div style={{ textAlign: 'center', paddingTop: '80px', position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, pointerEvents: 'none' }}>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534' }}>
@@ -267,22 +274,22 @@ export default function Landing() {
             {t('lp_fluid_title', 'Experience the Engine')}
           </h2>
         </div>
-        
-        {/* The glass component container (Large Vertical Area) */}
         <div style={{ height: '100vh', width: '100%', position: 'relative' }}>
-          <FluidGlass />
+          {!isMobile ? <FluidGlass /> : (
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <h3 style={{ fontSize: '1.8rem', fontWeight: 900, opacity: 0.6 }}>Niti Setu Engine</h3>
+            </div>
+          )}
         </div>
       </InView>
 
       <Wave fill={c.bg2} />
 
-      {/* ══ Technology ══ */}
       <InView id="technology" style={{ ...sec(), background: c.bg2 }}>
         <motion.div variants={FU}>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534' }}>{t('lp_tech_tag')}</span>
           <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em', color: c.text, lineHeight: 1.15, marginTop: '10px', marginBottom: '48px' }}>{t('lp_tech_title')}</h2>
         </motion.div>
-
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
           {[
             { icon: Cpu,       title: t('lp_tech1_title'), desc: t('lp_tech1_desc') },
@@ -299,8 +306,6 @@ export default function Landing() {
             </motion.div>
           ))}
         </div>
-
-        {/* checklist card */}
         <motion.div variants={FU} style={{ background: c.bgCard, border: `1px solid ${c.border}`, borderRadius: '20px', padding: '28px 32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
           {[t('lp_check1'),t('lp_check2'),t('lp_check3'),t('lp_check4'),t('lp_check5'),t('lp_check6'),t('lp_check7'),t('lp_check8')].map(item => (
             <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -313,67 +318,41 @@ export default function Landing() {
 
       <Wave fill={c.bg} flip />
 
-      {/* ══ CTA / Contact ══ */}
       <InView id="contact" style={{ ...sec({ padding: '80px max(28px, calc((100vw - 820px)/2))' }), background: c.bg }}>
-        <motion.div variants={FU} style={{
-          position: 'relative',
-          borderRadius: '24px', padding: '60px 40px', textAlign: 'center',
-          border: `1px solid ${c.borderGlow}`,
-          boxShadow: isDark ? '0 0 60px rgba(22,163,74,0.06)' : '0 0 60px rgba(22,163,74,0.04)',
-          overflow: 'hidden'
-        }}>
+        <motion.div variants={FU} style={{ position: 'relative', borderRadius: '24px', padding: '60px 40px', textAlign: 'center', border: `1px solid ${c.borderGlow}`, boxShadow: isDark ? '0 0 60px rgba(22,163,74,0.06)' : '0 0 60px rgba(22,163,74,0.04)', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-             <Silk 
-                speed={2.5} 
-                scale={isDark ? 1.5 : 2} 
-                color={isDark ? '#166534' : '#b47828'} 
-                noiseIntensity={1.2} 
-                style={{ opacity: isDark ? 0.4 : 0.15 }}
-             />
+             {!isMobile ? (
+               <Silk speed={2.5} scale={isDark ? 1.5 : 2} color={isDark ? '#166534' : '#b47828'} noiseIntensity={1.2} style={{ opacity: isDark ? 0.4 : 0.15 }} />
+             ) : (
+               <div style={{ position: 'absolute', inset: 0, background: isDark ? 'rgba(22,163,74,0.1)' : 'rgba(250,234,188,0.2)' }} />
+             )}
           </div>
           <div style={{ position: 'relative', zIndex: 1 }}>
             <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: isDark ? '#4ade80' : '#166534', display: 'block', marginBottom: '12px' }}>{t('lp_cta_tag')}</span>
-          <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em', color: c.text, lineHeight: 1.12, marginBottom: '16px' }}>
-            {t('lp_cta_title1')}<br />{t('lp_cta_title2')}
-          </h2>
-          <p style={{ fontSize: '1rem', color: c.textSec, maxWidth: '480px', margin: '0 auto 36px', lineHeight: 1.78 }}>
-            {t('lp_cta_desc')}
-          </p>
-
-          <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '44px' }}>
-            <Link to="/check" style={{ textDecoration: 'none' }}>
-              <motion.button whileHover={{ scale: 1.05, boxShadow: '0 14px 40px rgba(22,163,74,0.45)' }} whileTap={{ scale: 0.97 }} style={{
-                background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '12px',
-                padding: '13px 30px', fontSize: '1rem', fontWeight: 700, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: '8px',
-                boxShadow: '0 4px 18px rgba(22,163,74,0.4)',
-              }}>
-                {t('lp_start_free_check')} <ArrowRight size={17} />
-              </motion.button>
-            </Link>
-            <a href="https://github.com/abhay-patil-cse27/agri-scheme-eligibility-rag" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-              <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} style={{
-                background: c.bgCard, color: c.text, border: `1px solid ${c.border}`,
-                borderRadius: '12px', padding: '13px 30px', fontSize: '1rem', fontWeight: 600,
-                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-              }}>
-                <Github size={17} /> {t('lp_view_github')}
-              </motion.button>
-            </a>
-          </div>
-
-          {/* Contact info — legitimate & minimal */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: c.bgGlass, border: `1px solid ${c.border}`, borderRadius: '100px', padding: '10px 20px', backdropFilter: 'blur(4px)' }}>
-            <MapPin size={15} color={isDark ? '#4ade80' : '#166534'} />
-            <span style={{ fontSize: '0.88rem', color: c.textSec, fontWeight: 500 }}>{t('lp_cta_location')}</span>
-            <span style={{ color: c.textMute }}>·</span>
-            <span style={{ fontSize: '0.83rem', color: c.textMute }}>{t('lp_cta_student')}</span>
-          </div>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em', color: c.text, lineHeight: 1.12, marginBottom: '16px' }}>{t('lp_cta_title1')}<br />{t('lp_cta_title2')}</h2>
+            <p style={{ fontSize: '1rem', color: c.textSec, maxWidth: '480px', margin: '0 auto 36px', lineHeight: 1.78 }}>{t('lp_cta_desc')}</p>
+            <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '44px' }}>
+              <Link to="/check" style={{ textDecoration: 'none' }}>
+                <motion.button whileHover={{ scale: 1.05, boxShadow: '0 14px 40px rgba(22,163,74,0.45)' }} whileTap={{ scale: 0.97 }} style={{ background: GREEN_GRAD, color: '#fff', border: 'none', borderRadius: '12px', padding: '13px 30px', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 18px rgba(22,163,74,0.4)' }}>
+                  {t('lp_start_free_check')} <ArrowRight size={17} />
+                </motion.button>
+              </Link>
+              <a href="https://github.com/abhay-patil-cse27/agri-scheme-eligibility-rag" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} style={{ background: c.bgCard, color: c.text, border: `1px solid ${c.border}`, borderRadius: '12px', padding: '13px 30px', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Github size={17} /> {t('lp_view_github')}
+                </motion.button>
+              </a>
+            </div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: c.bgGlass, border: `1px solid ${c.border}`, borderRadius: '100px', padding: '10px 20px', backdropFilter: 'blur(4px)' }}>
+              <MapPin size={15} color={isDark ? '#4ade80' : '#166534'} />
+              <span style={{ fontSize: '0.88rem', color: c.textSec, fontWeight: 500 }}>{t('lp_cta_location')}</span>
+              <span style={{ color: c.textMute }}>·</span>
+              <span style={{ fontSize: '0.83rem', color: c.textMute }}>{t('lp_cta_student')}</span>
+            </div>
           </div>
         </motion.div>
       </InView>
 
-      {/* ══ Footer ══ */}
       <footer style={{ borderTop: `1px solid ${c.border}`, background: isDark ? '#060d06' : '#ede6d0', padding: '36px max(28px, calc((100vw - 1180px)/2)) 28px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px', marginBottom: '28px' }}>
           <div style={{ maxWidth: '280px' }}>
@@ -388,41 +367,27 @@ export default function Landing() {
             </div>
             <p style={{ fontSize: '0.83rem', color: c.textMute, lineHeight: 1.65 }}>{t('lp_footer_desc')}</p>
           </div>
-
           <div style={{ display: 'flex', gap: '44px', flexWrap: 'wrap' }}>
             <div>
               <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>{t('lp_footer_navigate')}</p>
               {NAV.map(n => (
-                <button key={n.id} onClick={() => go(n.id)} style={{ display: 'block', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textAlign: 'left', transition: 'color 0.2s' }}
-                  onMouseOver={e => e.currentTarget.style.color = c.text}
-                  onMouseOut={e => e.currentTarget.style.color = c.textMute}
-                >{n.label}</button>
+                <button key={n.id} onClick={() => go(n.id)} style={{ display: 'block', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textAlign: 'left', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.textMute}>{n.label}</button>
               ))}
             </div>
             <div>
               <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>{t('lp_footer_portal')}</p>
-              {(user 
-                ? [[t('lp_go_dashboard', 'Go to Dashboard →'), '/dashboard']] 
-                : [[t('btn_free_check'), '/check'], [t('btn_signin'), '/login'], [t('btn_register'), '/register']]
-              ).map(([l, to]) => (
-                <Link key={l} to={to} style={{ display: 'block', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textDecoration: 'none', transition: 'color 0.2s' }}
-                  onMouseOver={e => e.currentTarget.style.color = c.text}
-                  onMouseOut={e => e.currentTarget.style.color = c.textMute}
-                >{l}</Link>
+              {(user ? [[t('lp_go_dashboard', 'Go to Dashboard →'), '/dashboard']] : [[t('btn_free_check'), '/check'], [t('btn_signin'), '/login'], [t('btn_register'), '/register']]).map(([l, to]) => (
+                <Link key={l} to={to} style={{ display: 'block', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.textMute}>{l}</Link>
               ))}
             </div>
             <div>
               <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>Legal & Resources</p>
               {[["FAQ", '/faq'], ["Privacy Policy", '/privacy']].map(([l, to]) => (
-                <Link key={l} to={to} style={{ display: 'block', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textDecoration: 'none', transition: 'color 0.2s' }}
-                  onMouseOver={e => e.currentTarget.style.color = c.text}
-                  onMouseOut={e => e.currentTarget.style.color = c.textMute}
-                >{l}</Link>
+                <Link key={l} to={to} style={{ display: 'block', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.textMute}>{l}</Link>
               ))}
             </div>
           </div>
         </div>
-
         <div style={{ borderTop: `1px solid ${c.border}`, paddingTop: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <p style={{ fontSize: '0.78rem', color: c.textMute }}>{t('lp_footer_copyright')}</p>
           <p style={{ fontSize: '0.78rem', color: c.textMute }}>{t('lp_footer_made')}</p>

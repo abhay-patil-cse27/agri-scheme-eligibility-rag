@@ -3,12 +3,14 @@ import react from '@vitejs/plugin-react';
 import path from "path";
 import tailwindcss from '@tailwindcss/vite';
 import viteCompression from 'vite-plugin-compression';
+import mkcert from 'vite-plugin-mkcert';
 
 export default defineConfig({
   plugins: [
     react(), 
     tailwindcss(),
-    viteCompression({ algorithm: 'gzip', ext: '.gz' })
+    viteCompression({ algorithm: 'gzip', ext: '.gz' }),
+    mkcert()
   ],
   resolve: {
     alias: {
@@ -16,6 +18,7 @@ export default defineConfig({
     },
   },
   server: {
+    host: true,
     port: 5173,
     proxy: {
       '/api': {

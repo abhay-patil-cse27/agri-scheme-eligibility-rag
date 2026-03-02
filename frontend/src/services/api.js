@@ -30,9 +30,19 @@ api.interceptors.response.use(
   (error) => {
     // Global unauthorized handler
     if (error.response?.status === 401) {
-      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register') && window.location.pathname !== '/') {
+      const isPublicPath = 
+        window.location.pathname === '/' || 
+        window.location.pathname.includes('/login') || 
+        window.location.pathname.includes('/register') ||
+        window.location.pathname.includes('/check'); // Landing and public checks
+
+      if (!isPublicPath) {
+        // Only clear token and redirect if it's a private page
         localStorage.removeItem('token');
         window.location.href = '/login?expired=true';
+      } else {
+        // If they're on a public path, just clear the stale token without redirecting
+        localStorage.removeItem('token');
       }
     }
     return Promise.reject(error);

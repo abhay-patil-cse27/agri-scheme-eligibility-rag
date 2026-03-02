@@ -215,6 +215,13 @@ export default function Dashboard() {
   const [health, setHealth] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -246,10 +253,10 @@ export default function Dashboard() {
     <AgriCard
       animate={true}
       className="agri-card"
-      style={{ padding: '32px', marginBottom: '32px' }}
-      padding="32px"
+      style={{ padding: isMobile ? '20px' : '32px', marginBottom: isMobile ? '20px' : '32px' }}
+      padding={isMobile ? "20px" : "32px"}
     >
-      <div style={{ marginBottom: '32px' }}>
+      <div style={{ marginBottom: isMobile ? '20px' : '32px' }}>
         <h1
           style={{
             fontSize: "1.8rem",
@@ -271,10 +278,10 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div
+      <div 
+        className="dashboard-stats-grid"
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
           gap: "16px",
           marginBottom: "0px",
         }}
@@ -316,7 +323,7 @@ export default function Dashboard() {
            initial="hidden" animate="visible" variants={fadeUp} custom={4}
            style={{ marginBottom: '40px', display: 'flex', flexDirection: 'column', gap: '24px' }}
         >
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+          <div className="dashboard-charts-grid-main" style={{ display: 'grid', gap: '24px' }}>
             {/* Checks Over Time */}
             <AgriCard index={4} padding="24px" className="agri-card">
               <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -401,7 +408,7 @@ export default function Dashboard() {
             </AgriCard>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div className="dashboard-charts-grid" style={{ display: 'grid', gap: '24px' }}>
             {/* Top schemes */}
             <AgriCard index={6} padding="24px" className="agri-card">
                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -485,17 +492,19 @@ export default function Dashboard() {
         animate={true}
         className="agri-card gradient-border"
         style={{ 
-          padding: "32px", 
-          marginBottom: "32px",
+          padding: isMobile ? '20px' : "32px", 
+          marginBottom: isMobile ? '20px' : "32px",
           border: 'none'
         }}
-        padding="32px"
+        padding={isMobile ? '20px' : "32px"}
       >
         <div
           style={{
             display: "flex",
+            flexDirection: isMobile ? 'column' : 'row',
             justifyContent: "space-between",
-            alignItems: "center",
+            alignItems: isMobile ? "flex-start" : "center",
+            gap: isMobile ? "20px" : "0",
             position: "relative",
             zIndex: 1,
           }}
@@ -503,7 +512,7 @@ export default function Dashboard() {
           <div>
             <h2
               style={{
-                fontSize: "1.25rem",
+                fontSize: isMobile ? "1.1rem" : "1.25rem",
                 fontWeight: 700,
                 marginBottom: "8px",
                 display: 'flex',
@@ -548,8 +557,8 @@ export default function Dashboard() {
     <AgriCard
       animate={true}
       className="agri-card"
-      style={{ padding: '32px', marginBottom: '32px' }}
-      padding="32px"
+      style={{ padding: isMobile ? '20px' : '32px', marginBottom: isMobile ? '20px' : '32px' }}
+      padding={isMobile ? "20px" : "32px"}
     >
         <div
           style={{
@@ -591,9 +600,9 @@ export default function Dashboard() {
         </div>
       ) : (
         <div
+          className="dashboard-schemes-grid"
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
             gap: "24px",
             width: "100%",
           }}

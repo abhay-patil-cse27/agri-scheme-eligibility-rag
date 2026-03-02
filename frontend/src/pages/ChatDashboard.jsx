@@ -41,7 +41,19 @@ const ChatDashboard = () => {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (mobile) setSidebarOpen(false);
+      else setSidebarOpen(true);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   const audioRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -400,26 +412,47 @@ const ChatDashboard = () => {
   };
 
   return (
-    <div style={{ maxWidth: '1400px', margin: '0 auto', height: 'calc(100vh - 100px)', display: 'flex', gap: '24px', padding: '10px' }}>
+    <div className="chat-dashboard-container" style={{ maxWidth: '1400px', margin: '0 auto', height: 'calc(100vh - 100px)', display: 'flex', gap: '24px', padding: '10px' }}>
       
       {/* Sidebar - Chat History List (ChatGPT style) */}
+      {/* Sidebar - Mobile Overlay Backdrop */}
+      <AnimatePresence>
+        {isMobile && sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000 }}
+          />
+        )}
+      </AnimatePresence>
+
       <motion.div 
+        className="chat-sidebar"
         initial={false}
         animate={{ 
-          width: sidebarOpen ? '320px' : '0px', 
-          opacity: sidebarOpen ? 1 : 0,
-          marginRight: sidebarOpen ? '0px' : '-24px' 
+          width: isMobile ? (sidebarOpen ? '280px' : '0px') : (sidebarOpen ? '320px' : '0px'), 
+          opacity: (isMobile && !sidebarOpen) ? 0 : 1,
+          x: isMobile ? (sidebarOpen ? 0 : -280) : 0,
+          marginRight: (!isMobile && sidebarOpen) ? '0px' : '-24px' 
         }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         style={{ 
           display: 'flex', 
           flexDirection: 'column', 
           background: 'var(--bg-secondary)', 
-          borderRadius: '24px', 
-          border: '1px solid var(--border-glass)',
+          borderRadius: isMobile ? '0' : '24px', 
+          borderRight: isMobile ? '1px solid var(--border-color)' : 'none',
+          border: isMobile ? 'none' : '1px solid var(--border-glass)',
           overflow: 'hidden',
-          position: 'relative',
+          position: isMobile ? 'fixed' : 'relative',
+          left: 0,
+          top: isMobile ? 0 : 'auto',
+          bottom: isMobile ? 0 : 'auto',
+          zIndex: isMobile ? 1100 : 1,
           flexShrink: 0,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+          boxShadow: sidebarOpen ? '0 8px 32px rgba(0,0,0,0.12)' : 'none',
         }}
       >
         <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -592,7 +625,7 @@ const ChatDashboard = () => {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         
         {/* Header Strip */}
-        <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ marginBottom: isMobile ? '12px' : '16px', display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '16px' }}>
           <button 
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="btn-glass"
@@ -601,15 +634,17 @@ const ChatDashboard = () => {
             {sidebarOpen ? <ChevronLeft size={20} /> : <HistoryIcon size={20} />}
           </button>
           
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800 }}>
+          <h1 style={{ fontSize: isMobile ? '1.1rem' : '1.5rem', fontWeight: 800 }}>
             <span className="gradient-text">Krishi Mitra</span>
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginLeft: '12px', fontWeight: 500 }}>
-              {currentSessionId ? sessions.find(s => s._id === currentSessionId)?.title : 'New Session'}
-            </span>
+            {!isMobile && (
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginLeft: '12px', fontWeight: 500 }}>
+                {currentSessionId ? sessions.find(s => s._id === currentSessionId)?.title : 'New Session'}
+              </span>
+            )}
           </h1>
 
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '130px' }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: isMobile ? '100px' : '130px' }} className="mobile-lang-switcher">
               <LanguageSwitcher 
                 placement="down" 
                 currentLanguage={chatLanguage}
@@ -620,8 +655,8 @@ const ChatDashboard = () => {
         </div>
 
         {/* Chat Feed */}
-        <AgriCard style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', border: '1px solid var(--border-glass)', background: 'var(--bg-primary)' }}>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <AgriCard style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', border: isMobile ? 'none' : '1px solid var(--border-glass)', background: 'var(--bg-primary)', borderRadius: isMobile ? '12px' : '24px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px' : '24px', display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '20px' }}>
             {messages.length === 0 && !isLoading ? (
               <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                 <div style={{ 
@@ -747,7 +782,7 @@ const ChatDashboard = () => {
           <div style={{
             display: 'flex', alignItems: 'flex-end', background: 'var(--bg-card)', 
             border: '1px solid var(--border-glass)', borderRadius: '24px', 
-            padding: '8px 12px', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)',
+            padding: '8px 12px',
             transition: 'all 0.3s ease',
             boxShadow: inputValue.trim() ? '0 4px 12px rgba(16, 185, 129, 0.08)' : 'inset 0 2px 4px rgba(0,0,0,0.05)',
             borderColor: inputValue.trim() ? 'rgba(16, 185, 129, 0.2)' : 'var(--border-glass)'

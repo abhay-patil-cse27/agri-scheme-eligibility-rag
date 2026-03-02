@@ -1,6 +1,7 @@
-import React, { Suspense, lazy, useState } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Zap, Menu } from 'lucide-react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import GlobalLoader from './components/common/GlobalLoader';
 import KrishiMitra from './components/common/KrishiMitra';
@@ -40,28 +41,86 @@ function AppShell() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('sidebar_collapsed') === 'true';
   });
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) setIsMobileMenuOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const toggleSidebar = () => {
-    const nextValue = !isSidebarCollapsed;
-    setIsSidebarCollapsed(nextValue);
-    localStorage.setItem('sidebar_collapsed', nextValue);
+    if (isMobile) {
+      setIsMobileMenuOpen(!isMobileMenuOpen);
+    } else {
+      const nextValue = !isSidebarCollapsed;
+      setIsSidebarCollapsed(nextValue);
+      localStorage.setItem('sidebar_collapsed', nextValue);
+    }
   };
   
   return (
     <ProtectedRoute>
-      <div style={{ position: 'relative', display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
-        <Sidebar isCollapsed={isSidebarCollapsed} onToggle={toggleSidebar} />
+      <div style={{ position: 'relative', display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)', flexDirection: isMobile ? 'column' : 'row' }}>
+        
+        {/* Sidebar - Desktop-Side or Mobile-Overlay */}
+        <Sidebar 
+          isCollapsed={isSidebarCollapsed} 
+          onToggle={toggleSidebar} 
+          isMobile={isMobile}
+          isMobileOpen={isMobileMenuOpen}
+          onCloseMobile={() => setIsMobileMenuOpen(false)}
+        />
+
+        {/* Mobile Header */}
+        {isMobile && (
+          <header style={{
+            height: '64px',
+            background: 'var(--bg-secondary)',
+            borderBottom: '1px solid var(--border-color)',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0 20px',
+            position: 'sticky',
+            top: 0,
+            zIndex: 90,
+            justifyContent: 'space-between',
+            backdropFilter: 'blur(10px)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Zap size={18} color="white" />
+              </div>
+              <h1 style={{ fontSize: '1.1rem', fontWeight: 900, letterSpacing: '-0.02em' }}>
+                <span className="gradient-text">Niti</span>
+                <span style={{ color: 'var(--text-primary)' }}>-Setu</span>
+              </h1>
+            </div>
+            <button 
+              onClick={toggleSidebar}
+              style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            >
+              <Menu size={20} />
+            </button>
+          </header>
+        )}
+
         <main style={{
           position: 'relative',
           zIndex: 1,
           flex: 1,
-          marginLeft: isSidebarCollapsed ? '80px' : '260px',
-          padding: '32px 40px',
+          marginLeft: isMobile ? '0' : (isSidebarCollapsed ? '80px' : '260px'),
+          padding: isMobile ? '20px 16px' : '32px 40px',
           minHeight: '100vh',
           background: 'var(--bg-primary)',
           minWidth: 0,
           width: '100%',
-          transition: 'margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
           <Outlet />
         </main>
@@ -74,10 +133,19 @@ function AppShell() {
 function AuthShell() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const bg = isDark
     ? 'radial-gradient(ellipse at top, #0c170c 0%, #060d06 70%)'
     : 'linear-gradient(160deg, #faf7ee 0%, #f2ead8 45%, #f7f2e4 100%)';
   const dotColor = isDark ? 'rgba(34,197,94,0.05)' : 'rgba(101,67,33,0.07)';
+
   return (
     <div style={{
       position: 'relative',
@@ -86,16 +154,18 @@ function AuthShell() {
       backgroundImage: `radial-gradient(circle, ${dotColor} 1px, transparent 1px), ${bg}`,
       backgroundSize: '28px 28px, 100% 100%',
     }}>
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.2, pointerEvents: 'none' }}>
-        <Aurora
-          colorStops={
-            isDark 
-            ? ['#16a34a', '#166534', '#060d06'] 
-            : ['#4ade80', '#16a34a', '#dcfce7']
-          }
-          speed={0.3}
-        />
-      </div>
+      {!isMobile && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.2, pointerEvents: 'none' }}>
+          <Aurora
+            colorStops={
+              isDark 
+              ? ['#16a34a', '#166534', '#060d06'] 
+              : ['#4ade80', '#16a34a', '#dcfce7']
+            }
+            speed={0.3}
+          />
+        </div>
+      )}
       
       <div style={{ position: 'relative', zIndex: 1 }}>
         <LandingNav />
@@ -126,18 +196,32 @@ const pageTransition = {
 };
 
 // Wrapper for animated routes
-const PageWrapper = ({ children }) => (
-  <motion.div
-    initial="initial"
-    animate="in"
-    exit="out"
-    variants={pageVariants}
-    transition={pageTransition}
-    style={{ height: '100%', width: '100%' }}
-  >
-    {children}
-  </motion.div>
-);
+const PageWrapper = ({ children }) => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  if (isMobile) {
+    return <div style={{ height: '100%', width: '100%' }}>{children}</div>;
+  }
+
+  return (
+    <motion.div
+      initial="initial"
+      animate="in"
+      exit="out"
+      variants={pageVariants}
+      transition={pageTransition}
+      style={{ height: '100%', width: '100%' }}
+    >
+      {children}
+    </motion.div>
+  );
+};
 
 function AnimatedRoutes() {
   const location = useLocation();

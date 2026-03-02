@@ -14,6 +14,9 @@ export function useVoice(language = 'en') {
     audioChunksRef.current = [];
 
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Microphone access is not supported on this browser or requires HTTPS.");
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
       // Select best supported mimeType (Chrome/Safari/Firefox compatibility)

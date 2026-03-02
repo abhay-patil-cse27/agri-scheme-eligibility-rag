@@ -153,6 +153,14 @@ const KrishiMitra = () => {
   }, [activeTab]);
 
   const loadHistory = async () => {
+    // Only load if authenticated
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showGreeting();
+      setIsHistoryLoaded(true);
+      return;
+    }
+
     try {
       // 1. Get all sessions
       const sessionList = await getChatSessions();
@@ -205,7 +213,13 @@ const KrishiMitra = () => {
 
   useEffect(() => {
     if (isOpen) {
-      loadHistory();
+      const token = localStorage.getItem('token');
+      if (token) {
+        loadHistory();
+      } else {
+        showGreeting();
+        setIsHistoryLoaded(true);
+      }
     }
   }, [isOpen]);
 
@@ -815,7 +829,7 @@ const KrishiMitra = () => {
                   <div style={{
                     display: 'flex', alignItems: 'flex-end', background: 'var(--bg-card)', 
                     border: '1px solid var(--border-glass)', borderRadius: '20px', 
-                    padding: '6px', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)',
+                    padding: '6px',
                     transition: 'all 0.3s ease',
                     boxShadow: inputValue.trim() ? '0 4px 12px rgba(16, 185, 129, 0.08)' : 'inset 0 2px 4px rgba(0,0,0,0.05)',
                     borderColor: inputValue.trim() ? 'rgba(16, 185, 129, 0.2)' : 'var(--border-glass)'

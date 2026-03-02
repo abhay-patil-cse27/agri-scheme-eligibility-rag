@@ -30,4 +30,5 @@ module.exports = {
   neo4jUser: process.env.NEO4J_USER,
   neo4jPassword: process.env.NEO4J_PASSWORD,
   neo4jDatabase: process.env.NEO4J_DATABASE || "neo4j",
+  frontendUrl: process.env.FRONTEND_URL || "http://localhost:5173",
 };

@@ -134,7 +134,7 @@ function NavButton({ item, isActive, isCollapsed, t, navTransition }) {
   );
 }
 
-export default function Sidebar({ isCollapsed, onToggle }) {
+export default function Sidebar({ isCollapsed, onToggle, isMobile, isMobileOpen, onCloseMobile }) {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -150,8 +150,10 @@ export default function Sidebar({ isCollapsed, onToggle }) {
   const currentTagline = taglines[user?.role] || 'Agriculture Intelligence';
 
   const sidebarVariants = {
-    expanded: { width: '260px', padding: '24px 16px' },
-    collapsed: { width: '80px', padding: '24px 10px' }
+    expanded: { x: 0, width: '260px', padding: '24px 16px' },
+    collapsed: { x: 0, width: '80px', padding: '24px 10px' },
+    mobileClosed: { x: '-100%', width: '280px', padding: '24px 16px' },
+    mobileOpen: { x: 0, width: '280px', padding: '24px 16px' }
   };
 
   const navTransition = { duration: 0.4, ease: [0.4, 0, 0.2, 1] };
@@ -163,28 +165,52 @@ export default function Sidebar({ isCollapsed, onToggle }) {
     return true;
   });
 
+  const currentVariant = isMobile 
+    ? (isMobileOpen ? 'mobileOpen' : 'mobileClosed')
+    : (isCollapsed ? 'collapsed' : 'expanded');
+
   return (
-    <motion.aside
-      initial={isCollapsed ? 'collapsed' : 'expanded'}
-      animate={isCollapsed ? 'collapsed' : 'expanded'}
-      variants={sidebarVariants}
-      transition={navTransition}
-      style={{
-        height: '100vh',
-        maxHeight: '100vh',
-        background: 'var(--bg-secondary)',
-        borderRight: '1px solid var(--border-color)',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'fixed',
-        left: 0,
-        top: 0,
-        zIndex: 100,
-        overflowY: 'auto',
-        overflowX: 'hidden',
-      }}
-      className="custom-scrollbar"
-    >
+    <>
+      <AnimatePresence>
+        {isMobile && isMobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onCloseMobile}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.4)',
+              backdropFilter: 'blur(4px)',
+              zIndex: 1000,
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.aside
+        initial={isMobile ? 'mobileClosed' : (isCollapsed ? 'collapsed' : 'expanded')}
+        animate={currentVariant}
+        variants={sidebarVariants}
+        transition={navTransition}
+        style={{
+          height: '100vh',
+          maxHeight: '100vh',
+          background: 'var(--bg-secondary)',
+          borderRight: '1px solid var(--border-color)',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          zIndex: 1100,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          boxShadow: isMobile && isMobileOpen ? '20px 0 50px rgba(0,0,0,0.3)' : 'none'
+        }}
+        className="custom-scrollbar"
+      >
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 5px;
@@ -240,35 +266,41 @@ export default function Sidebar({ isCollapsed, onToggle }) {
           </AnimatePresence>
         </Link>
 
-        <motion.button 
-          layout
-          onClick={onToggle}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          style={{ 
-            background: 'var(--bg-primary)', 
-            border: '1px solid var(--border-color)', 
-            color: 'var(--text-primary)', 
-            width: '28px', 
-            height: '28px', 
-            borderRadius: '8px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-            flexShrink: 0
-          }}
-        >
-          {isCollapsed ? <Menu size={14} /> : <ChevronLeft size={14} />}
-        </motion.button>
+        {!isMobile && (
+          <motion.button 
+            layout
+            onClick={onToggle}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            style={{ 
+              background: 'var(--bg-primary)', 
+              border: '1px solid var(--border-color)', 
+              color: 'var(--text-primary)', 
+              width: '28px', 
+              height: '28px', 
+              borderRadius: '8px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+              flexShrink: 0
+            }}
+          >
+            {isCollapsed ? <Menu size={14} /> : <ChevronLeft size={14} />}
+          </motion.button>
+        )}
       </div>
 
       {/* Navigation section */}
       <nav style={{ flexGrow: 1, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '32px' }}>
         {filteredNavItems.map((item) => {
           const isActive = location.pathname === item.to || (item.to !== '/dashboard/' && location.pathname.startsWith(item.to));
-          return <NavButton key={item.label} item={item} isActive={isActive} isCollapsed={isCollapsed} t={t} navTransition={navTransition} />;
+          return (
+            <div key={item.label} onClick={isMobile ? onCloseMobile : undefined}>
+              <NavButton item={item} isActive={isActive} isCollapsed={!isMobile && isCollapsed} t={t} navTransition={navTransition} />
+            </div>
+          );
         })}
       </nav>
 
@@ -422,6 +454,7 @@ export default function Sidebar({ isCollapsed, onToggle }) {
         </motion.div>
       </div>
       <NotificationCenter isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
-    </motion.aside>
+      </motion.aside>
+    </>
   );
 }

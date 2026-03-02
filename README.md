@@ -4,7 +4,7 @@ AI-Powered Multilingual RAG Ecosystem for Indian Agricultural Schemes.
 
 [![GitHub Release](https://img.shields.io/badge/Release-v1.0--Production-green)](#key-features)
 [![Stack](https://img.shields.io/badge/Stack-MERN%20%7C%20RAG%20%7C%20Groq-blue)](#technical-architecture)
-[![License](https://img.shields.io/badge/License-MIT-orange)](#license)
+[![License](https://img.shields.io/badge/License-MIT-orange)](#license--contact)
 
 Niti Setu is a professional-grade "last-mile" delivery engine for government
 schemes. It uses **Retrieval-Augmented Generation (RAG)** to decode complex
@@ -25,7 +25,7 @@ decisions in their native language.
 - **Dual-Layer Conflict Engine:** Actively prevents fraudulent or overlapping applications combining **Neo4j Graph `EXCLUSIVE_OF` rules** with **Semantic Duplicate Override** prompts in the LLM.
 - **Deterministic RAG Caching:** Eligibility checks are secured via **SHA-256 profile hashing**. The cache intelligently recognizes if a farmer modifies their active enrollments list (Conflict Test) and instantly bypasses stale cache to trigger a fresh LLM evaluation.
 - **Citation-Backed Decisions:** Every result includes verbatim quotes and page references for 100% verifiability, driven by a deep 3-Tier Optimization Cache (Eligibility, Translation, and TTS) to save API tokens and reduce latency.
-- **Progressive Disclosure UI:** Dynamic "Existing Enrollments" toggles adapting seamlessly to Light/Dark modes, ensuring farmers aren't overwhelmed with forms.
+- **High-Performance Mobile UI:** "Industry-Grade" responsive design with a **Zero-Hang** performance strategy. Automatically disables heavy WebGL components and intensive animations on mobile devices to ensure a smooth, native-like experience on mid-range smartphones (Android/iOS).
 - **Smart Voice Sync:** Real-time synchronization of **Groq-Whisper** transcriptions directly into the chat input field across all interfaces (Dashboard & Floating Bot).
 
 ---
@@ -133,6 +133,7 @@ Explore our deep-dive technical documents:
 - **[Developer Guide](docs/DEVELOPER_GUIDE.md)**: Implementation details of MMR, chunking, and search algorithms.
 - **[API Specification](docs/API_SPEC.md)**: Complete REST API documentation.
 - **[Privacy Policy](docs/PRIVACY_POLICY.md)**: Zero-storage protocol details.
+- **[Mobile Strategy](docs/MOBILE_OPTIMIZATION.md)**: Performance and UX optimization for farmers.
 
 ---
 
