@@ -19,6 +19,10 @@ and complex animations.
   - **Live Syncing Controller:** Manual "Pause/Resume" mechanism for client-side performance optimization.
   - **Adaptive Grid Layout:** Prevents layout overflow across various viewport sizes using a responsive card architecture.
 - **Intelligent Sidebar Navigation:** Smooth framer-motion layout transitions that adapt perfectly between expanded and collapsed states. It includes a smart flexbox footer that prevents UI overlap when the window height is constrained, preserving all global controls (Logout, Notifications, Dark Mode, Language).
+- **Premium Landing Navigation:**
+  - **Smooth Scrolling Hash Links:** Native anchor link interception for seamless intra-page navigation.
+  - **Floating Scroll Controls:** Context-aware Up/Down scroll arrows that adapt based on viewport position (hiding/showing based on absolute scroll bounds).
+  - **Clickable Email Integration:** Direct `mailto:` action integrated directly into the navbar and footer.
 - **Role Management Authority Control:** Action-specific icons and color-coded status badges that dynamically reflect user security tiers ("Manage Privileges" gear vs "Elevate Role" arrow).
 - **Premium Krishi Mitra UI:** A completely revamped floating assistant featuring:
   - **Glassmorphic Home Tab:** Includes a high-impact hero section with decorative background elements and refined typography.

@@ -33,6 +33,7 @@ export default function LandingNav() {
     { label: t('nav_features'),     href: '/#features' },
     { label: t('nav_audience'), href: '/#audience' },
     { label: t('nav_tech'),   href: '/#technology' },
+    { label: 'patil.abhay214@gmail.com', href: 'mailto:patil.abhay214@gmail.com' },
   ];
 
   return (
@@ -59,8 +60,25 @@ export default function LandingNav() {
 
         {/* Desktop links */}
         <div style={{ display: 'flex', gap: '2px', flex: 1 }}>
+          <a href="/" style={{ textDecoration: 'none' }}>
+            <button style={{
+              background: 'none', border: 'none', cursor: 'pointer', padding: '7px 14px',
+              borderRadius: '8px', fontSize: '0.88rem', fontWeight: 500, color: textSec,
+              transition: 'color 0.2s, background 0.2s',
+            }}
+              onMouseOver={e => { e.currentTarget.style.color = text; e.currentTarget.style.background = glass; }}
+              onMouseOut={e => { e.currentTarget.style.color = textSec; e.currentTarget.style.background = 'none'; }}
+            >
+              {t('nav_home', 'Home')}
+            </button>
+          </a>
           {LINKS.map(l => (
-            <Link key={l.label} to={l.href} style={{ textDecoration: 'none' }}>
+            <a key={l.label} href={l.href} style={{ textDecoration: 'none' }} onClick={(e) => {
+              if (window.location.pathname === '/' && l.href.startsWith('/#')) {
+                e.preventDefault();
+                document.querySelector(l.href.replace('/', ''))?.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}>
               <button style={{
                 background: 'none', border: 'none', cursor: 'pointer', padding: '7px 14px',
                 borderRadius: '8px', fontSize: '0.88rem', fontWeight: 500, color: textSec,
@@ -69,7 +87,7 @@ export default function LandingNav() {
                 onMouseOver={e => { e.currentTarget.style.color = text; e.currentTarget.style.background = glass; }}
                 onMouseOut={e => { e.currentTarget.style.color = textSec; e.currentTarget.style.background = 'none'; }}
               >{l.label}</button>
-            </Link>
+            </a>
           ))}
         </div>
 
@@ -144,8 +162,20 @@ export default function LandingNav() {
           right: 0,
           boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
         }}>
+          <a href="/" onClick={() => setOpen(false)} style={{ textDecoration: 'none', fontSize: '1.05rem', fontWeight: 600, color: text, padding: '12px 14px', borderRadius: '12px', display: 'block', background: glass }}>
+            {t('nav_home', 'Home')}
+          </a>
           {LINKS.map(l => (
-            <Link key={l.label} to={l.href} onClick={() => setOpen(false)} style={{ textDecoration: 'none', fontSize: '1.05rem', fontWeight: 600, color: text, padding: '12px 14px', borderRadius: '12px', display: 'block', background: glass }}>{l.label}</Link>
+            <a key={l.label} href={l.href} onClick={(e) => { 
+                if(window.location.pathname === '/' && l.href.startsWith('/#')) {
+                   e.preventDefault(); 
+                   document.querySelector(l.href.replace('/', ''))?.scrollIntoView({behavior: 'smooth'}); 
+                } 
+                setOpen(false); 
+              }} 
+              style={{ textDecoration: 'none', fontSize: '1.05rem', fontWeight: 600, color: text, padding: '12px 14px', borderRadius: '12px', display: 'block', background: glass }}>
+              {l.label}
+            </a>
           ))}
           {!user && (
              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px', paddingTop: '16px', borderTop: `1px solid ${border}` }}>

@@ -340,7 +340,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
               {form.state && STATE_DIALECT_MAPPING[form.state] && STATE_DIALECT_MAPPING[form.state].map(d => (
                 <option key={d.value} value={d.value}>{d.label}</option>
               ))}
-              {!form.state && <optgroup label="Select state first" />}
+              {!form.state && <option value="disabled" disabled>Select state first</option>}
             </select>
           </div>
           <div>

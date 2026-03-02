@@ -6,12 +6,13 @@ import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import {
   Zap, Shield, Brain, FileText, Users, BarChart3, Mic, Globe,
-  Star, ArrowRight, CheckCircle, Sun, Moon, Menu, X,
+  Star, ArrowRight, ArrowUp, ArrowDown, CheckCircle, Sun, Moon, Menu, X,
   Cpu, Lock, Languages, HeartHandshake, Wheat, MapPin,
   Github, Sprout, TrendingUp, Clock, CheckCircle2, Search, Info, Check, Quote
 } from 'lucide-react';
 import FluidGlass from '../components/FluidGlass';
 import LandingNav from '../components/layout/LandingNav';
+import LandingFooter from '../components/common/LandingFooter';
 import Plasma from '../components/Plasma';
 import Silk from '../components/Silk';
 import CircularText from '../components/CircularText';
@@ -69,6 +70,7 @@ export default function Landing() {
   const navigate             = useNavigate();
   const [open, setOpen]      = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [scrolledToBottom, setScrolledToBottom] = useState(false);
   const heroRef              = useRef(null);
   const { scrollYProgress }  = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const heroY                = useTransform(scrollYProgress, [0, 1], ['0%', '20%']);
@@ -81,6 +83,7 @@ export default function Landing() {
   useEffect(() => {
     const h = () => {
       setScrolled(window.scrollY > 40);
+      setScrolledToBottom((window.innerHeight + Math.round(window.scrollY)) >= document.body.offsetHeight - 40);
       setIsMobile(window.innerWidth < 768);
     };
     window.addEventListener('resize', h);
@@ -204,8 +207,15 @@ export default function Landing() {
               {t('hero_btn_learn')}
             </button>
           </div>
+          
+          <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.86rem', color: c.textMute }}>Contact:</span>
+            <a href="mailto:patil.abhay214@gmail.com" style={{ fontSize: '0.9rem', fontWeight: 600, color: c.text, textDecoration: 'none', transition: 'color 0.2s', borderBottom: `1px dashed ${c.border}` }} onMouseOver={e => e.currentTarget.style.color = '#16a34a'} onMouseOut={e => e.currentTarget.style.color = c.text}>
+              patil.abhay214@gmail.com
+            </a>
+          </div>
 
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: c.border, borderRadius: '18px', overflow: 'hidden', marginTop: '72px', border: `1px solid ${c.border}` }}>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: c.border, borderRadius: '18px', overflow: 'hidden', marginTop: '60px', border: `1px solid ${c.border}` }}>
             {WHY.map(w => (
               <div key={w.val} style={{ background: c.bgCard, padding: '20px 14px', textAlign: 'center', backdropFilter: 'blur(8px)' }}>
                 <p style={{ fontSize: '1.75rem', fontWeight: 900, background: GREEN_GRAD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', letterSpacing: '-0.03em' }}>{w.val}</p>
@@ -353,46 +363,7 @@ export default function Landing() {
         </motion.div>
       </InView>
 
-      <footer style={{ borderTop: `1px solid ${c.border}`, background: isDark ? '#060d06' : '#ede6d0', padding: '36px max(28px, calc((100vw - 1180px)/2)) 28px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px', marginBottom: '28px' }}>
-          <div style={{ maxWidth: '280px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-              <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: GREEN_GRAD, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Sprout size={15} color="white" />
-              </div>
-              <span style={{ fontSize: '1.05rem', fontWeight: 800 }}>
-                <span style={{ background: GREEN_GRAD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Niti</span>
-                <span style={{ color: c.text }}>Setu</span>
-              </span>
-            </div>
-            <p style={{ fontSize: '0.83rem', color: c.textMute, lineHeight: 1.65 }}>{t('lp_footer_desc')}</p>
-          </div>
-          <div style={{ display: 'flex', gap: '44px', flexWrap: 'wrap' }}>
-            <div>
-              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>{t('lp_footer_navigate')}</p>
-              {NAV.map(n => (
-                <button key={n.id} onClick={() => go(n.id)} style={{ display: 'block', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textAlign: 'left', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.textMute}>{n.label}</button>
-              ))}
-            </div>
-            <div>
-              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>{t('lp_footer_portal')}</p>
-              {(user ? [[t('lp_go_dashboard', 'Go to Dashboard →'), '/dashboard']] : [[t('btn_free_check'), '/check'], [t('btn_signin'), '/login'], [t('btn_register'), '/register']]).map(([l, to]) => (
-                <Link key={l} to={to} style={{ display: 'block', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.textMute}>{l}</Link>
-              ))}
-            </div>
-            <div>
-              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>Legal & Resources</p>
-              {[["FAQ", '/faq'], ["Privacy Policy", '/privacy']].map(([l, to]) => (
-                <Link key={l} to={to} style={{ display: 'block', fontSize: '0.86rem', color: c.textMute, padding: '4px 0', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = c.text} onMouseOut={e => e.currentTarget.style.color = c.textMute}>{l}</Link>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div style={{ borderTop: `1px solid ${c.border}`, paddingTop: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-          <p style={{ fontSize: '0.78rem', color: c.textMute }}>{t('lp_footer_copyright')}</p>
-          <p style={{ fontSize: '0.78rem', color: c.textMute }}>{t('lp_footer_made')}</p>
-        </div>
-      </footer>
+      <LandingFooter />
 
       <style>{`
         @media (max-width: 680px) {
@@ -405,6 +376,27 @@ export default function Landing() {
           }
         }
       `}</style>
+      <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} style={{ position: 'fixed', bottom: '28px', left: '28px', zIndex: 100, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {scrolled && (
+          <button 
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
+            className="btn-glow flex flex-center" 
+            style={{ width: '44px', height: '44px', borderRadius: '50%', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <ArrowUp size={20} />
+          </button>
+        )}
+        {!scrolledToBottom && (
+          <button 
+            onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} 
+            style={{ width: '44px', height: '44px', borderRadius: '50%', padding: 0, background: c.bgCard, color: c.text, border: `1px solid ${c.border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onMouseOver={e=>e.currentTarget.style.borderColor='var(--accent-indigo)'}
+            onMouseOut={e=>e.currentTarget.style.borderColor=c.border}
+          >
+            <ArrowDown size={20} />
+          </button>
+        )}
+      </motion.div>
     </div>
   );
 }
