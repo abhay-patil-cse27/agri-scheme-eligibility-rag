@@ -453,6 +453,39 @@ Extract whatever information is available from the actual provided transcript. S
  * @param {string} [language='en'] - Regional language code (e.g. 'hi', 'mr')
  * @returns {string} Trancribed text
  */
+async function denoiseTranscript(rawTranscript) {
+  if (!rawTranscript || rawTranscript.length < 10) return rawTranscript;
+
+  const systemPrompt = `You are an expert Transcript Cleaner.
+  You receive a raw Speech-to-Text transcript from a farmer. Sometimes, the STT model hallucinates nonsensical loops at the end (e.g., "DM to someone", "YouTube links", "Nach Stars", "Louis307", or phonetic repetitions like "adu vou bekum").
+
+  YOUR TASK:
+  1. Identify the core meaningful sentence(s) related to farming, registration, or schemes.
+  2. REMOVE all non-meaningful additions, hallucinations, repetitions, and phonetic gibberish at the end of the transcript.
+  3. DO NOT translate the transcript. Keep it in the original language (Hindi/Marathi/English/etc).
+  4. If the entire transcript is nonsense or just noise, return an empty string "".
+  5. Return ONLY the cleaned text. NO markdown, NO commentary.`;
+
+  try {
+    const completion = await runQueued(() =>
+      withRetry(() =>
+        groqInstances[currentGroqIndex].chat.completions.create({
+          model: "llama-3.1-8b-instant", // Fast and efficient for cleanups
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Raw Transcript: "${rawTranscript}"` },
+          ],
+          temperature: 0,
+        })
+      )
+    );
+    return completion.choices[0]?.message?.content?.trim() || rawTranscript;
+  } catch (err) {
+    logger.warn("Denoising failed, returning raw transcript:", err.message);
+    return rawTranscript;
+  }
+}
+
 async function transcribeAudio(filePath, language = "en", usageCategory = "registered") {
   const fs = require("fs");
   try {
@@ -465,7 +498,7 @@ async function transcribeAudio(filePath, language = "en", usageCategory = "regis
     Main dialects: Hindi (हिंदी), Marathi (मराठी). 
     IMPORTANT: Do NOT translate. Transcribe exactly as spoken in regional language or Hinglish/Marathighlish. 
     Preserve local farming terms: सात-बारा (7/12), पिक विमा (Crop Insurance), कर्ज (Loan), खत (Fertilizer), एकर (Acre), हेक्टर (Hectare), बिघा (Bigha), पाऊस (Rain), पेरणी (Sowing). 
-    If the user uses English words in the middle of regional speech, transcribe them as English words.`;
+    If the user stops speaking, do NOT hallucinate endings like "Subscribe" or "DM me". Focus on accuracy for the speaker's voice only.`;
 
     const transcription = await runQueued(() =>
       withRetry(() =>
@@ -484,7 +517,10 @@ async function transcribeAudio(filePath, language = "en", usageCategory = "regis
     ResourceUsage.recordUsage('Groq-Whisper', Math.ceil(duration), usageCategory).catch(e => logger.error('Usage track error:', e));
 
     logger.info("Audio transcribed successfully");
-    return transcription.text;
+    
+    // Clean up hallucinations before returning
+    const cleanedTranscript = await denoiseTranscript(transcription.text);
+    return cleanedTranscript;
   } catch (error) {
     logger.error("Audio transcription failed:", error.message);
     throw new Error(`Voice transcription failed: ${error.message}`);
