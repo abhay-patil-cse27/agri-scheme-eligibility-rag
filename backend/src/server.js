@@ -28,6 +28,7 @@ const chatRoutes = require('./routes/chatRoutes');
 const scanRoutes = require('./routes/scanRoutes');
 
 const app = express();
+app.set("trust proxy", 1); // Trust reverse proxy (Vercel/Render) for rate-limiting
 
 
 // Serve scheme documents statically
