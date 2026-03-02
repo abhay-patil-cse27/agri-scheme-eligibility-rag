@@ -15,10 +15,6 @@ independent, voice-centric UX.
 The platform is built on a modular, decoupled architecture that ensures
 scalability and security.
 
-![System Architecture](architecture/system-architecture.png)
-
-![Vector Search Logic](architecture/vector-search-logic.png)
-
 ```mermaid
 graph TD
     %% Users
@@ -134,7 +130,7 @@ specific keyword terms (like scheme codes or state names):
   results, ensuring that if a chunk is relevant in both paths, it is boosted
   to the top.
 
-![Vector Search Logic](architecture/vector-search-logic.png)
+
 
 ### 3. Diversity Filtering (MMR)
 
@@ -208,7 +204,7 @@ Every eligibility response is backed by:
 The eligibility determination follows a strict, citation-backed intelligence
 pipeline.
 
-![RAG Sequence](architecture/master-rag-sequence.png)
+
 
 ```mermaid
 sequenceDiagram
@@ -270,7 +266,7 @@ Niti Setu achieves high performance by bypassing high-level RAG frameworks (Lang
 Privacy is baked into the protocol. We follow a **Zero-Storage** policy for
 sensitive documents like Aadhaar or land records.
 
-![Privacy Data Flow](architecture/privacy-data-flow.png)
+
 
 ```mermaid
 graph LR
@@ -283,7 +279,6 @@ graph LR
     L -- "Data Merge" --> P[Profile State]
     
     style T fill:#f96,stroke:#333,stroke-dasharray: 5 5
-    note right of T: File exists for < 500ms
 ```
 
 ### Zero-Storage Protocol (Multer Implementation)
@@ -358,7 +353,7 @@ To monitor infrastructure sustainability and costs, Niti Setu implements a **Rea
 Our code is structured into clear pillars to support production-scale
 maintenance.
 
-![Backend Component Map](architecture/backend-component-map.png)
+
 
 ```mermaid
 mindmap
