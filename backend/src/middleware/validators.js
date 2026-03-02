@@ -73,6 +73,14 @@ const validateProfile = [
     .optional({ nullable: true })
     .isArray()
     .withMessage('activeSchemes must be an array of strings'),
+  body('primaryIncomeSource')
+    .optional({ nullable: true })
+    .isIn(['Agriculture', 'Dairy', 'Poultry', 'Fisheries', 'Horticulture', 'Other'])
+    .withMessage('Primary income source must be Agriculture, Dairy, Poultry, Fisheries, Horticulture, or Other'),
+  body('isFarmerRelated')
+    .optional({ nullable: true })
+    .isBoolean()
+    .withMessage('isFarmerRelated must be true or false'),
   handleValidationErrors,
 ];
 

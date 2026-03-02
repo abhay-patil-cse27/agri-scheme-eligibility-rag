@@ -279,6 +279,8 @@ graph LR
     L -- "Data Merge" --> P[Profile State]
     
     style T fill:#f96,stroke:#333,stroke-dasharray: 5 5
+    T -.-> N["Note: File exists for < 500ms"]
+    style N fill:none,stroke:none,color:#bbb,font-style:italic
 ```
 
 ### Zero-Storage Protocol (Multer Implementation)

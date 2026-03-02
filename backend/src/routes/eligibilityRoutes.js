@@ -21,9 +21,17 @@ const PublicCheckCache = require('../models/PublicCheckCache');
  * Generate a deterministic hash for a profile object.
  */
 function hashProfile(profile) {
-  const sortedKeys = ['age', 'annualIncome', 'category', 'cropType', 'district', 'hasIrrigationAccess', 'landHolding', 'name', 'state'];
+  const sortedKeys = ['age', 'annualIncome', 'category', 'cropType', 'district', 'hasIrrigationAccess', 'landHolding', 'name', 'state', 'primaryIncomeSource', 'isFarmerRelated'];
   const coreString = sortedKeys
-    .map(key => `${key}:${profile[key] || ''}`)
+    .map(key => {
+      let value = profile[key];
+      if (key === 'primaryIncomeSource' && !value) {
+        value = 'Agriculture';
+      } else if (key === 'isFarmerRelated' && value === undefined) {
+        value = true;
+      }
+      return `${key}:${value || ''}`;
+    })
     .join('|');
   const activeSchemesString = Array.isArray(profile.activeSchemes) ? profile.activeSchemes.sort().join(',') : '';
   const baseString = coreString + '|activeSchemes:' + activeSchemesString;

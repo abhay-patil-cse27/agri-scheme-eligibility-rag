@@ -1,55 +1,70 @@
-# 📚 Niti Setu: Documentation Roadmap
+# 🚀 Niti Setu Reader's Navigator
 
-Welcome to the Niti Setu documentation hub. To help you navigate our "Industry-Grade" RAG ecosystem, use this guide to find exactly what you need.
-
-## 🗺️ Choose Your Path
-
-| If you are... | Recommended Starting Point |
-| :--- | :--- |
-| **A New Developer** | [🚀 Developer Guide](DEVELOPER_GUIDE.md) |
-| **An Architect** | [🏗️ System Architecture](ARCHITECTURE.md) |
-| **A Privacy Auditor** | [🛡️ Privacy Policy](PRIVACY_POLICY.md) |
-| **A Frontend Engineer** | [✨ Frontend Guide](FRONTEND_GUIDE.md) |
-| **An API Consumer** | [🔌 API Specification](API_SPEC.md) |
+Welcome to **Niti Setu** (नीति सेतु). This guide is designed to help you navigate our codebase and documentation without getting lost in the "RAG weeds."
 
 ---
 
-## 🛠️ Feature Deep-Dives
+## 🗺️ Where should I start?
 
-Dive into the technical implementation of our most powerful features:
+Depending on your goal, follow these paths:
 
-### 📱 WhatsApp "Setu" (Bridge)
+### 1. "I want to see how the RAG logic works."
+Go to the **Krishi Mitra Engine**:
+- 📍 **Core Script:** [`backend/src/services/llmService.js`](../backend/src/services/llmService.js)
+- 📍 **Implementation Details:** [Developer Guide: MMR & RRF Implementation](../docs/DEVELOPER_GUIDE.md)
+- *Key concepts:* Native MMR, Reciprocal Rank Fusion, Context Window Management.
 
-* **What:** Voice-note-centric gateway for rural accessibility.
-* **Tech:** Twilio Webhooks + Groq Whisper STT + Llama 3.3.
-* **Guide:** [Advanced Features > WhatsApp](docs/ADVANCED_FEATURES.md#1-whatsapp-setu-bridge-)
+### 2. "I want to understand the data privacy flow."
+Check our **Zero-Storage Protocol**:
+- 📍 **Architecture Diagram:** [Architecture.md: Ephemeral Data Flow](../docs/ARCHITECTURE.md#ephemeral-privacy-first-data-flow)
+- 📍 **Privacy Policy:** [Privacy Policy](../docs/PRIVACY_POLICY.md)
+- *Key concepts:* Memory Buffers, Base64 Streams, `fs.unlink` cleanup.
 
-### 📶 Offline-First (PWA)
+### 3. "I want to see the Conflict Detection system."
+Look into the **Hybrid Reasoning Layer**:
+- 📍 **Graph Logic:** [`backend/src/services/graphService.js`](../backend/src/services/graphService.js)
+- 📍 **Integration:** [Architecture.md: Sequence Diagram](../docs/ARCHITECTURE.md#master-rag--intelligence-sequence)
+- *Key concepts:* Neo4j `EXCLUSIVE_OF` rules, Semantic Duplicate Override.
 
-* **What:** Native-like app experience on patchy farm networks.
-* **Tech:** Vite PWA + Workbox Caching Strategy.
-* **Guide:** [Advanced Features > PWA](docs/ADVANCED_FEATURES.md#2-offline-first-pwa-)
-
-### 🗣️ Hyper-Local Dialect Tuning
-
-* **What:** Adapting AI persona to regional Marathi/Hindi nuances.
-* **Tech:** Context-Injected System Prompts.
-* **Guide:** [Advanced Features > Dialect Tuning](docs/ADVANCED_FEATURES.md#3-hyper-local-dialect-tuning-)
-
----
-
-## ⚙️ Backend & Infrastructure
-
-* **[Backend Guide](BACKEND_GUIDE.md)**: Deep dive into Node.js, Express, and AI service orchestration.
-* **[Performance & Optimization](ARCHITECTURE.md#performance--optimization)**: Details on our 4-layer caching strategy and resource tracking.
-* **[Mobile Optimization](MOBILE_OPTIMIZATION.md)**: How we scale high-fidelity visuals for mid-range smartphones.
+### 4. "I want to setup the project locally."
+Follow the **Quick Start**:
+- 📍 **Main Instructions:** [Readme: Installation](../README.md#installation-and-setup)
+- 📍 **Env Template:** [`backend/.env.example`](../backend/.env.example)
 
 ---
 
-## 🏗️ The Tech Stack at a Glance
+## 🛠️ Project Structure at a Glance
 
-* **AI Engine:** Groq (Llama 3.3, 3.2, Whisper)
-* **Vector DB:** MongoDB Atlas ($vectorSearch)
-* **Knowledge Graph:** Neo4j Aura (Conflict Rules)
-* **Frontend:** React 19 + Vite + Framer Motion
-* **Voice:** ElevenLabs TTS + Web Speech API
+```text
+niti-setu/
+├── backend/                # Express server & AI core
+│   ├── src/
+│   │   ├── services/       # AI logic, Graph logic, Email, etc.
+│   │   ├── routes/         # API endpoints
+│   │   ├── middleware/     # Auth, Validators, OTP
+│   │   └── models/         # Mongoose & Resource Schemas
+├── frontend/               # React Dashboard & Assistant
+│   ├── src/
+│   │   ├── pages/          # Dashboard, Check, Settings
+│   │   ├── components/     # UI Kits, AgriCard, FloatingBot
+│   │   └── context/        # Auth & UI Context
+└── docs/                   # Full Technical Stack Documentation
+```
+
+---
+
+## 🗣️ Common Questions
+
+**Q: Why not use LangChain?**  
+A: To maintain sub-second performance and 100% data sovereignty. Native implementations allow for 3x faster execution and granular token control.
+
+**Q: How does the multilingual TTS work?**  
+A: We combine a high-performance LRU cache for translations with an ElevenLabs neural synthesis layer, allowing for consistent, low-latency regional speech.
+
+**Q: Is my document data stored?**  
+A: **No.** Documents are processed as transient memory buffers and deleted instantly after extraction.
+
+---
+
+> [!TIP]
+> **Pro Tip:** Start by exploring the [Architecture Guide](../docs/ARCHITECTURE.md) to visualize how the parallel retrieval paths merge into a single, citation-backed verdict.

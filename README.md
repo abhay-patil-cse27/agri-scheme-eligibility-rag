@@ -130,13 +130,13 @@ cd frontend && npm run dev
 
 The Niti Setu documentation is comprehensive. Use the table below to find the guide most relevant to your role:
 
-| Role | Guide | Purpose |
+| Use Case | Guide | Action |
 | :--- | :--- | :--- |
-| **Newcomer** | [🚀 Readme Navigator](docs/NAVIGATOR.md) | Systematic walkthrough of the ecosystem. |
-| **Architect** | [🏗️ Architecture](docs/ARCHITECTURE.md) | HLD, LLD, and RAG Data Flow diagrams. |
-| **Coder** | [🛠️ Developer Guide](docs/DEVELOPER_GUIDE.md) | MMR/RRF implementation & Search logic. |
-| **Integrator** | [🔌 API Spec](docs/API_SPEC.md) | Endpoint details for Auth, Chat, and OCR. |
-| **Security** | [🛡️ Privacy Policy](docs/PRIVACY_POLICY.md) | Zero-storage & transient data protocols. |
+| **Newcomer** | [🚀 Readme Navigator](docs/NAVIGATOR.md) | **[Start Here]** |
+| **Architect** | [🏗️ Architecture](docs/ARCHITECTURE.md) | **[System Design]** |
+| **Coder** | [🛠️ Developer Guide](docs/DEVELOPER_GUIDE.md) | **[Logic & RAG]** |
+| **Integrator** | [🔌 API Spec](docs/API_SPEC.md) | **[Endpoints]** |
+| **Security** | [🛡️ Privacy Policy](docs/PRIVACY_POLICY.md) | **[Compliance]** |
 
 > [!TIP]
 > **Looking for Phase 3 updates?** Check out the **[Advanced Features Guide](docs/ADVANCED_FEATURES.md)** for details on the WhatsApp Bridge, PWA logic, and Dialect Tuning.

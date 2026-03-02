@@ -108,6 +108,18 @@ const farmerProfileSchema = new mongoose.Schema(
       type: String,
       trim: true,
       index: true,
+    },
+    primaryIncomeSource: {
+      type: String,
+      enum: {
+        values: ['Agriculture', 'Dairy', 'Poultry', 'Fisheries', 'Horticulture', 'Other'],
+        message: 'Income source must be Agriculture, Dairy, Poultry, Fisheries, Horticulture, or Other',
+      },
+      default: 'Agriculture',
+    },
+    isFarmerRelated: {
+      type: Boolean,
+      default: true
     }
   },
   {

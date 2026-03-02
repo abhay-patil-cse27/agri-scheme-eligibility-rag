@@ -17,6 +17,44 @@ import AgriCard from '../components/common/AgriCard';
 import DocumentScanner from '../components/farmers/DocumentScanner';
 import { CATEGORY_LINKS } from '../services/categoryService';
 
+const STATE_DIALECT_MAPPING = {
+  "Maharashtra": [
+    { value: "Standard", label: "Standard (Neutral)" },
+    { value: "Kolhapur", label: "Kolhapur (Western Marathi)" },
+    { value: "Vidarbha", label: "Vidarbha (Varhadi)" },
+    { value: "Marathwada", label: "Marathwada" },
+    { value: "Konkan", label: "Konkan (Malvani)" },
+    { value: "Khandesh", label: "Khandesh (Ahirani)" }
+  ],
+  "Uttar Pradesh": [
+    { value: "Standard", label: "Standard (Neutral)" },
+    { value: "Bhojpuri", label: "Bhojpuri Region" },
+    { value: "Awadhi", label: "Awadhi Region" },
+    { value: "Braj", label: "Braj Bhasha Region" }
+  ],
+  "Gujarat": [
+    { value: "Standard", label: "Standard (Neutral)" },
+    { value: "Saurashtra", label: "Saurashtra" },
+    { value: "Kutch", label: "Kutch" }
+  ],
+  "Andhra Pradesh": [
+    { value: "Standard", label: "Standard (Neutral)" },
+    { value: "Rayalaseema", label: "Rayalaseema" },
+    { value: "Coastal", label: "Coastal Andhra" }
+  ],
+  "Bihar": [
+    { value: "Standard", label: "Standard (Neutral)" },
+    { value: "Magahi", label: "Magahi Region" },
+    { value: "Maithili", label: "Maithili Region" }
+  ],
+  "Punjab": [
+    { value: "Standard", label: "Standard (Neutral)" },
+    { value: "Malwa", label: "Malwa Region" },
+    { value: "Majha", label: "Majha Region" },
+    { value: "Doaba", label: "Doaba Region" }
+  ]
+};
+
 const indianStates = {
   // ── 28 States ────────────────────────────
   "Andhra Pradesh": ["Alluri Sitharama Raju", "Anakapalli", "Anantapur", "Annamayya", "Bapatla", "Chittoor", "Dr. B.R. Ambedkar Konaseema", "East Godavari", "Eluru", "Guntur", "Kakinada", "Kurnool", "Nandyal", "NTR", "Palnadu", "Parvathipuram Manyam", "Prakasam", "Sri Potti Sriramulu Nellore", "Sri Sathya Sai", "Srikakulam", "Tirupati", "Visakhapatnam", "Vizianagaram", "West Godavari", "Y.S.R. Kadapa"],
@@ -193,32 +231,23 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
     name: '', age: '', state: '', district: '', landHolding: '',
     cropType: '', category: 'General', annualIncome: '', hasIrrigationAccess: false,
     gender: 'Male', hasBPLCard: false, ownershipType: 'Owner', hasKcc: false, isDifferentlyAbled: false, hasAadharSeededBank: false,
-    activeSchemes: [], subRegion: ''
+    activeSchemes: [], subRegion: '', primaryIncomeSource: 'Agriculture', isFarmerRelated: true
   });
 
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customSchemeName, setCustomSchemeName] = useState('');
   const [isEnrolled, setIsEnrolled] = useState(false);
 
-  const displaySchemes = allSchemes.filter(s => {
-    // 1. If Category is selected in dropdown, ONLY show schemes in that category
-    if (selectedCategory) {
-      return s.category === selectedCategory && s.name !== selectedScheme;
-    }
-    
-    // 2. Fallback logic: Auto-detect from selectedScheme if no category dropdown is forced
-    const selectedObj = allSchemes.find(as => as.name === selectedScheme);
-    if (!selectedObj && selectedScheme !== 'all') return false; 
-    
-    const targetCategory = selectedObj ? selectedObj.category : (s.category || 'other');
-    return s.category === targetCategory && s.name !== selectedScheme;
-  });
-
+  // Sync with initial data (e.g., from voice or scanner)
   useEffect(() => {
     if (initialData) {
       setForm((prev) => ({
         ...prev,
-        ...Object.fromEntries(Object.entries(initialData).filter((entry) => entry[1] != null && entry[1] !== '')),
+        ...initialData,
+        // Ensure numbers are handled
+        age: initialData.age || prev.age,
+        landHolding: initialData.landHolding || prev.landHolding,
+        annualIncome: initialData.annualIncome || prev.annualIncome,
       }));
       if (initialData.activeSchemes && initialData.activeSchemes.length > 0) {
         setIsEnrolled(true);
@@ -230,9 +259,11 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
     const { name, value, type, checked } = e.target;
     setForm((prev) => {
       const updated = { ...prev, [name]: type === 'checkbox' ? checked : value };
-      // If state changes, clear district since the new state might not have the old district
       if (name === 'state') {
         updated.district = '';
+        updated.subRegion = (STATE_DIALECT_MAPPING[value] && STATE_DIALECT_MAPPING[value].length > 0) 
+          ? STATE_DIALECT_MAPPING[value][0].value 
+          : '';
       }
       return updated;
     });
@@ -258,6 +289,8 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
     });
   };
 
+  const displaySchemes = allSchemes.filter(s => !selectedCategory || s.category === selectedCategory);
+
   return (
     <form onSubmit={handleSubmit}>
       <AgriCard
@@ -267,208 +300,199 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
         style={{ padding: '28px', marginBottom: '24px' }}
         padding="28px"
       >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-        <User size={20} style={{ color: 'var(--accent-violet)' }} />
-        <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>{t('pf_title')}</h3>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-        <div>
-          <label style={labelStyle}><User size={14} /> {t('reg_name')}</label>
-          <input name="name" value={form.name} onChange={handleChange} placeholder="e.g. Ramesh Patil" className="input-dark" required />
-        </div>
-        <div>
-          <label style={labelStyle}><User size={14} /> {t('cm_age')}</label>
-          <input name="age" type="number" min="18" max="120" value={form.age} onChange={handleChange} placeholder="e.g. 35" className="input-dark" required />
-        </div>
-        <div>
-          <label style={labelStyle}><MapPin size={14} /> {t('cm_state')}</label>
-          <select name="state" value={form.state} onChange={handleChange} className="select-dark" required>
-            <option value="">{t('cm_search')}</option>
-            {Object.keys(indianStates).map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-        <div>
-          <label style={labelStyle}><MapPin size={14} /> {t('cm_district')}</label>
-          <select 
-            name="district" 
-            value={form.district} 
-            onChange={handleChange} 
-            className="select-dark" 
-            disabled={!form.state}
-            required
-          >
-            <option value="">{t('cm_district_ph')}</option>
-            {form.state && indianStates[form.state] && indianStates[form.state].map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label style={labelStyle}><MapPin size={14} /> {t('pf_sub_region', 'Sub-Region (Dialect)')}</label>
-          <select 
-            name="subRegion" 
-            value={form.subRegion} 
-            onChange={handleChange} 
-            className="select-dark"
-          >
-            <option value="">{t('pf_select_subregion', 'Standard (Neutral)')}</option>
-            <optgroup label="Maharashtra Dialects">
-              <option value="Kolhapur">Kolhapur (Western Marathi)</option>
-              <option value="Vidarbha">Vidarbha (Varhadi)</option>
-              <option value="Marathwada">Marathwada</option>
-              <option value="Konkan">Konkan (Malvani)</option>
-              <option value="Khandesh">Khandesh (Ahirani)</option>
-            </optgroup>
-            <optgroup label="Other Regions">
-              <option value="Bhojpuri">Bhojpuri Region</option>
-              <option value="Saurashtra">Saurashtra</option>
-              <option value="Rayalaseema">Rayalaseema</option>
-            </optgroup>
-          </select>
-        </div>
-        <div>
-          <label style={labelStyle}><Ruler size={14} /> {t('cm_land')}</label>
-          <input name="landHolding" type="number" step="0.1" value={form.landHolding} onChange={handleChange} placeholder="e.g. 2.5" className="input-dark" required />
-        </div>
-        <div>
-          <label style={labelStyle}><Sprout size={14} /> {t('cm_crop')}</label>
-          <input name="cropType" value={form.cropType} onChange={handleChange} placeholder="e.g. Wheat, Rice" className="input-dark" required />
-        </div>
-        <div>
-          <label style={labelStyle}><Shield size={14} /> {t('cm_category')}</label>
-          <select name="category" value={form.category} onChange={handleChange} className="select-dark">
-            <option value="General">{t('cm_general')}</option>
-            <option value="EWS">{t('cm_ews')}</option>
-            <option value="OBC">{t('cm_obc')}</option>
-            <option value="SC">{t('cm_scst')}</option>
-            <option value="ST">{t('cm_scst')}</option>
-            <option value="Minority">{t('cm_minority')}</option>
-          </select>
-        </div>
-        <div>
-          <label style={labelStyle}><Wallet size={14} /> {t('cm_income')}</label>
-          <input name="annualIncome" type="number" value={form.annualIncome} onChange={handleChange} placeholder="e.g. 200000" className="input-dark" />
-        </div>
-        <div>
-          <label style={labelStyle}><User size={14} /> {t('pf_gender')}</label>
-          <select name="gender" value={form.gender} onChange={handleChange} className="select-dark">
-            <option value="Male">{t('pf_male')}</option>
-            <option value="Female">{t('pf_female')}</option>
-            <option value="Other">{t('pf_other')}</option>
-          </select>
-        </div>
-        <div>
-          <label style={labelStyle}><MapPin size={14} /> {t('pf_ownership_type')}</label>
-          <select name="ownershipType" value={form.ownershipType} onChange={handleChange} className="select-dark">
-            <option value="Owner">{t('pf_owner')}</option>
-            <option value="Tenant/Sharecropper">{t('pf_tenant')}</option>
-            <option value="Co-owner">{t('pf_coowner')}</option>
-          </select>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px 0' }}>
-          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-            <input type="checkbox" name="hasIrrigationAccess" checked={form.hasIrrigationAccess} onChange={handleChange}
-              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-            <span><Droplets size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t('cm_has_irrigation')}</span>
-          </label>
-          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-            <input type="checkbox" name="hasBPLCard" checked={form.hasBPLCard} onChange={handleChange}
-              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-            <span><FileText size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t('pf_bpl_card')}</span>
-          </label>
-          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-            <input type="checkbox" name="hasKcc" checked={form.hasKcc} onChange={handleChange}
-              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-            <span><Wallet size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t('pf_kcc_owner')}</span>
-          </label>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px 0' }}>
-          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-            <input type="checkbox" name="isDifferentlyAbled" checked={form.isDifferentlyAbled} onChange={handleChange}
-              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-            <span><User size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t('pf_divyangjan')}</span>
-          </label>
-          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-            <input type="checkbox" name="hasAadharSeededBank" checked={form.hasAadharSeededBank} onChange={handleChange}
-              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' }} />
-            <span><CheckCircle2 size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t('pf_aadhar_seeded')}</span>
-          </label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
+          <User size={20} style={{ color: 'var(--accent-violet)' }} />
+          <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>{t('pf_title')}</h3>
         </div>
 
-      </div>
+        {/* Top 12 Main Parameters - Perfectly Balanced Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div>
+            <label style={labelStyle}><User size={14} /> {t('reg_name')}</label>
+            <input name="name" value={form.name} onChange={handleChange} placeholder="e.g. Ramesh Patil" className="input-dark" required />
+          </div>
+          <div>
+            <label style={labelStyle}><User size={14} /> {t('cm_age')}</label>
+            <input name="age" type="number" min="18" max="120" value={form.age} onChange={handleChange} placeholder="e.g. 35" className="input-dark" required />
+          </div>
+          
+          <div>
+            <label style={labelStyle}><MapPin size={14} /> {t('cm_state')}</label>
+            <select name="state" value={form.state} onChange={handleChange} className="select-dark" required>
+              <option value="">{t('cm_search')}</option>
+              {Object.keys(indianStates).map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}><MapPin size={14} /> {t('cm_district')}</label>
+            <select name="district" value={form.district} onChange={handleChange} className="select-dark" disabled={!form.state} required>
+              <option value="">{t('cm_district_ph')}</option>
+              {form.state && indianStates[form.state] && indianStates[form.state].map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
 
-      {/* Existing Enrollments Section */}
-      <div style={{ marginTop: '24px', padding: '20px', background: 'var(--bg-glass)', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isEnrolled ? '16px' : '0' }}>
-          <label style={{ ...labelStyle, marginBottom: 0 }}>
-            <Shield size={16} style={{ color: 'var(--accent-indigo)' }} /> 
-            Are you already enrolled in any related <b>{selectedCategory ? selectedCategory.replace(/_/g, ' ') : 'government'}</b> schemes?
-          </label>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={() => {
-                setIsEnrolled(true);
-                // Auto-select everything by default to ensure maximum conflict scanning if they don't know exact names
-                if (!form.activeSchemes || form.activeSchemes.length === 0) {
-                  setForm(prev => ({ ...prev, activeSchemes: displaySchemes.map(s => s.name) }));
-                }
-              }}
-              style={{
-                padding: '4px 12px', borderRadius: '100px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
-                background: isEnrolled ? 'var(--accent-indigo)' : 'var(--bg-glass)',
-                color: isEnrolled ? 'var(--bg-primary)' : 'var(--text-secondary)',
-                border: `1px solid ${isEnrolled ? 'var(--accent-indigo)' : 'var(--border-glass)'}`,
-                transition: 'all 0.2s'
-              }}
-            >
-              Yes
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsEnrolled(false);
-                setForm(prev => ({ ...prev, activeSchemes: [] }));
-              }}
-              style={{
-                padding: '4px 12px', borderRadius: '100px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
-                background: !isEnrolled ? 'var(--accent-rose)' : 'var(--bg-glass)',
-                color: !isEnrolled ? 'white' : 'var(--text-secondary)',
-                border: `1px solid ${!isEnrolled ? 'var(--accent-rose)' : 'var(--border-glass)'}`,
-                transition: 'all 0.2s'
-              }}
-            >
-              No
-            </button>
+          <div>
+            <label style={labelStyle}><MapPin size={14} /> {t('pf_sub_region', 'Sub-Region (Dialect)')}</label>
+            <select name="subRegion" value={form.subRegion} onChange={handleChange} className="select-dark">
+              <option value="">{t('pf_select_subregion', 'Standard (Neutral)')}</option>
+              {form.state && STATE_DIALECT_MAPPING[form.state] && STATE_DIALECT_MAPPING[form.state].map(d => (
+                <option key={d.value} value={d.value}>{d.label}</option>
+              ))}
+              {!form.state && <optgroup label="Select state first" />}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}><Ruler size={14} /> {t('cm_land')}</label>
+            <input name="landHolding" type="number" step="0.1" value={form.landHolding} onChange={handleChange} placeholder="e.g. 2.5" className="input-dark" required />
+          </div>
+
+          <div>
+            <label style={labelStyle}><Sprout size={14} /> {t('cm_crop')}</label>
+            <input name="cropType" value={form.cropType} onChange={handleChange} placeholder="e.g. Wheat, Rice" className="input-dark" required />
+          </div>
+          <div>
+            <label style={labelStyle}><Wallet size={14} /> Primary Income Source</label>
+            <select name="primaryIncomeSource" value={form.primaryIncomeSource} onChange={handleChange} className="select-dark">
+              <option value="Agriculture">Agriculture</option>
+              <option value="Dairy">Dairy Farming</option>
+              <option value="Poultry">Poultry Farming</option>
+              <option value="Fisheries">Fisheries</option>
+              <option value="Horticulture">Horticulture</option>
+              <option value="Other">Other Agricultural Allied</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={labelStyle}><Shield size={14} /> {t('cm_category')}</label>
+            <select name="category" value={form.category} onChange={handleChange} className="select-dark">
+              <option value="General">{t('cm_general')}</option>
+              <option value="EWS">{t('cm_ews')}</option>
+              <option value="OBC">{t('cm_obc')}</option>
+              <option value="SC">{t('cm_scst')}</option>
+              <option value="ST">{t('cm_scst')}</option>
+              <option value="Minority">{t('cm_minority')}</option>
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}><Wallet size={14} /> {t('cm_income')}</label>
+            <input name="annualIncome" type="number" value={form.annualIncome} onChange={handleChange} placeholder="e.g. 200000" className="input-dark" />
+          </div>
+
+          <div>
+            <label style={labelStyle}><User size={14} /> {t('pf_gender')}</label>
+            <select name="gender" value={form.gender} onChange={handleChange} className="select-dark">
+              <option value="Male">{t('pf_male')}</option>
+              <option value="Female">{t('pf_female')}</option>
+              <option value="Other">{t('pf_other')}</option>
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}><MapPin size={14} /> {t('pf_ownership_type')}</label>
+            <select name="ownershipType" value={form.ownershipType} onChange={handleChange} className="select-dark">
+              <option value="Owner">{t('pf_owner')}</option>
+              <option value="Tenant/Sharecropper">{t('pf_tenant')}</option>
+              <option value="Co-owner">{t('pf_coowner')}</option>
+            </select>
           </div>
         </div>
 
-        <AnimatePresence>
-          {isEnrolled && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}>
-              {displaySchemes.length === 0 ? (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{t('pf_no_schemes_found')}</p>
-              ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '8px', borderTop: '1px dashed var(--border-glass)' }}>
-                  {displaySchemes.map(s => {
-                    const isSelected = form.activeSchemes?.includes(s.name);
-                    return (
+        {/* 6 Identity & Eligibility Checkboxes */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+          <label style={checkboxLabelStyle}>
+            <input type="checkbox" name="isFarmerRelated" checked={form.isFarmerRelated} onChange={handleChange} style={checkboxStyle} />
+            <span><User size={14} style={iconGapStyle} /> Farmer/Related Relation Confirm</span>
+          </label>
+          <label style={checkboxLabelStyle}>
+            <input type="checkbox" name="hasIrrigationAccess" checked={form.hasIrrigationAccess} onChange={handleChange} style={checkboxStyle} />
+            <span><Droplets size={14} style={iconGapStyle} /> {t('cm_has_irrigation')}</span>
+          </label>
+          <label style={checkboxLabelStyle}>
+            <input type="checkbox" name="hasBPLCard" checked={form.hasBPLCard} onChange={handleChange} style={checkboxStyle} />
+            <span><FileText size={14} style={iconGapStyle} /> {t('pf_bpl_card')}</span>
+          </label>
+          <label style={checkboxLabelStyle}>
+            <input type="checkbox" name="hasKcc" checked={form.hasKcc} onChange={handleChange} style={checkboxStyle} />
+            <span><Wallet size={14} style={iconGapStyle} /> {t('pf_kcc_owner')}</span>
+          </label>
+          <label style={checkboxLabelStyle}>
+            <input type="checkbox" name="isDifferentlyAbled" checked={form.isDifferentlyAbled} onChange={handleChange} style={checkboxStyle} />
+            <span><User size={14} style={iconGapStyle} /> {t('pf_divyangjan')}</span>
+          </label>
+          <label style={checkboxLabelStyle}>
+            <input type="checkbox" name="hasAadharSeededBank" checked={form.hasAadharSeededBank} onChange={handleChange} style={checkboxStyle} />
+            <span><CheckCircle2 size={14} style={iconGapStyle} /> {t('pf_aadhar_seeded')}</span>
+          </label>
+        </div>
+
+        {/* Existing Enrollments Section */}
+        <div style={{ marginTop: '24px', padding: '20px', background: 'var(--bg-glass)', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isEnrolled ? '16px' : '0' }}>
+            <label style={{ ...labelStyle, marginBottom: 0 }}>
+              <Shield size={16} style={{ color: 'var(--accent-indigo)' }} /> 
+              Are you already enrolled in any related <b>{selectedCategory ? selectedCategory.replace(/_/g, ' ') : 'government'}</b> schemes?
+            </label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEnrolled(true);
+                  if (!form.activeSchemes || form.activeSchemes.length === 0) {
+                    setForm(prev => ({ ...prev, activeSchemes: displaySchemes.map(s => s.name) }));
+                  }
+                }}
+                className={`tab-btn ${isEnrolled ? 'active' : ''}`}
+                style={{
+                  padding: '4px 12px', borderRadius: '100px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+                  background: isEnrolled ? 'var(--accent-indigo)' : 'var(--bg-glass)',
+                  color: isEnrolled ? 'var(--bg-primary)' : 'var(--text-secondary)',
+                  border: `1px solid ${isEnrolled ? 'var(--accent-indigo)' : 'var(--border-glass)'}`,
+                }}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEnrolled(false);
+                  setForm(prev => ({ ...prev, activeSchemes: [] }));
+                }}
+                style={{
+                  padding: '4px 12px', borderRadius: '100px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+                  background: !isEnrolled ? 'var(--accent-rose)' : 'var(--bg-glass)',
+                  color: !isEnrolled ? 'white' : 'var(--text-secondary)',
+                  border: `1px solid ${!isEnrolled ? 'var(--accent-rose)' : 'var(--border-glass)'}`,
+                }}
+              >
+                No
+              </button>
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {isEnrolled && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: '1px dashed var(--border-glass)' }}>
+                  {displaySchemes.length === 0 ? (
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{t('pf_no_schemes_found')}</p>
+                  ) : (
+                    displaySchemes.map(s => (
                       <button
                         key={s._id}
                         type="button"
                         onClick={() => toggleScheme(s.name)}
                         style={{
-                          padding: '6px 12px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-                          background: isSelected ? 'var(--accent-indigo)' : 'var(--bg-glass)',
-                          color: isSelected ? 'var(--bg-primary)' : 'var(--text-secondary)',
-                          border: `1px solid ${isSelected ? 'var(--accent-indigo)' : 'var(--border-glass)'}`
+                          padding: '6px 12px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                          background: form.activeSchemes?.includes(s.name) ? 'var(--accent-indigo)' : 'var(--bg-glass)',
+                          color: form.activeSchemes?.includes(s.name) ? 'var(--bg-primary)' : 'var(--text-secondary)',
+                          border: `1px solid ${form.activeSchemes?.includes(s.name) ? 'var(--accent-indigo)' : 'var(--border-glass)'}`
                         }}
                       >
                         {s.name}
                       </button>
-                    );
-                  })}
+                    ))
+                  )}
                   
                   {form.activeSchemes?.filter(s => !displaySchemes.some(as => as.name === s)).map(customName => (
                     <button
@@ -491,67 +515,45 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
                         padding: '6px 14px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', background: 'var(--bg-glass)', color: 'var(--accent-indigo)', border: '1px dashed var(--accent-indigo)'
                       }}
                     >
-                      <Plus size={14} style={{ display: 'inline', marginRight: '4px' }} />
-                      {t('pf_not_listed')}
+                      <Plus size={14} style={{ display: 'inline', marginRight: '4px' }} /> {t('pf_not_listed')}
                     </button>
                   )}
                 </div>
-              )}
 
-              {showCustomInput && (
-                <div style={{ marginTop: '12px', display: 'flex', gap: '8px', paddingBottom: '8px' }}>
-                  <input 
-                    type="text" 
-                    value={customSchemeName}
-                    onChange={(e) => setCustomSchemeName(e.target.value)}
-                    placeholder={t('pf_enter_scheme_ph')}
-                    className="input-dark"
-                    style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (customSchemeName.trim()) {
-                        const next = [...(form.activeSchemes || []), customSchemeName.trim()];
-                        setForm({ ...form, activeSchemes: [...new Set(next)] });
-                        setCustomSchemeName('');
-                        setShowCustomInput(false);
-                      }
-                    }}
-                    className="btn-glow"
-                    style={{ padding: '8px 16px', fontSize: '0.8rem' }}
-                  >
-                    {t('pf_add')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowCustomInput(false); setCustomSchemeName(''); }}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem' }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                {showCustomInput && (
+                  <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                    <input type="text" value={customSchemeName} onChange={(e) => setCustomSchemeName(e.target.value)} placeholder={t('pf_enter_scheme_ph')} className="input-dark" style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem' }} />
+                    <button type="button" onClick={() => { if (customSchemeName.trim()) { setForm({ ...form, activeSchemes: [...new Set([...(form.activeSchemes || []), customSchemeName.trim()])] }); setCustomSchemeName(''); setShowCustomInput(false); } }} className="btn-glow" style={{ padding: '8px 16px', fontSize: '0.8rem' }}> {t('pf_add')} </button>
+                    <button type="button" onClick={() => { setShowCustomInput(false); setCustomSchemeName(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem' }}> Cancel </button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        type="submit"
-        className="btn-glow"
-        disabled={loading}
-        style={{ marginTop: '24px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-      >
-        {loading ? <Loader2 size={18} className="spin" /> : <Search size={18} />}
-        {loading ? t('pf_btn_loading') : t('pf_btn')}
-      </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          type="submit"
+          className="btn-glow"
+          disabled={loading}
+          style={{ marginTop: '32px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '16px' }}
+        >
+          {loading ? <Loader2 size={18} className="spin" /> : <Search size={18} />}
+          {loading ? t('pf_btn_loading') : t('pf_btn')}
+        </motion.button>
       </AgriCard>
     </form>
   );
 }
+
+const checkboxLabelStyle = {
+  display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer',
+  fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)'
+};
+const checkboxStyle = { width: '18px', height: '18px', accentColor: 'var(--accent-indigo)' };
+const iconGapStyle = { display: 'inline', marginRight: '4px' };
 
 const labelStyle = {
   display: 'flex', alignItems: 'center', gap: '6px',

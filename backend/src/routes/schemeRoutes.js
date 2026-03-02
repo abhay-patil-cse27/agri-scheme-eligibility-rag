@@ -174,7 +174,6 @@ router.post(
  */
 router.get(
   '/',
-  protect,
   cache('1 hour'),
   asyncHandler(async (req, res) => {
     const schemes = await Scheme.find({ isActive: true })
