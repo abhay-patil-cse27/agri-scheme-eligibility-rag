@@ -13,6 +13,7 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -88,7 +89,7 @@ export default function Register() {
     }
 
     try {
-      const res = await register(name.trim(), email.trim(), password.trim(), otp.trim());
+      const res = await register(name.trim(), email.trim(), password.trim(), otp.trim(), contactNumber.trim());
       if (res.success) {
         addToast(t('reg_success'), t('reg_welcome'), 'success');
       } else {
@@ -182,6 +183,21 @@ export default function Register() {
                   className="input-dark" placeholder={t('login_email_ph', 'name@example.com')}
                   style={{ padding: '16px 20px', borderRadius: '16px' }}
                 />
+              </div>
+
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '10px' }}>
+                  <Zap size={16} className="text-amber-400" /> WhatsApp Number (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={contactNumber} onChange={(e) => setContactNumber(e.target.value)}
+                  className="input-dark" placeholder="e.g. +91 9876543210"
+                  style={{ padding: '16px 20px', borderRadius: '16px' }}
+                />
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '8px' }}>
+                  Linking your WhatsApp lets you chat with Krishi Mitra via voice notes.
+                </p>
               </div>
 
               <motion.button

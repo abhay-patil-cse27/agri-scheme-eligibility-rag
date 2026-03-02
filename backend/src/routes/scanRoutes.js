@@ -55,9 +55,11 @@ router.post('/document', protect, upload.single('document'), async (req, res) =>
     // Read the file as base64 to send to Groq Vision
     const imageBuffer = fs.readFileSync(filePath);
     const base64Image = imageBuffer.toString('base64');
+    const docType = req.body.documentType || 'Official ID / Land Record';
+    const landUnit = req.body.landUnit || 'Hectares';
 
     // Extract data using our specialized multi-modal LLM
-    const extractedData = await llmService.extractProfileFromDocument(base64Image, docType);
+    const extractedData = await llmService.extractProfileFromDocument(base64Image, docType, "self-scan", landUnit);
 
     logger.info(`Extraction complete for user ${req.user.id}`);
 

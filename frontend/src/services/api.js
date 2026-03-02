@@ -52,7 +52,7 @@ api.interceptors.response.use(
 // ── Auth ──────────────────────────────────
 export const login = (email, password) => api.post('/auth/login', { email, password }).then(r => r.data);
 export const sendOTP = (email, purpose) => api.post('/auth/send-otp', { email, purpose }).then(r => r.data);
-export const register = (name, email, password, otp) => api.post('/auth/register', { name, email, password, otp }).then(r => r.data);
+export const register = (name, email, password, otp, contactNumber) => api.post('/auth/register', { name, email, password, otp, contactNumber }).then(r => r.data);
 export const googleLogin = (token) => api.post('/auth/google', { token }).then(r => r.data);
 export const getMe = () => api.get('/auth/me').then(r => r.data);
 export const updateDetails = (data) => api.put('/auth/updatedetails', data).then(r => r.data);
@@ -168,10 +168,11 @@ export const getResourceUsage = () => api.get('/analytics/resources').then((r) =
 export const getGraphData = () => api.get('/graph/explorer').then((r) => r.data);
 
 // ── Scanning ──────────────────────────────
-export const scanDocument = (file, documentType) => {
+export const scanDocument = (file, documentType, landUnit = 'Hectares') => {
   const formData = new FormData();
   formData.append('document', file);
   formData.append('documentType', documentType);
+  formData.append('landUnit', landUnit);
   
   return api.post('/scan/document', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },

@@ -31,6 +31,7 @@ const validateProfile = [
     .withMessage('Name must be under 100 characters'),
   body('state').trim().notEmpty().withMessage('State is required'),
   body('district').trim().notEmpty().withMessage('District is required'),
+  body('subRegion').optional({ nullable: true }).trim().isLength({ max: 100 }).withMessage('Sub-region must be under 100 characters'),
   body('landHolding')
     .isFloat({ min: 0 })
     .withMessage('Land holding must be a positive number (in acres)'),

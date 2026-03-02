@@ -26,7 +26,7 @@ The core value of the backend lies in its **Custom Native RAG Engine**.
   - **Vector Database:** Stores the 1000-character document chunks alongside rich metadata.
   - **Vector Search Index:** Handles the `$vectorSearch` queries using cosine similarity.
 - **Neo4j Aura (Free):**
-  - Stores the **Scholarship/Scheme Taxonomy** as a Knowledge Graph.
+  - Stores the **Agricultural Scheme Taxonomy** as a Knowledge Graph.
   - Enforces **Mutual Exclusion** logic natively. The database seeds over 22+ explicit hard rules preventing farmers from holding cross-sector overlapping schemes (e.g. blocking PMFBY and WBCIS simultaneously).
 - **Chat Session Logic:**
   - **ChatSession:** Stores session metadata (title, language).

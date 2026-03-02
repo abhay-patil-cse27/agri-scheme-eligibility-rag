@@ -23,6 +23,7 @@ router.post(
       age: req.body.age,
       state: req.body.state,
       district: req.body.district,
+      subRegion: req.body.subRegion || '',
       landHolding: req.body.landHolding,
       cropType: req.body.cropType,
       category: req.body.category,
@@ -118,7 +119,7 @@ router.put(
   validateObjectId,
   asyncHandler(async (req, res) => {
     const allowedFields = [
-      'name', 'age', 'state', 'district', 'landHolding',
+      'name', 'age', 'state',      'district', 'subRegion', 'landHolding',
       'cropType', 'category', 'annualIncome', 'hasIrrigationAccess',
       'gender', 'hasBPLCard', 'ownershipType', 'hasKcc', 'isDifferentlyAbled', 'hasAadharSeededBank', 'activeSchemes'
     ];

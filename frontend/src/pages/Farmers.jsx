@@ -273,8 +273,30 @@ export default function Farmers() {
                     </select>
                   </div>
                   <div>
+                    <label style={labelStyle}><Mail size={14} /> WhatsApp / Contact</label>
+                    <input name="contactNumber" value={editingProfile.contactNumber || ''} onChange={handleChange} className="input-dark" placeholder="+91..." />
+                  </div>
+                  <div>
                     <label style={labelStyle}><MapPin size={14} /> {t('cm_district')}</label>
                     <input name="district" value={editingProfile.district || ''} onChange={handleChange} className="input-dark" />
+                  </div>
+                  <div>
+                    <label style={labelStyle}><MapPin size={14} /> {t('pf_sub_region', 'Sub-Region (Dialect)')}</label>
+                    <select 
+                      name="subRegion" 
+                      value={editingProfile.subRegion || ''} 
+                      onChange={handleChange} 
+                      className="select-dark"
+                    >
+                      <option value="">Standard (General)</option>
+                      <optgroup label="Maharashtra Dialects">
+                        <option value="Kolhapur">Kolhapur (Western Marathi)</option>
+                        <option value="Vidarbha">Vidarbha (Varhadi)</option>
+                        <option value="Marathwada">Marathwada</option>
+                        <option value="Konkan">Konkan (Malvani)</option>
+                        <option value="Khandesh">Khandesh (Ahirani)</option>
+                      </optgroup>
+                    </select>
                   </div>
                   <div>
                     <label style={labelStyle}><Ruler size={14} /> {t('cm_land')}</label>

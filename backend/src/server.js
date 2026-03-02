@@ -26,6 +26,7 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const graphRoutes = require('./routes/graphRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const scanRoutes = require('./routes/scanRoutes');
+const whatsappRoutes = require('./routes/whatsappRoutes');
 
 const app = express();
 app.set("trust proxy", 1); // Trust reverse proxy (Vercel/Render) for rate-limiting
@@ -77,6 +78,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/graph', graphRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/scan', scanRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────
 app.use((req, res) => {

@@ -40,6 +40,12 @@ const userSchema = new mongoose.Schema(
       enum: ['farmer', 'admin', 'superadmin'],
       default: 'farmer',
     },
+    contactNumber: {
+      type: String,
+      trim: true,
+      unique: true,
+      sparse: true,
+    },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },

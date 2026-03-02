@@ -220,6 +220,7 @@ FARMER PROFILE:
 - Age: ${profile.age || "Not specified"} (Evaluate carefully against age limits)
 - State: ${profile.state}
 - District: ${profile.district}
+- Sub-Region: ${profile.subRegion || "Not specified"}
 - Land Holding: ${profile.landHolding} acres (${profile.landHoldingHectares || (profile.landHolding * 0.404686).toFixed(3)} hectares) (IMPORTANT: 1 acre = 0.404686 hectares. Check limits accurately)
 - Crop Type: ${profile.cropType}
 - Social Category: ${profile.category}
@@ -639,6 +640,7 @@ async function chatWithKrishiMitra(
   - You are a friendly, wise, and empathetic "friend of the farmer".
   - You speak simply and clearly, avoiding unnecessary jargon.
   - You are passionate about helping farmers access government benefits and improve their yields.
+  - DIALECT TUNING: The farmer is from the sub-region: "${profile.subRegion || 'Standard'}" in ${profile.state || 'India'}. Adapt your greeting and vocabulary to reflect the local dialect and cultural nuances of this specific sub-region (e.g., "Ram Ram" or specific local farming terms) to build trust.
 
   YOUR KNOWLEDGE BASE:
   - You know about Indian government schemes (PM-Kisan, RKVY, NMSA, etc.).
@@ -697,14 +699,18 @@ async function chatWithKrishiMitra(
  * @param {string} documentType - Type of document (e.g. '7/12', 'Aadhaar', 'KCC')
  * @returns {Promise<Object>} - Parsed profile object
  */
-async function extractProfileFromDocument(base64Image, documentType, usageCategory = "registered") {
+async function extractProfileFromDocument(base64Image, documentType, usageCategory = "registered", landUnit = "Hectares") {
   const systemPrompt = `You are a strict, secure OCR and data extraction AI for a government agricultural platform.
 Your job is to read the provided document (type: ${documentType}) and extract ONLY the agricultural and core demographic data required for scheme eligibility.
 
 STRICT PRIVACY RULES:
 1. NEVER extract or output any Government ID numbers (e.g., the 12-digit Aadhaar number, PAN number). Ignore them completely.
 2. If the document is an Aadhaar card, extract the Name, State, Date of Birth/Age, and Gender.
-3. If the document is a 7/12 Land Extract (Satbara), extract the Owner Name, State/District, and Land Holding (Sum the total land size in Acres heavily accurately by converting Hectares if needed; 1 Hectare = 2.47 Acres).
+3. If the document is a 7/12 Land Extract (Satbara), extract the Owner Name, State/District, and Land Holding.
+   IMPORTANT CONTEXT: The user indicated that the land size in this document is likely in **${landUnit}**. 
+   - Sum the total land size accurately.
+   - If the unit is Hectares, convert to Acres (1 Hectare = 2.47 Acres).
+   - Your final output for "landHolding" MUST ALWAYS BE IN ACRES.
 
 OUTPUT FORMAT:
 Output ONLY valid JSON. Your output must strictly adhere to this schema:
@@ -714,7 +720,7 @@ Output ONLY valid JSON. Your output must strictly adhere to this schema:
   "gender": "male" | "female" | "other",
   "state": "Full State Name in English (e.g. Maharashtra)",
   "category": "general" | "obc" | "sc" | "st" | "other" (infer if possible, else leave empty),
-  "landHolding": Number (in Acres),
+  "landHolding": Number (ALWAYS IN ACRES),
   "annualIncome": Number (if present)
 }
 Omit any keys where the data is not found in the image. DO NOT output markdown, backticks, or conversational text.`;

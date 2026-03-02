@@ -17,6 +17,7 @@ export default function Settings() {
   const [details, setDetails] = useState({ 
     name: user?.name || '', 
     email: user?.email || '',
+    contactNumber: user?.contactNumber || '',
     activeSchemes: user?.activeSchemes || [] 
   });
   const [allSchemes, setAllSchemes] = useState([]);
@@ -32,6 +33,7 @@ export default function Settings() {
       setDetails({
         name: user.name || '',
         email: user.email || '',
+        contactNumber: user.contactNumber || '',
         activeSchemes: user.activeSchemes || []
       });
     }
@@ -140,6 +142,13 @@ export default function Settings() {
               <div style={{ position: 'relative' }}>
                 <Mail size={16} style={{ position: 'absolute', top: '12px', left: '12px', color: 'var(--text-muted)' }} />
                 <input required type="email" value={details.email} onChange={(e) => setDetails({ ...details, email: e.target.value })} className="input-dark" style={{ paddingLeft: '36px' }} />
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>WhatsApp Number (Optional)</label>
+              <div style={{ position: 'relative' }}>
+                <Zap size={16} style={{ position: 'absolute', top: '12px', left: '12px', color: 'var(--text-muted)' }} />
+                <input type="text" value={details.contactNumber} onChange={(e) => setDetails({ ...details, contactNumber: e.target.value })} className="input-dark" style={{ paddingLeft: '36px' }} placeholder="+91 9876543210" />
               </div>
             </div>
           </div>

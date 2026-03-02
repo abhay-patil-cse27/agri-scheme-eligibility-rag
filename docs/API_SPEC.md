@@ -57,8 +57,9 @@ Specialized endpoints for high-accessibility feature extraction.
 
 `POST /api/scan/document`
 
-- **Body:** `Multipart/form-data` with `document` (Image) and `documentType`.
+- **Body:** `Multipart/form-data` with `document` (Image), `documentType` (e.g., '7-12'), and `landUnit` (optional: 'Acres' or 'Hectares').
 - **Privacy:** Binary stream only. Zero permanent storage.
+- **Unit Logic:** Auto-converts Hectares to Acres (2.47x) for standardizing land eligibility checks.
 
 ### Voice Transcription & Extraction
 
@@ -108,3 +109,17 @@ The assistant supports persistent, multi-session conversation history.
 - `POST /api/chat/sessions` - Create a new chat session (returns `sessionId`).
 - `GET /api/chat/sessions/:id/messages` - Retrieve full message history for a specific session.
 - `DELETE /api/chat/sessions/:id` - Delete a specific chat session and all its messages.
+
+---
+
+## 📱 WhatsApp Bridge (Setu)
+
+Asynchronous integration primarily for voice-driven agricultural support.
+
+### WhatsApp Webhook
+
+`POST /api/whatsapp/webhook`
+
+- **Source:** Twilio Cloud (Secure Webhook).
+- **Function:** Transcription (Whisper) -> Intent Extraction -> RAG Reasoning -> Dialect-tuned WhatsApp Reply.
+- **Payload:** `Body` (Message), `MediaUrl0` (Voice note), `From` (Contact number).

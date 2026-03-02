@@ -17,6 +17,7 @@ export default function DocumentScanner({ onDataExtracted }) {
   const [hasConsent, setHasConsent] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState('');
+  const [landUnit, setLandUnit] = useState('Hectares'); // Default for Satbara
   
   const fileInputRef = useRef(null);
 
@@ -73,7 +74,7 @@ export default function DocumentScanner({ onDataExtracted }) {
     setError('');
     
     try {
-      const response = await scanDocument(file, docType);
+      const response = await scanDocument(file, docType, landUnit);
       if (response.success && response.data) {
         onDataExtracted(response.data);
         clearFile();
@@ -180,6 +181,35 @@ export default function DocumentScanner({ onDataExtracted }) {
                 <option value="Other Official ID">Other Official ID</option>
               </select>
             </div>
+
+            {docType === '7/12 Land Record' && (
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px' }}>Land Unit on Document</label>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  {['Hectares', 'Acres'].map((unit) => (
+                    <button
+                      key={unit}
+                      type="button"
+                      onClick={() => setLandUnit(unit)}
+                      style={{
+                        flex: 1,
+                        padding: '8px',
+                        borderRadius: '8px',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        background: landUnit === unit ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.05)',
+                        color: landUnit === unit ? 'white' : 'var(--text-secondary)',
+                        border: `1px solid ${landUnit === unit ? 'var(--accent-indigo)' : 'var(--border-glass)'}`
+                      }}
+                    >
+                      {unit}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', padding: '12px', background: 'rgba(255,165,0,0.05)', borderRadius: '8px', border: '1px solid rgba(255,165,0,0.2)' }}>
               <input 

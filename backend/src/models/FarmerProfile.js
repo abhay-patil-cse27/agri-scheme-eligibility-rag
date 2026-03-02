@@ -23,6 +23,11 @@ const farmerProfileSchema = new mongoose.Schema(
       required: [true, 'District is required'],
       trim: true,
     },
+    subRegion: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     landHolding: {
       type: Number,
       required: [true, 'Land holding (acres) is required'],
@@ -98,6 +103,11 @@ const farmerProfileSchema = new mongoose.Schema(
     hasAadharSeededBank: {
       type: Boolean,
       default: false,
+    },
+    contactNumber: {
+      type: String,
+      trim: true,
+      index: true,
     }
   },
   {

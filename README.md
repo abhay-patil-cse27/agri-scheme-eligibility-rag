@@ -26,6 +26,9 @@ decisions in their native language.
 - **Deterministic RAG Caching:** Eligibility checks are secured via **SHA-256 profile hashing**. The cache intelligently recognizes if a farmer modifies their active enrollments list (Conflict Test) and instantly bypasses stale cache to trigger a fresh LLM evaluation.
 - **Citation-Backed Decisions:** Every result includes verbatim quotes and page references for 100% verifiability, driven by a deep 3-Tier Optimization Cache (Eligibility, Translation, and TTS) to save API tokens and reduce latency.
 - **High-Performance Mobile UI:** "Industry-Grade" responsive design with a **Zero-Hang** performance strategy. Automatically disables heavy WebGL components and intensive animations on mobile devices to ensure a smooth, native-like experience on mid-range smartphones (Android/iOS).
+- **Offline-First (PWA):** Progressive Web App support using `vite-plugin-pwa`. Farmers can "install" the app and access scheme descriptions even with patchy farm internet through persistent assets and API caching.
+- **WhatsApp "Setu" (Bridge):** Asynchronous WhatsApp chatbot integration using **Twilio**. Supports voice notes, transcribing them via Whisper, and generating dialect-tuned AI responses directly in the farmer's favorite messaging app.
+- **Hyper-Local Dialect Tuning:** AI adapts its tone, greetings, and vocabulary based on the farmer's specific sub-region (e.g., Kolhapur, Vidarbha), making the assistant feel like a local advisor.
 - **Smart Voice Sync:** Real-time synchronization of **Groq-Whisper** transcriptions directly into the chat input field across all interfaces (Dashboard & Floating Bot).
 
 ---
@@ -123,17 +126,22 @@ cd frontend && npm run dev
 
 ---
 
-## Documentation
+## 📚 Documentation Navigator
 
-Explore our deep-dive technical documents:
+The Niti Setu documentation is comprehensive. Use the table below to find the guide most relevant to your role:
 
-- **[Technical Architecture](docs/ARCHITECTURE.md)**: Details on HLD, LLD, and Data Flow diagrams.
-- **[Frontend Guide](docs/FRONTEND_GUIDE.md)**: Deep dive into the React Design System and Glassmorphic components.
-- **[Backend Guide](docs/BACKEND_GUIDE.md)**: Implementation details of databases, security, and the AI service layer.
-- **[Developer Guide](docs/DEVELOPER_GUIDE.md)**: Implementation details of MMR, chunking, and search algorithms.
-- **[API Specification](docs/API_SPEC.md)**: Complete REST API documentation.
-- **[Privacy Policy](docs/PRIVACY_POLICY.md)**: Zero-storage protocol details.
-- **[Mobile Strategy](docs/MOBILE_OPTIMIZATION.md)**: Performance and UX optimization for farmers.
+| Role | Guide | Purpose |
+| :--- | :--- | :--- |
+| **Newcomer** | [🚀 Readme Navigator](docs/NAVIGATOR.md) | Systematic walkthrough of the ecosystem. |
+| **Architect** | [🏗️ Architecture](docs/ARCHITECTURE.md) | HLD, LLD, and RAG Data Flow diagrams. |
+| **Coder** | [🛠️ Developer Guide](docs/DEVELOPER_GUIDE.md) | MMR/RRF implementation & Search logic. |
+| **Integrator** | [🔌 API Spec](docs/API_SPEC.md) | Endpoint details for Auth, Chat, and OCR. |
+| **Security** | [🛡️ Privacy Policy](docs/PRIVACY_POLICY.md) | Zero-storage & transient data protocols. |
+
+> [!TIP]
+> **Looking for Phase 3 updates?** Check out the **[Advanced Features Guide](docs/ADVANCED_FEATURES.md)** for details on the WhatsApp Bridge, PWA logic, and Dialect Tuning.
+
+---
 
 ---
 

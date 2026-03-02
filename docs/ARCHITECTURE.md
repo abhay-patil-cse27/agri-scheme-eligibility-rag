@@ -17,6 +17,81 @@ scalability and security.
 
 ![System Architecture](architecture/system-architecture.png)
 
+![Vector Search Logic](architecture/vector-search-logic.png)
+
+```mermaid
+graph TD
+    %% Users
+    Farmer((Farmer / Guest))
+    Admin((System Admin))
+    
+    %% Interfaces
+    WebUI[Vite PWA Frontend]
+    WhatsApp[WhatsApp / Twilio Bridge]
+    
+    %% Security Layer
+    subgraph "Auth & Security"
+        OTP[OTP Service]
+        OAuth[Google OAuth 2.0]
+        JWT[JWT Signer/Verify]
+        RL[Rate Limiter]
+    end
+    
+    %% Logic Layers
+    subgraph "Backend (Node.js/Express)"
+        API[API Gateway]
+        WAS[WhatsApp Setu Service]
+        LLM[Krishi Mitra RAG Engine]
+        OCR[Groq-Vision OCR Service]
+        Voice[Voice & TTS Service]
+    end
+    
+    %% Computation
+    subgraph "Inference & Heavy Logic"
+        Groq[Groq Llama 3.3/3.2/3.1]
+        Xenova[Local Embeddings - Xenova]
+        Eleven[ElevenLabs TTS]
+    end
+    
+    %% Storage
+    subgraph "Data Tier"
+        DB[(MongoDB Atlas - Vector & User)]
+        KG[(Neo4j Aura - Graph Rules)]
+        Cache[LRU Memory Cache]
+    end
+    
+    %% Comms
+    SMTP[Gmail SMTP - Transactional]
+    
+    %% Interactions
+    Farmer --> WebUI
+    Farmer -- "Voice Note / Text" --> WhatsApp
+    Admin --> WebUI
+    
+    WebUI -- "HTTPS / JSON" --> API
+    WhatsApp -- "Webhook" --> WAS
+    
+    API -- "Verify" --> OTP
+    API -- "Sign" --> JWT
+    API -- "Request" --> RL
+    
+    API --> LLM
+    API --> OCR
+    API --> Voice
+    WAS --> LLM
+    
+    LLM -- "Similarity" --> DB
+    LLM -- "Constraint Check" --> KG
+    LLM -- "Vector Generation" --> Xenova
+    LLM -- "Inference" --> Groq
+    
+    OCR -- "Vision" --> Groq
+    Voice -- "Synthesis" --> Eleven
+    
+    API --> Cache
+    API -- "Notifications" --> SMTP
+```
+
 ### Key Layers
 
 - **Frontend UI:** React 19, Vite, Framer Motion, **React Bits** - Premium **Glassmorphic** design system, interactive animations, and responsive layouts.
@@ -59,6 +134,8 @@ specific keyword terms (like scheme codes or state names):
   results, ensuring that if a chunk is relevant in both paths, it is boosted
   to the top.
 
+![Vector Search Logic](architecture/vector-search-logic.png)
+
 ### 3. Diversity Filtering (MMR)
 
 To prevent the LLM from seeing redundant information, we apply **Maximal
@@ -67,6 +144,23 @@ Marginal Relevance (MMR)**:
 - It penalizes chunks that are too similar to already selected chunks.
 - This ensures the context window contains a diverse range of criteria (e.g.,
   one chunk about age, one about land size, one about crop type).
+
+```mermaid
+graph TD
+    Query([User Query]) --> Pre[Translation & Intent Clipping]
+    Pre --> Embed[Transformers.js Vectorization]
+    
+    subgraph "Parallel Knowledge Retrieval"
+        Embed --> Vector[MongoDB Vector Search Index]
+        Pre --> Keyword[MongoDB Atlas BM25 Text Search]
+    end
+    
+    Vector -- "Score 0.1-1.0" --> Fusion[Reciprocal Rank Fusion - RRF]
+    Keyword -- "Score 1-100" --> Fusion
+    
+    Fusion -- "Ranked Candidates" --> MMR[Maximal Marginal Relevance]
+    MMR -- "Diversity Check" --> Context[Context Window Injection]
+```
 
 ---
 
@@ -116,6 +210,39 @@ pipeline.
 
 ![RAG Sequence](architecture/master-rag-sequence.png)
 
+```mermaid
+sequenceDiagram
+    participant U as User (Query)
+    participant S as Service Layer
+    participant X as Xenova (Local)
+    participant D as MongoDB (Vector)
+    participant G as Neo4j (Graph)
+    participant L as Groq (LLM)
+    
+    U->>S: "Am I eligible for PM-Kisan?"
+    S->>S: Select Language & Sub-Region context
+    S->>X: Generate Query Embedding (384-d)
+    X-->>S: Vector returned
+    
+    par Multi-Path Retrieval
+        S->>D: $vectorSearch (Semantic)
+        S->>D: Text Index (Keyword BM25)
+    end
+    
+    S->>S: Reciprocal Rank Fusion (RRF)
+    S->>D: Fetch Top 10 Context Chunks
+    S->>S: Maximal Marginal Relevance (MMR) Diversification
+    
+    S->>G: Check EXCLUSIVE_OF Conflict Rules
+    G-->>S: "Farmer holds conflicted scheme X"
+    
+    S->>L: Payload: Divergent Context + Conflicts + Dialect Prompt
+    L->>L: Semantic Reasoning & Verdict Generation
+    L-->>S: JSON Verdict + Citations
+    
+    S-->>U: Final Response (Audio + Text)
+```
+
 ### The Two-Phase Pipeline (100% Native implementation)
 
 Niti Setu achieves high performance by bypassing high-level RAG frameworks (LangChain/LlamaIndex) and pre-built hybrid libraries. This native approach ensures:
@@ -144,6 +271,20 @@ Privacy is baked into the protocol. We follow a **Zero-Storage** policy for
 sensitive documents like Aadhaar or land records.
 
 ![Privacy Data Flow](architecture/privacy-data-flow.png)
+
+```mermaid
+graph LR
+    U[Farmer] -- "Upload Image" --> M[Multer Middleware]
+    M -- "Disk Write" --> T[tmp/ Directory]
+    T -- "Buffer Read" --> B[Base64 Conversion]
+    B -- "HTTPS Stream" --> G[Groq Vision API]
+    G -- "JSON Result" --> L[Cleanup Logic]
+    L -- "fs.unlink" --> T
+    L -- "Data Merge" --> P[Profile State]
+    
+    style T fill:#f96,stroke:#333,stroke-dasharray: 5 5
+    note right of T: File exists for < 500ms
+```
 
 ### Zero-Storage Protocol (Multer Implementation)
 
@@ -218,6 +359,38 @@ Our code is structured into clear pillars to support production-scale
 maintenance.
 
 ![Backend Component Map](architecture/backend-component-map.png)
+
+```mermaid
+mindmap
+  root((Niti Setu Backend))
+    Routes
+      Auth
+      Eligibility
+      Voice
+      WhatsApp
+      Scan
+      Analytics
+      Graph
+      Chat
+    Services
+      LLM Engine
+      Graph Traxy
+      Embedding Ops
+      WhatsApp Setu
+      Resource Tracking
+    Models
+      User
+      FarmerProfile
+      Scheme
+      Chunk
+      ResourceUsage
+      AuditLog
+    Middleware
+      JWT Auth
+      Rate Limiter
+      Validators
+      Error Handler
+```
 
 - **Routes (`/routes`):** Clean API surface (Auth, Eligibility, Voice, Scan, Analytics, Graph, Chat, Profile).
 - **Services (`/services`):** The "Brains" where LLM logic, Graph traversal, and Embeddings live.

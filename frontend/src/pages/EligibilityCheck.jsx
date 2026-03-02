@@ -193,7 +193,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
     name: '', age: '', state: '', district: '', landHolding: '',
     cropType: '', category: 'General', annualIncome: '', hasIrrigationAccess: false,
     gender: 'Male', hasBPLCard: false, ownershipType: 'Owner', hasKcc: false, isDifferentlyAbled: false, hasAadharSeededBank: false,
-    activeSchemes: []
+    activeSchemes: [], subRegion: ''
   });
 
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -302,6 +302,29 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
             {form.state && indianStates[form.state] && indianStates[form.state].map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}><MapPin size={14} /> {t('pf_sub_region', 'Sub-Region (Dialect)')}</label>
+          <select 
+            name="subRegion" 
+            value={form.subRegion} 
+            onChange={handleChange} 
+            className="select-dark"
+          >
+            <option value="">{t('pf_select_subregion', 'Standard (Neutral)')}</option>
+            <optgroup label="Maharashtra Dialects">
+              <option value="Kolhapur">Kolhapur (Western Marathi)</option>
+              <option value="Vidarbha">Vidarbha (Varhadi)</option>
+              <option value="Marathwada">Marathwada</option>
+              <option value="Konkan">Konkan (Malvani)</option>
+              <option value="Khandesh">Khandesh (Ahirani)</option>
+            </optgroup>
+            <optgroup label="Other Regions">
+              <option value="Bhojpuri">Bhojpuri Region</option>
+              <option value="Saurashtra">Saurashtra</option>
+              <option value="Rayalaseema">Rayalaseema</option>
+            </optgroup>
           </select>
         </div>
         <div>

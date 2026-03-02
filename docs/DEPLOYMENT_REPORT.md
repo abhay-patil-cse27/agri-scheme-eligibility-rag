@@ -61,6 +61,7 @@ npm start
 - [ ] **SSL/TLS**: Provision a production certificate via Let's Encrypt (Certbot). Local `mkcert` is for dev only.
 - [ ] **Rate Limiting Check**: Verify IP headers are correctly forwarded by Nginx.
 - [ ] **PII Memory Sweep**: Confirm that `fs.unlink()` in `scanRoutes.js` is wiping temporary documents within 500ms of analysis.
+- [ ] **STT Denoising**: Verify the `llama-3.1-8b-instant` model is active in `llmService.js` to prevent Whisper hallucinations in noisy farming environments.
 - [ ] **Admin Provisioning**: Manually create the first Super Admin (`admin@nitisetu.gov.in`) in the MongoDB `users` collection to unlock the Admin Dashboard.
 
 ## 5. Deployment Verification
