@@ -32,19 +32,23 @@ sequenceDiagram
 ```
 
 ### Security & ID Governance (Unique User Protocol)
-
+ 
 The system enforces a **Strict Identity Governance** model to ensure data integrity and prevent double-dipping in schemes:
-
+ 
 1. **Unique Identity Linking**:
-   - Every incoming WhatsApp message is hashed and compared against the `FarmerProfile` database using the sender's phone number as a **Primary Unique Key**.
-   - This ensures that a single WhatsApp account maps to exactly one **Unique User in the backend.
-
-2. **Multimodal Registry Checks**:
-   - **Registered Users**: Receive a "Premium Personalized Experience" including greetings by name, hyper-local dialect tuning, and direct links to their private *Eligibility History*.
-   - **Unregistered Guests**: Are identified instantly. The system serves a "Guided Public Response" that includes a warm welcome, a high-level answer, and an automated registration nudge to convert them into verified users.
-
-3. **Dynamic Response Architecting**:
-   - The AI engine uses **Contextual Prompt Injection** to change its tone. If the user is a guest, it prefixes the response with a registration notice: *"We have noticed that you are not registered with Niti Setu yet!"* to drive user acquisition.
+   - Every incoming WhatsApp message is compared against the `User` database using the sender's phone number as a **Primary Unique Key**.
+   - This ensures that a single WhatsApp account maps to exactly one **Verified User** in the backend.
+ 
+2. **WhatsApp OTP Verification Protocol**:
+   - To prevent identity spoofing, users must verify their WhatsApp number via a **Secure 6-Digit OTP** sent directly to their WhatsApp device.
+   - Status is tracked via `isPhoneVerified`. If a user changes their number in settings, the verification status is automatically reset, requiring a re-verification of the new number.
+ 
+3. **Multimodal Registry Checks**:
+   - **Verified Users**: Receive a "Premium Personalized Experience" including greetings by name, hyper-local dialect tuning, and direct links to their private *Eligibility History*.
+   - **Unregistered Guests/Unverified**: Are identified instantly. The system serves a "Guided Public Response" that includes a warm welcome, a high-level answer, and an automated registration/verification nudge.
+ 
+4. **Dynamic Response Architecting**:
+   - The AI engine uses **Contextual Prompt Injection** to change its tone. If the user is unverified, it prefixes the response with a registration notice: *"We have noticed that you are not registered with Niti Setu yet!"* to drive user acquisition and security.
 
 ### Robust Local Tunneling & Fallbacks
 
@@ -130,8 +134,15 @@ Follow these steps to establish the agriculture-to-AI bridge:
    - Paste the IP into the tunnel browser prompt and click **Submit**.
    - Your tunnel is now "unlocked" for Twilio webhooks.
 
-5. **Synchronize Device**:
-   Send the specific "join" code (e.g., `join stretch-unusual`) to the Twilio number from your WhatsApp device to link it to the sandbox environment.
+5. **WhatsApp Number Registration & Verification (Optional)**:
+   - Users can now manage their WhatsApp identity directly from the **Profile Settings**.
+   - **Step A**: Navigate to *Settings* > *Update Profile*.
+   - **Step B**: Enter a valid WhatsApp number (e.g., `+91XXXXXXXXXX`).
+   - **Step C**: Click **"Verify via WhatsApp"**. The backend generates a secure OTP and dispatches it via the WhatsApp bridge.
+   - **Step D**: Enter the 6-digit code in the app. Once verified, the number is locked to the account, and the user gains full personalized AI access via WhatsApp.
+
+6. **Synchronize Device (Sandbox Only)**:
+   - Send the specific "join" code (e.g., `join stretch-unusual`) to the Twilio number from your WhatsApp device to link it to the sandbox environment.
 
 ---
 

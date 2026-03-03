@@ -9,6 +9,7 @@ const config = require('../config/env');
 const { protect, authorize } = require('../middleware/auth');
 const sendEmail = require('../utils/sendEmail');
 const { OAuth2Client } = require('google-auth-library');
+const { sendWhatsAppOTP } = require('../services/whatsappService');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -103,6 +104,8 @@ const sendTokenResponse = (user, statusCode, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      contactNumber: user.contactNumber,
+      isPhoneVerified: user.isPhoneVerified,
       activeSchemes: user.activeSchemes,
     }
   });
@@ -233,16 +236,19 @@ router.put(
   '/updatedetails',
   protect,
   asyncHandler(async (req, res) => {
-    const fieldsToUpdate = {
-      name: req.body.name,
-      email: req.body.email,
-      activeSchemes: req.body.activeSchemes,
-    };
+    const user = await User.findById(req.user.id);
+    
+    // If phone changes, it must be re-verified
+    if (req.body.contactNumber && req.body.contactNumber !== user.contactNumber) {
+        user.isPhoneVerified = false;
+        user.contactNumber = req.body.contactNumber;
+    }
+    
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    user.activeSchemes = req.body.activeSchemes || user.activeSchemes;
 
-    const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
-      new: true,
-      runValidators: true,
-    });
+    await user.save({ runValidators: true });
 
     try {
       await sendEmail({
@@ -338,10 +344,84 @@ router.put(
     user.password = password;
     await user.save();
 
+    sendTokenResponse(user, 200, res);
+  })
+);
+
+/**
+ * POST /api/auth/send-whatsapp-otp
+ * Generate and send OTP via WhatsApp for phone verification
+ */
+router.post(
+  '/send-whatsapp-otp',
+  protect,
+  asyncHandler(async (req, res) => {
+    const { contactNumber } = req.body;
+
+    if (!contactNumber) {
+      return res.status(400).json({ success: false, error: 'Please provide a WhatsApp number' });
+    }
+
+    // Check if number is taken by someone else
+    const existing = await User.findOne({ contactNumber, _id: { $ne: req.user.id } });
+    if (existing) {
+      return res.status(400).json({ success: false, error: 'This number is already registered to another account.' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Save/Update OTP in DB
+    await OTP.findOneAndUpdate(
+      { contactNumber, purpose: 'phone_verification' },
+      { otp, createdAt: Date.now() },
+      { upsert: true, new: true }
+    );
+
+    // Send WhatsApp OTP
+    await sendWhatsAppOTP(contactNumber, otp);
+    
+    res.status(200).json({ success: true, message: 'Verification code sent to WhatsApp' });
+  })
+);
+
+/**
+ * POST /api/auth/verify-whatsapp-otp
+ * Verify WhatsApp OTP and update user's verification status
+ */
+router.post(
+  '/verify-whatsapp-otp',
+  protect,
+  asyncHandler(async (req, res) => {
+    const { contactNumber, otp } = req.body;
+
+    if (!contactNumber || !otp) {
+      return res.status(400).json({ success: false, error: 'Please provide number and code' });
+    }
+
+    // Verify OTP record
+    const otpRecord = await OTP.findOne({ contactNumber, otp, purpose: 'phone_verification' });
+    if (!otpRecord) {
+      return res.status(400).json({ success: false, error: 'Invalid or expired verification code' });
+    }
+
+    // Update User
+    const user = await User.findById(req.user.id);
+    user.contactNumber = contactNumber;
+    user.isPhoneVerified = true;
+    await user.save();
+
     // Delete OTP
     await OTP.deleteOne({ _id: otpRecord._id });
 
-    sendTokenResponse(user, 200, res);
+    res.status(200).json({ 
+      success: true, 
+      message: 'Phone number verified successfully!',
+      data: {
+        contactNumber: user.contactNumber,
+        isPhoneVerified: user.isPhoneVerified
+      }
+    });
   })
 );
 

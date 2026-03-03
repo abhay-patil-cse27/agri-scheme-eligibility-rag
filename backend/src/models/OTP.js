@@ -3,7 +3,9 @@ const mongoose = require('mongoose');
 const OTPSchema = new mongoose.Schema({
   email: {
     type: String,
-    required: true,
+  },
+  contactNumber: {
+    type: String,
   },
   otp: {
     type: String,
@@ -11,7 +13,7 @@ const OTPSchema = new mongoose.Schema({
   },
   purpose: {
     type: String,
-    enum: ['registration', 'password_reset'],
+    enum: ['registration', 'password_reset', 'phone_verification'],
     required: true,
   },
   createdAt: {

@@ -63,6 +63,8 @@ export const provisionAdmin = (data) => api.post('/auth/admins', data).then(r =>
 export const updateUserRole = (id, role) => api.put(`/auth/users/${id}/role`, { role }).then(r => r.data);
 export const getAllUsers = () => api.get('/auth/users').then((r) => r.data);
 export const deleteUser = (id) => api.delete(`/auth/users/${id}`).then((r) => r.data);
+export const sendWhatsAppOTP = (contactNumber) => api.post('/auth/send-whatsapp-otp', { contactNumber }).then(r => r.data);
+export const verifyWhatsAppOTP = (contactNumber, otp) => api.post('/auth/verify-whatsapp-otp', { contactNumber, otp }).then(r => r.data);
 
 // ── Schemes ───────────────────────────────
 export const getSchemes = () => api.get(`/schemes?_v=${Date.now()}`).then((r) => r.data);

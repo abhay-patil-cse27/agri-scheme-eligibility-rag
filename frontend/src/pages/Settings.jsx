@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { User, Mail, Lock, KeyRound, Loader2, Save, Plus, X, Zap } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { updateDetails, updatePassword, sendOTP, getSchemes } from '../services/api';
+import { updateDetails, updatePassword, sendOTP, getSchemes, sendWhatsAppOTP, verifyWhatsAppOTP } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import AgriCard from '../components/common/AgriCard';
@@ -27,6 +27,11 @@ export default function Settings() {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customSchemeName, setCustomSchemeName] = useState('');
+  
+  // WhatsApp Verification State
+  const [whatsappOTP, setWhatsappOTP] = useState('');
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationLoading, setVerificationLoading] = useState(false);
   
   useEffect(() => {
     if (user) {
@@ -94,6 +99,48 @@ export default function Settings() {
     }
   };
 
+  const handleSendWhatsAppOTP = async () => {
+    if (!details.contactNumber) {
+      addToast('Error', 'Please enter a WhatsApp number first', 'error');
+      return;
+    }
+    setVerificationLoading(true);
+    try {
+      const res = await sendWhatsAppOTP(details.contactNumber);
+      if (res.success) {
+        setShowVerification(true);
+        addToast(t('otp_sent_title'), 'A 6-digit code has been sent to your WhatsApp', 'success');
+      }
+    } catch (err) {
+      addToast(t('toast_system_error'), err.response?.data?.error || 'Failed to send WhatsApp code', 'error');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const handleVerifyWhatsAppOTP = async () => {
+    if (!whatsappOTP || whatsappOTP.length !== 6) {
+      addToast('Error', 'Please enter a valid 6-digit code', 'error');
+      return;
+    }
+    setVerificationLoading(true);
+    try {
+      const res = await verifyWhatsAppOTP(details.contactNumber, whatsappOTP);
+      if (res.success) {
+        // Update both local and context state
+        const updatedUser = { ...user, isPhoneVerified: true, contactNumber: details.contactNumber };
+        setUser(updatedUser);
+        setShowVerification(false);
+        setWhatsappOTP('');
+        addToast('Verified!', 'Your WhatsApp number is now successfully verified', 'success');
+      }
+    } catch (err) {
+      addToast(t('toast_system_error'), err.response?.data?.error || 'Verification failed', 'error');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
     <AgriCard
@@ -145,12 +192,67 @@ export default function Settings() {
               </div>
             </div>
             <div>
-              <label style={labelStyle}>WhatsApp Number (Optional)</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label style={labelStyle}>WhatsApp Number</label>
+                {user?.isPhoneVerified && details.contactNumber === user.contactNumber ? (
+                  <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
+                     Verified ✔
+                  </span>
+                ) : (
+                  details.contactNumber && (
+                    <button 
+                      type="button" 
+                      onClick={handleSendWhatsAppOTP} 
+                      disabled={verificationLoading}
+                      style={{ background: 'none', border: 'none', color: 'var(--accent-indigo)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', marginBottom: '8px' }}
+                    >
+                      {verificationLoading ? 'Sending...' : 'Verify via WhatsApp'}
+                    </button>
+                  )
+                )}
+              </div>
               <div style={{ position: 'relative' }}>
                 <Zap size={16} style={{ position: 'absolute', top: '12px', left: '12px', color: 'var(--text-muted)' }} />
                 <input type="text" value={details.contactNumber} onChange={(e) => setDetails({ ...details, contactNumber: e.target.value })} className="input-dark" style={{ paddingLeft: '36px' }} placeholder="+91 9876543210" />
               </div>
             </div>
+
+            {showVerification && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{ gridColumn: '1 / -1', background: 'rgba(99, 102, 241, 0.05)', padding: '20px', borderRadius: '12px', border: '1px solid var(--accent-indigo)' }}
+              >
+                <label style={labelStyle}>Enter 6-Digit WhatsApp Verification Code</label>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <input 
+                    type="text" 
+                    maxLength={6}
+                    value={whatsappOTP} 
+                    onChange={(e) => setWhatsappOTP(e.target.value.replace(/\D/g, ''))} 
+                    className="input-dark" 
+                    style={{ letterSpacing: '8px', textAlign: 'center', fontSize: '1.2rem', fontWeight: 800 }}
+                    placeholder="000000"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={handleVerifyWhatsAppOTP}
+                    disabled={verificationLoading}
+                    className="btn-glow"
+                    style={{ padding: '0 24px' }}
+                  >
+                    {verificationLoading ? <Loader2 size={18} className="spin" /> : 'Verify'}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowVerification(false)}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </div>
 
           <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>

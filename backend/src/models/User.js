@@ -46,6 +46,10 @@ const userSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
+    isPhoneVerified: {
+      type: Boolean,
+      default: false,
+    },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },

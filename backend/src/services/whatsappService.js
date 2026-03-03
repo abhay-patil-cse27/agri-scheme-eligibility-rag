@@ -133,7 +133,17 @@ const sendWhatsAppMessage = async (to, text) => {
   }
 };
 
+/**
+ * Send a verification OTP via WhatsApp
+ */
+const sendWhatsAppOTP = async (phoneNumber, otp) => {
+  const formattedPhone = phoneNumber.startsWith('whatsapp:') ? phoneNumber : `whatsapp:${phoneNumber}`;
+  const message = `🔔 *Niti Setu Security Protocol*\n\nYour 6-digit verification code is: *${otp}*\n\nThis code is valid for 10 minutes. Do not share it with anyone. 🌾`;
+  return await sendWhatsAppMessage(formattedPhone, message);
+};
+
 module.exports = {
   handleIncomingMessage,
-  sendWhatsAppMessage
+  sendWhatsAppMessage,
+  sendWhatsAppOTP
 };
