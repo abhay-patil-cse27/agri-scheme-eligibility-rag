@@ -99,9 +99,10 @@ const handleIncomingMessage = async (payload) => {
     }
 
     // 4. Generate AI Response for Registered Users (Unified Account Identity)
-    const primaryName = user?.name || profiles[0].name;
+    const accountName = user?.name || "Abhay Patil"; // Prioritize Account Owner
     const systemRole = user?.role || 'Farmer';
-    const profilesList = profiles.map((p, i) => `   - Profile ${i+1}: *${p.name}* (${p.cropType} in ${p.district})`).join('\n');
+    const profilesCount = profiles.length;
+    const profilesList = profiles.map((p, i) => `   - Farmer: *${p.name}* (${p.cropType} in ${p.district})`).join('\n');
 
     const registeredOptions = `
     • View your *Eligibility History* 📊
@@ -110,19 +111,25 @@ const handleIncomingMessage = async (payload) => {
     • Ask about *Weather or Market Prices* 🌦️
     `;
 
+    // Create a virtual profile for the LLM to use the correct name in the greeting
+    const virtualProfile = {
+      ...profiles[0], // Keep location/crops context for background knowledge
+      name: accountName, // OVERRIDE name with Account Holder for greeting
+      role: systemRole
+    };
+
     const registeredContext = `[ADMIN NOTE: 
-    - PRIMARY IDENTITY: You are talking to *${primaryName}*. 
+    - CRITICAL IDENTITY: You are talking to the ACCOUNT OWNER: *${accountName}*. 
     - SYSTEM ROLE: They are a verified *${systemRole === 'admin' ? 'Administrator' : 'Farmer'}*.
-    - ACCOUNT SUMMARY: This login manages ${profiles.length} distinct farmer profiles.
-    - PROFILES INVENTORY:
+    - DATA CONTEXT: This user manages ${profilesCount} farmer profiles under their email.
+    - PROFILES INVENTORY (For your reference):
 ${profilesList}
-    - INSTRUCTION: GREETING MUST BE ADDRESSED TO *${primaryName}*. 
-    - DO NOT address them by individual profile names unless they ask about a specific one.
-    - Mention their official role (*${systemRole}*) in the welcome.
-    - ACKNOWLEDGE that they are managing multiple records under one secure account.
+    - MANDATORY INSTRUCTION: GREETING MUST BE "Namaskar ${accountName}! 🙏" (or regional equivalent). 
+    - DO NOT call the user by farmer names like "Suresh" or "Niranjan". 
+    - ACKNOWLEDGE that they are the master account owner managing these ${profilesCount} profiles.
     - OPTIONS: ${registeredOptions}]`;
     
-    const aiResponse = await chatWithKrishiMitra(userMessage, [], profiles[0], 'en', 'registered', registeredContext);
+    const aiResponse = await chatWithKrishiMitra(userMessage, [], virtualProfile, 'en', 'registered', registeredContext);
     
     // 5. Send Response Back to User
     await sendWhatsAppMessage(from, aiResponse);
