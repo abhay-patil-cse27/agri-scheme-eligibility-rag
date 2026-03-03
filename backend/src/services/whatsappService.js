@@ -74,19 +74,18 @@ const handleIncomingMessage = async (payload) => {
     // First, find the user who has verified this phone number
     const user = await User.findOne({ contactNumber, isPhoneVerified: true });
     
-    let profile = null;
+    let profiles = [];
     if (user) {
-      // Find the profile linked to this unique user account
-      profile = await FarmerProfile.findOne({ userId: user._id }).lean();
+      // Find ALL profiles linked to this unique user account
+      profiles = await FarmerProfile.find({ userId: user._id }).lean();
     } else {
       // Fallback: Check if there's a profile with this number directly (legacy/guest verification)
-      profile = await FarmerProfile.findOne({ contactNumber }).lean();
+      const directProfile = await FarmerProfile.findOne({ contactNumber }).lean();
+      if (directProfile) profiles = [directProfile];
     }
     
-    // 3. Handle Guest Mode Logic (Uniqueness Enforcement)
-    if (!profile) {
-      // User is not in our system. We enforce uniqueness in the Database via 'unique: true' indexes 
-      // on Email and contactNumber in the User Schema.
+    // 3. Handle Guest Mode Logic
+    if (profiles.length === 0) {
       const guestContext = `[ADMIN NOTE: 
       - This user is NOT registered. 
       - IMPORTANT: Start your message by politely mentioning: "We have noticed that you are not registered with Niti Setu yet! 🌾"
@@ -99,21 +98,31 @@ const handleIncomingMessage = async (payload) => {
       return;
     }
 
-    // 4. Generate AI Response for Registered Users (Personalized Options)
+    // 4. Generate AI Response for Registered Users (Unified Account Identity)
+    const primaryName = user?.name || profiles[0].name;
+    const systemRole = user?.role || 'Farmer';
+    const profilesList = profiles.map((p, i) => `   - Profile ${i+1}: *${p.name}* (${p.cropType} in ${p.district})`).join('\n');
+
     const registeredOptions = `
-    - View your *Eligibility History* 📊
-    - Check new *Schemes* 📂
-    - Update your *Farmer Profile* 🚜
-    - Ask about *Weather or Market Prices* 🌦️
+    • View your *Eligibility History* 📊
+    • Check new *Schemes* 📂
+    • Update your *Farmer Profile* 🚜
+    • Ask about *Weather or Market Prices* 🌦️
     `;
 
     const registeredContext = `[ADMIN NOTE: 
-    - This is a VERIFIED unique user (ID: ${profile.userId}). 
-    - Address them as *${profile.name}*. 
-    - Since they are registered, offer them these premium options: ${registeredOptions}
-    - Remind them they can use 'Voice Input' in the app for faster profile updates.]`;
+    - PRIMARY IDENTITY: You are talking to *${primaryName}*. 
+    - SYSTEM ROLE: They are a verified *${systemRole === 'admin' ? 'Administrator' : 'Farmer'}*.
+    - ACCOUNT SUMMARY: This login manages ${profiles.length} distinct farmer profiles.
+    - PROFILES INVENTORY:
+${profilesList}
+    - INSTRUCTION: GREETING MUST BE ADDRESSED TO *${primaryName}*. 
+    - DO NOT address them by individual profile names unless they ask about a specific one.
+    - Mention their official role (*${systemRole}*) in the welcome.
+    - ACKNOWLEDGE that they are managing multiple records under one secure account.
+    - OPTIONS: ${registeredOptions}]`;
     
-    const aiResponse = await chatWithKrishiMitra(userMessage, [], profile, 'en', 'registered', registeredContext);
+    const aiResponse = await chatWithKrishiMitra(userMessage, [], profiles[0], 'en', 'registered', registeredContext);
     
     // 5. Send Response Back to User
     await sendWhatsAppMessage(from, aiResponse);
