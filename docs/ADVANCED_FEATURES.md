@@ -86,13 +86,26 @@ Follow these steps to establish the agriculture-to-AI bridge:
     npm run dev:full
     ```
 
-    *Note: This generates a random `*.trycloudflare.com` URL.*
+    *Note: This generates a random `*.trycloudflare.com` URL. If you see DNS `i/o timeout` errors, use the SSH fallbacks below.*
 
-    *Alternative (Manual - Cloudflare):*
+    *High Reliability Fallback (Serveo - Best for DNS blocks):* 🚀
+
+    If your ISP blocks Cloudflare/Localtunnel, use this SSH-based tunnel:
 
     ```bash
-    npm run tunnel
+    npm run tunnel:ssh
     ```
+
+    - When asked: `Are you sure you want to continue connecting (yes/no/[fingerprint])?` type **yes**.
+    - It will generate a persistent URL like `https://...serveousercontent.com`.
+
+    *Fastest Fallback (Pinggy):* ⚡
+
+    ```bash
+    npm run tunnel:ping
+    ```
+
+    - Select **y** to continue if prompted.
 
     *Backup (Localtunnel):*
 
@@ -100,7 +113,7 @@ Follow these steps to establish the agriculture-to-AI bridge:
     npm run tunnel:lt
     ```
 
-    *Note: If using this, visit the URL in a browser and enter your public IP from [ipv4.icanhazip.com](https://ipv4.icanhazip.com) to unlock the tunnel.*
+    *Note: If using Localtunnel, visit the URL in a browser and enter your public IP from [ipv4.icanhazip.com](https://ipv4.icanhazip.com) to unlock the tunnel.*
 
 3. **Twilio Webhook Configuration**:
    - Access the [Twilio Console](https://console.twilio.com/).
