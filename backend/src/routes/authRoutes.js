@@ -362,6 +362,16 @@ router.post(
       return res.status(400).json({ success: false, error: 'Please provide a WhatsApp number' });
     }
 
+    // Clean number and ensure it starts with +91 and has 10 digits after it
+    let cleanNumber = contactNumber.replace(/\D/g, '');
+    if (cleanNumber.length === 10) {
+      cleanNumber = '+91' + cleanNumber;
+    } else if (cleanNumber.length === 12 && cleanNumber.startsWith('91')) {
+      cleanNumber = '+' + cleanNumber;
+    } else {
+      return res.status(400).json({ success: false, error: 'Please enter a valid 10-digit mobile number' });
+    }
+
     // Check if number is taken by someone else
     const existing = await User.findOne({ contactNumber, _id: { $ne: req.user.id } });
     if (existing) {
@@ -379,9 +389,9 @@ router.post(
     );
 
     // Send WhatsApp OTP
-    await sendWhatsAppOTP(contactNumber, otp);
+    await sendWhatsAppOTP(cleanNumber, otp);
     
-    res.status(200).json({ success: true, message: 'Verification code sent to WhatsApp' });
+    res.status(200).json({ success: true, message: 'Verification code sent to WhatsApp', formattedNumber: cleanNumber });
   })
 );
 
@@ -399,8 +409,13 @@ router.post(
       return res.status(400).json({ success: false, error: 'Please provide number and code' });
     }
 
+    // Clean number for verification
+    let cleanNumber = contactNumber.replace(/\D/g, '');
+    if (cleanNumber.length === 10) cleanNumber = '+91' + cleanNumber;
+    else if (cleanNumber.length === 12 && cleanNumber.startsWith('91')) cleanNumber = '+' + cleanNumber;
+
     // Verify OTP record
-    const otpRecord = await OTP.findOne({ contactNumber, otp, purpose: 'phone_verification' });
+    const otpRecord = await OTP.findOne({ contactNumber: cleanNumber, otp, purpose: 'phone_verification' });
     if (!otpRecord) {
       return res.status(400).json({ success: false, error: 'Invalid or expired verification code' });
     }
