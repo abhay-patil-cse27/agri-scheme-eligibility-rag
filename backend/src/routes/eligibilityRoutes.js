@@ -345,9 +345,6 @@ router.post(
 
     const profileHash = hashProfile(profileData);
 
-    // Track pre-filtering latencies
-    let preFilterEmbeddingLatency = 0;
-    let preFilterVectorSearchLatency = 0;
 
     // Process schemes in parallel (subject to LLM service internal concurrency limit)
     const results = await Promise.all(

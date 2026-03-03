@@ -6,12 +6,13 @@ const User = require('../models/User');
 const OTP = require('../models/OTP');
 const { asyncHandler } = require('../middleware/errorHandler');
 const config = require('../config/env');
+const logger = require('../config/logger');
 const { protect, authorize } = require('../middleware/auth');
 const sendEmail = require('../utils/sendEmail');
 const { OAuth2Client } = require('google-auth-library');
 const { sendWhatsAppOTP } = require('../services/whatsappService');
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client(config.googleClientId);
 
 /**
  * POST /api/auth/send-otp
@@ -83,7 +84,7 @@ router.post(
 
       res.status(200).json({ success: true, message: 'OTP sent to email' });
     } catch (err) {
-      console.error(err);
+      logger.error('OTP email could not be sent', err);
       return res.status(500).json({ success: false, error: 'Email could not be sent' });
     }
   })
@@ -92,8 +93,8 @@ router.post(
 // Helper to get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
   // Create token
-  const token = jwt.sign({ id: user._id }, config.jwtSecret || 'supersecretjwtkey', {
-    expiresIn: config.jwtExpire || '30d',
+  const token = jwt.sign({ id: user._id }, config.jwtSecret, {
+    expiresIn: config.jwtExpire,
   });
 
   res.status(statusCode).json({
@@ -118,7 +119,7 @@ const sendTokenResponse = (user, statusCode, res) => {
 router.post(
   '/register',
   asyncHandler(async (req, res) => {
-    const { name, email, password, otp } = req.body;
+    const { name, email, password, otp, contactNumber } = req.body;
 
     // Verify OTP
     const otpRecord = await OTP.findOne({ email, otp, purpose: 'registration' });
@@ -127,12 +128,19 @@ router.post(
     }
 
     // Create user (Force role to farmer, admins must be created manually in DB)
-    const user = await User.create({
+    const userData = {
       name,
       email,
       password,
       role: 'farmer',
-    });
+    };
+
+    // Save contactNumber if provided during registration
+    if (contactNumber) {
+      userData.contactNumber = contactNumber;
+    }
+
+    const user = await User.create(userData);
 
     // Delete OTP record
     await OTP.deleteOne({ _id: otpRecord._id });
@@ -166,14 +174,14 @@ router.post(
               </div>
  
               <div style="text-align: center;">
-                <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard" style="background-color: #166534; color: #ffffff; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: 800; display: inline-block; width: 100%; box-sizing: border-box;">Explore Dashboard</a>
+                <a href="${config.frontendUrl}/dashboard" style="background-color: #166534; color: #ffffff; padding: 14px 28px; border-radius: 12px; text-decoration: none; font-weight: 800; display: inline-block; width: 100%; box-sizing: border-box;">Explore Dashboard</a>
               </div>
             </div>
           </div>
         `
       });
     } catch (err) {
-      console.error('Welcome email could not be sent', err);
+      logger.error('Welcome email could not be sent', err);
     }
 
     sendTokenResponse(user, 201, res);
@@ -267,7 +275,7 @@ router.put(
         `
       });
     } catch (err) {
-      console.error('Profile update email could not be sent', err);
+      logger.error('Profile update email could not be sent', err);
     }
 
     res.status(200).json({
@@ -312,7 +320,7 @@ router.put(
         `
       });
     } catch (err) {
-      console.error('Password update email could not be sent', err);
+      logger.error('Password update email could not be sent', err);
     }
 
     sendTokenResponse(user, 200, res);
@@ -452,7 +460,7 @@ router.post(
     // Verify the Google ID Token
     const ticket = await client.verifyIdToken({
         idToken: token,
-        audience: process.env.GOOGLE_CLIENT_ID,  
+        audience: config.googleClientId,  
     });
     
     const payload = ticket.getPayload();
@@ -478,10 +486,6 @@ router.post(
   })
 );
 
-/**
- * GET /api/auth/users
- * Get all registered users (Admin only)
- */
 /**
  * GET /api/auth/users
  * Get all registered users (Admin only)
@@ -534,7 +538,7 @@ router.put(
   asyncHandler(async (req, res) => {
     const { role: targetRole } = req.body;
     
-    console.log(`[AUTH] Jurisdictional Update Request - User: ${req.params.id}, Target Tier: ${targetRole}`);
+    logger.info(`[AUTH] Jurisdictional Update Request - User: ${req.params.id}, Target Tier: ${targetRole}`);
 
     if (!targetRole) {
       return res.status(400).json({ success: false, error: 'Protocol violation: Target role tier not specified.' });
@@ -577,9 +581,9 @@ router.put(
     try {
       user.role = targetRole;
       await user.save();
-      console.log(`[AUTH] System Calibration Success: ${user.email} -> ${targetRole}`);
+      logger.info(`[AUTH] System Calibration Success: ${user.email} -> ${targetRole}`);
     } catch (saveErr) {
-      console.error('[AUTH] Calibration Error:', saveErr.message);
+      logger.error('[AUTH] Calibration Error:', saveErr.message);
       return res.status(500).json({ success: false, error: 'Systemic failure during database persistence.' });
     }
 
@@ -640,7 +644,7 @@ router.put(
               </div>
  
               <div style="text-align: center;">
-                <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard" style="background-color: #0f172a; color: #ffffff; padding: 16px; border-radius: 12px; text-decoration: none; font-weight: 700; display: inline-block; width: 100%; box-sizing: border-box;">Access platform</a>
+                <a href="${config.frontendUrl}/dashboard" style="background-color: #0f172a; color: #ffffff; padding: 16px; border-radius: 12px; text-decoration: none; font-weight: 700; display: inline-block; width: 100%; box-sizing: border-box;">Access platform</a>
               </div>
             </div>
             
@@ -652,9 +656,9 @@ router.put(
           </div>
         `
       });
-      console.log(`[AUTH] Notification dispatched to ${user.email}`);
+      logger.info(`[AUTH] Notification dispatched to ${user.email}`);
     } catch (emailErr) {
-      console.error('[AUTH] Jurisdictional email failed:', emailErr.message);
+      logger.error('[AUTH] Jurisdictional email failed:', emailErr.message);
     }
 
     res.status(200).json({
@@ -740,7 +744,7 @@ router.post(
               </div>
 
               <div style="text-align: center; margin-bottom: 30px;">
-                <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/login" style="background-color: #0f172a; color: #ffffff; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; display: inline-block;">Access Admin Console</a>
+                <a href="${config.frontendUrl}/login" style="background-color: #0f172a; color: #ffffff; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; display: inline-block;">Access Admin Console</a>
               </div>
 
               <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 40px 0;">
@@ -753,7 +757,7 @@ router.post(
         `
       });
     } catch (err) {
-      console.error('Provisioning email failed:', err);
+      logger.error('Provisioning email failed:', err);
     }
 
     res.status(201).json({

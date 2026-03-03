@@ -1,10 +1,10 @@
 const neo4j = require('neo4j-driver');
 const logger = require('./logger');
-require('dotenv').config();
+const config = require('./env');
 
-const uri = process.env.NEO4J_URI;
-const user = process.env.NEO4J_USER;
-const password = process.env.NEO4J_PASSWORD;
+const uri = config.neo4jUri;
+const user = config.neo4jUser;
+const password = config.neo4jPassword;
 
 let driver;
 
@@ -19,7 +19,7 @@ try {
   logger.error('Failed to create Neo4j driver:', error);
 }
 
-const getSession = (database = process.env.NEO4J_DATABASE || 'neo4j') => {
+const getSession = (database = config.neo4jDatabase) => {
   if (!driver) {
     throw new Error('Neo4j driver not initialized. Please check your credentials.');
   }

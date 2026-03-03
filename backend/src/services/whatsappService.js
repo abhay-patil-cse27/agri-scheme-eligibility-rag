@@ -91,7 +91,7 @@ const handleIncomingMessage = async (payload) => {
       - IMPORTANT: Start your message by politely mentioning: "We have noticed that you are not registered with Niti Setu yet! 🌾"
       - Their phone number ${contactNumber} does not exist in our database.
       - Remind them that registration requires a UNIQUE Email and Phone Number for security.
-      - Provide a warm welcome, brief answer, and follow the GUEST HANDLING rules to invite registration at ${process.env.FRONTEND_URL || 'nitisetu.vercel.app/register'} to unlock personalized benefits.]`;
+      - Provide a warm welcome, brief answer, and follow the GUEST HANDLING rules to invite registration at ${config.frontendUrl}/register to unlock personalized benefits.]`;
       
       const aiResponse = await chatWithKrishiMitra(userMessage, [], null, 'en', 'guest', guestContext);
       await sendWhatsAppMessage(from, aiResponse);
@@ -99,7 +99,7 @@ const handleIncomingMessage = async (payload) => {
     }
 
     // 4. Generate AI Response for Registered Users (Unified Account Identity)
-    const accountName = user?.name || "Abhay Patil"; // Prioritize Account Owner
+    const accountName = user?.name || profiles[0]?.name || "Farmer";
     const systemRole = user?.role || 'Farmer';
     const profilesCount = profiles.length;
     const profilesList = profiles.map((p, i) => `   - Farmer: *${p.name}* (${p.cropType} in ${p.district})`).join('\n');

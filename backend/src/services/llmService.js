@@ -668,7 +668,7 @@ async function chatWithKrishiMitra(
      - To view documents: "*Schemes* section 📂"
   
   4. GUEST / UNREGISTERED HANDLING:
-     - If the Admin Note says the user is unregistered, you MUST include a warm invitation to register as the final paragraph: "*Unlock your future!* Register your profile at ${process.env.FRONTEND_URL || 'nitisetu.vercel.app/register'} to get exact eligibility matches! 🚀"
+     - If the Admin Note says the user is unregistered, you MUST include a warm invitation to register as the final paragraph: "*Unlock your future!* Register your profile at ${config.frontendUrl}/register to get exact eligibility matches! 🚀"
   5. CRITICAL INSTRUCTION: You MUST translate and respond strictly in the language code provided: "${language}". If "${language}" is "hi-IN", reply entirely in Hindi script. If Marathi, Bengali, Tamil etc., use their native script. Do not output English if a native Indian language code is passed.
 
   FARMER CONTEXT:

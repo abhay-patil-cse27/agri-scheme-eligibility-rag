@@ -9,6 +9,7 @@ const AuditLog = require('../models/AuditLog');
 const ResourceUsage = require('../models/ResourceUsage');
 const { protect, authorize } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
+const logger = require('../config/logger');
 
 /**
  * GET /api/analytics
@@ -184,7 +185,7 @@ router.get(
       return actual ? actual : { ...def, _id: `temp_${def.serviceName.toLowerCase()}` };
     });
 
-    console.log(`[Analytics] Returning ${mergedUsage.length} resource nodes.`);
+    logger.info(`[Analytics] Returning ${mergedUsage.length} resource nodes.`);
 
     const totalUniquePhones = await FarmerProfile.countDocuments({ contactNumber: { $exists: true, $ne: '' } });
 

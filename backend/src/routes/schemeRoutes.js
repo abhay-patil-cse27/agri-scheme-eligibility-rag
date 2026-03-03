@@ -364,9 +364,3 @@ router.get(
 );
 
 module.exports = router;
-
-// trigger restart
-
-// clear apicache manually
-
-// final cache clear

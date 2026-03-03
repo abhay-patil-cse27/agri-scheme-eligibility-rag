@@ -8,6 +8,7 @@ const compression = require('compression');
 // Load config first (validates env vars)
 const config = require('./config/env');
 const { connectDB, disconnectDB } = require('./config/database');
+const { closeDriver: closeNeo4j } = require('./config/neo4j');
 const logger = require('./config/logger');
 const embeddingService = require('./services/embeddingService');
 
@@ -118,6 +119,7 @@ async function startServer() {
       logger.info(`${signal} received. Shutting down gracefully...`);
       server.close(async () => {
         await disconnectDB();
+        await closeNeo4j();
         logger.info('Server shut down complete');
         process.exit(0);
       });

@@ -1,4 +1,5 @@
 const { body, param, validationResult } = require('express-validator');
+const logger = require('../config/logger');
 
 /**
  * Middleware to check validation results and return errors.
@@ -6,7 +7,7 @@ const { body, param, validationResult } = require('express-validator');
 function handleValidationErrors(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.error('Validation Error Details:', errors.array());
+    logger.warn('Validation Error Details:', { errors: errors.array() });
     return res.status(400).json({
       success: false,
       error: 'Validation Error',

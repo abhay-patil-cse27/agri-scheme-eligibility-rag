@@ -21,8 +21,6 @@ const upload = multer({
   dest: UPLOADS_DIR,
   limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB max
   fileFilter: (req, file, cb) => {
-    const allowed = ['audio/webm', 'audio/ogg', 'audio/wav', 'audio/mp4',
-                     'audio/mpeg', 'audio/flac', 'audio/x-m4a', 'audio/webm;codecs=opus'];
     // Accept any audio/* MIME
     if (file.mimetype.startsWith('audio/') || file.mimetype === 'application/octet-stream') {
       cb(null, true);

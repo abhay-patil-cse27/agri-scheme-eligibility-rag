@@ -10,21 +10,9 @@ const ChatSessionSchema = new mongoose.Schema({
   title: {
     type: String,
     default: 'New Conversation'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
   }
-});
-
-// Update the updatedAt field on save
-ChatSessionSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model('ChatSession', ChatSessionSchema);

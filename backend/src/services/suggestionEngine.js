@@ -2,18 +2,8 @@ const Scheme = require('../models/Scheme');
 const embeddingService = require('./embeddingService');
 const vectorSearchService = require('./vectorSearchService');
 const llmService = require('./llmService');
-const logger = require('../config/logger');
-
-/**
- * Find alternative schemes when a farmer is ineligible for their target scheme.
- * Searches across all other schemes for potential matches.
- *
- * @param {Object} profile - Farmer profile data
- * @param {string} excludeSchemeId - Scheme ID to exclude (the one they were ineligible for)
- * @param {string} [language='en'] - The regional language code to translate AI output into.
- * @returns {Array} Top 2-3 alternative scheme suggestions with reasoning
- */
 const graphService = require('./graphService');
+const logger = require('../config/logger');
 
 /**
  * Find alternative schemes when a farmer is ineligible for their target scheme.

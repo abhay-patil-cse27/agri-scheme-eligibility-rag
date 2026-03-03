@@ -1,7 +1,7 @@
 const rateLimit = require('express-rate-limit');
 
 /**
- * General rate limiter: 100 requests per 15 minutes per IP.
+ * General rate limiter: 500 requests per 15 minutes per IP.
  */
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

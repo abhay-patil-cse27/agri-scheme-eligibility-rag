@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
 const ResourceUsage = require("../models/ResourceUsage");
+const logger = require("../config/logger");
 
 const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
@@ -94,11 +95,11 @@ const sendEmail = async (options) => {
   };
 
   const info = await transporter.sendMail(message);
-  console.log("Message sent: %s", info.messageId);
+  logger.info(`Email sent: ${info.messageId}`);
   
   // Track email usage (Successfully sent)
   await ResourceUsage.recordUsage('SMTP-Email', 1, 'registered')
-  .catch(e => console.error('Usage track error:', e));
+  .catch(e => logger.error('Usage track error:', e));
 };
 
 module.exports = sendEmail;

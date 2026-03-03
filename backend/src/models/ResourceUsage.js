@@ -4,7 +4,7 @@ const ResourceUsageSchema = new mongoose.Schema({
   serviceName: {
     type: String,
     required: true,
-    enum: ['Groq-LLM', 'Groq-Whisper', 'Groq-Vision', 'ElevenLabs-TTS', 'Google-Translate', 'SMTP-Email'],
+    enum: ['Groq-LLM', 'Groq-Whisper', 'Groq-Vision', 'ElevenLabs-TTS', 'SMTP-Email'],
     unique: true
   },
   provider: {

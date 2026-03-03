@@ -13,7 +13,7 @@ const logger = require('../config/logger');
  */
 router.get('/sessions', protect, async (req, res) => {
   try {
-    const sessions = await ChatSession.find({ user: req.user._id })
+    const sessions = await ChatSession.find({ user: req.user.id })
       .sort({ updatedAt: -1 });
 
     res.json(sessions);
@@ -32,7 +32,7 @@ router.post('/sessions', protect, async (req, res) => {
   try {
     const { title } = req.body;
     const session = new ChatSession({
-      user: req.user._id,
+      user: req.user.id,
       title: title || 'New Conversation'
     });
     await session.save();
@@ -53,7 +53,7 @@ router.get('/sessions/:sessionId/messages', protect, async (req, res) => {
     // Verify session belongs to user
     const session = await ChatSession.findOne({ 
       _id: req.params.sessionId, 
-      user: req.user._id 
+      user: req.user.id 
     });
 
     if (!session) {
@@ -79,7 +79,7 @@ router.delete('/sessions/:sessionId', protect, async (req, res) => {
   try {
     const session = await ChatSession.findOne({ 
       _id: req.params.sessionId, 
-      user: req.user._id 
+      user: req.user.id 
     });
 
     if (!session) {
@@ -105,7 +105,7 @@ router.delete('/sessions/:sessionId', protect, async (req, res) => {
  */
 router.delete('/clear', protect, async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id;
 
     // Delete all messages for this user
     await ChatMessage.deleteMany({ user: userId });
@@ -139,7 +139,7 @@ router.post('/', protect, async (req, res) => {
     // If no sessionId provided, create a new one
     if (!currentSessionId) {
       const session = new ChatSession({
-        user: req.user._id,
+        user: req.user.id,
         title: query.substring(0, 30) + (query.length > 30 ? '...' : '')
       });
       await session.save();
@@ -155,7 +155,7 @@ router.post('/', protect, async (req, res) => {
 
     // 1. Save user message to DB
     const userMsg = new ChatMessage({
-      user: req.user._id,
+      user: req.user.id,
       session: currentSessionId,
       role: 'user',
       content: query
@@ -167,7 +167,7 @@ router.post('/', protect, async (req, res) => {
 
     // 3. Save assistant message to DB
     const assistantMsg = new ChatMessage({
-      user: req.user._id,
+      user: req.user.id,
       session: currentSessionId,
       role: 'assistant',
       content: response

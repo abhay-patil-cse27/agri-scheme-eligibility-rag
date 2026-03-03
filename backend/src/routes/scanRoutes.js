@@ -47,7 +47,6 @@ router.post('/document', protect, upload.single('document'), async (req, res) =>
   }
 
   const filePath = req.file.path;
-  const docType = req.body.documentType || 'Official ID / Land Record';
 
   try {
     logger.info(`Starting ephemeral scan for user ${req.user.id}, file: ${req.file.filename}`);

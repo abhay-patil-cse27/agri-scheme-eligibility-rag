@@ -12,7 +12,7 @@ const { asyncHandler } = require('../middleware/errorHandler');
 router.get(
   '/explorer',
   protect,
-  authorize('admin', 'staff'),
+  authorize('admin', 'superadmin'),
   asyncHandler(async (req, res) => {
     const data = await graphService.getGraphData();
     res.json({

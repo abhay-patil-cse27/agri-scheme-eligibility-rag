@@ -7,7 +7,8 @@ const User = require('../models/User'); // Import User for email retrieval
 const { asyncHandler } = require('../middleware/errorHandler');
 const { validateProfile, validateObjectId } = require('../middleware/validators');
 const { protect, authorize } = require('../middleware/auth');
-const sendEmail = require('../utils/sendEmail'); // Import sendEmail utility
+const sendEmail = require('../utils/sendEmail');
+const logger = require('../config/logger');
 
 /**
  * POST /api/profiles
@@ -219,7 +220,7 @@ router.delete(
           html: emailContent
         });
       } catch (emailErr) {
-        console.error('Failed to send deletion notice email:', emailErr);
+        logger.error('Failed to send deletion notice email:', emailErr);
       }
     }
 
