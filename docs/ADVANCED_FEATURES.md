@@ -76,22 +76,31 @@ Follow these steps to establish the agriculture-to-AI bridge:
 
    You can now start both the backend server and the tunnel in a single industry-grade operation:
 
-   ```bash
-   cd backend
-   npm run dev:full
-   ```
+    ```bash
+    cd backend
+    ```
 
-   *Alternative (Manual - Localtunnel):*
-   ```bash
-   npm run tunnel
-   ```
+    *Main Method (Cloudflare - Recommended):* 🛠️
 
-   *Alternative (Backup - Cloudflare):* 🛠️
-   If Localtunnel fails, run this to use Cloudflare:
-   ```bash
-   npm run tunnel:cf
-   ```
-   *Note: Copy the HTTPS URL generated.*
+    ```bash
+    npm run dev:full
+    ```
+
+    *Note: This generates a random `*.trycloudflare.com` URL.*
+
+    *Alternative (Manual - Cloudflare):*
+
+    ```bash
+    npm run tunnel
+    ```
+
+    *Backup (Localtunnel):*
+
+    ```bash
+    npm run tunnel:lt
+    ```
+
+    *Note: If using this, visit the URL in a browser and enter your public IP from [ipv4.icanhazip.com](https://ipv4.icanhazip.com) to unlock the tunnel.*
 
 3. **Twilio Webhook Configuration**:
    - Access the [Twilio Console](https://console.twilio.com/).
