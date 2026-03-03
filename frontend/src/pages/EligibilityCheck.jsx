@@ -353,14 +353,14 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
             <input name="cropType" value={form.cropType} onChange={handleChange} placeholder="e.g. Wheat, Rice" className="input-dark" required />
           </div>
           <div>
-            <label style={labelStyle}><Wallet size={14} /> Primary Income Source</label>
+            <label style={labelStyle}><Wallet size={14} /> {t('pf_primary_income')}</label>
             <select name="primaryIncomeSource" value={form.primaryIncomeSource} onChange={handleChange} className="select-dark">
-              <option value="Agriculture">Agriculture</option>
-              <option value="Dairy">Dairy Farming</option>
-              <option value="Poultry">Poultry Farming</option>
-              <option value="Fisheries">Fisheries</option>
-              <option value="Horticulture">Horticulture</option>
-              <option value="Other">Other Agricultural Allied</option>
+              <option value="Agriculture">{t('pf_inc_agri')}</option>
+              <option value="Dairy">{t('pf_inc_dairy')}</option>
+              <option value="Poultry">{t('pf_inc_poultry')}</option>
+              <option value="Fisheries">{t('pf_inc_fisheries')}</option>
+              <option value="Horticulture">{t('pf_inc_horti')}</option>
+              <option value="Other">{t('pf_inc_other')}</option>
             </select>
           </div>
 
@@ -402,7 +402,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
           <label style={checkboxLabelStyle}>
             <input type="checkbox" name="isFarmerRelated" checked={form.isFarmerRelated} onChange={handleChange} style={checkboxStyle} />
-            <span><User size={14} style={iconGapStyle} /> Farmer/Related Relation Confirm</span>
+            <span><User size={14} style={iconGapStyle} /> {t('pf_farmer_confirm')}</span>
           </label>
           <label style={checkboxLabelStyle}>
             <input type="checkbox" name="hasIrrigationAccess" checked={form.hasIrrigationAccess} onChange={handleChange} style={checkboxStyle} />

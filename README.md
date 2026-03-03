@@ -18,7 +18,7 @@ decisions in their native language.
 - **Multilingual Support:** Native localization and intelligence for 10 regional languages: **English, Hindi, Marathi, Bengali, Telugu, Tamil, Gujarati, Kannada, Malayalam, and Punjabi**.
 - **Secure OTP Verification:** Robust 2-step verification system for registration and password recovery via official Government-style emails.
 - **Krishi Mitra AI Assistant:** A floating, voice-enabled assistant with **Multi-session Chat History**, supporting **Whisper STT** and **Auto-Speech Synthesis** (TTS) powered by a heavily optimized LRU Audio Cache. Features a premium **Glassmorphic Home Tab** with real-time status indicators.
-- **Privacy-First (Zero-Storage):** Vision AI scans 7/12 extracts and Aadhaar documents in-memory without permanent storage.
+- **Privacy-First (Trio-Input Scanner):** Integrated "Document Vault" with three specialized input methods: **Live Premium Scanner (WebRTC)**, **Native Device Camera Bridge**, and **Standard Gallery Upload**. Powered by Vision AI to scan 7/12 extracts and Aadhaar documents in-memory with strict zero-storage privacy.
 - **Security-First Governance:** Automated **Security Termination Emails** citing the **IT Act 2000 (India)** and associated cyber laws are issued instantly when an administrator removes a profile for security reasons.
 - **Advanced Native Retrieval:** Multi-path search (Vector + BM25) with built-from-scratch **MMR** for diversity and **Reciprocal Rank Fusion (RRF)** for precision, implemented without any third-party RAG libraries.
 - **Massive Knowledge Base:** 35+ official PDFs across 9 priority sectors, directly linked to `myscheme.gov.in` for high-availability universal access.
@@ -123,6 +123,19 @@ cd backend && npm run dev
 # Start Frontend
 cd frontend && npm run dev
 ```
+
+### 4. PWA & Production Preview
+
+To test the **Progressive Web App (PWA)** features and offline caching, you must build and preview the optimized production bundle:
+
+```bash
+cd frontend
+npm run build
+npm run preview
+```
+
+> [!NOTE]
+> Service Workers and the Web App Manifest are only active in the production build. Use the "Install" icon in your browser's address bar to verify the standalone functionality.
 
 ---
 

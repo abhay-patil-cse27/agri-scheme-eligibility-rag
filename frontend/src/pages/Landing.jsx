@@ -353,11 +353,19 @@ export default function Landing() {
                 </motion.button>
               </a>
             </div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: c.bgGlass, border: `1px solid ${c.border}`, borderRadius: '100px', padding: '10px 20px', backdropFilter: 'blur(4px)' }}>
-              <MapPin size={15} color={isDark ? '#4ade80' : '#166534'} />
-              <span style={{ fontSize: '0.88rem', color: c.textSec, fontWeight: 500 }}>{t('lp_cta_location')}</span>
-              <span style={{ color: c.textMute }}>·</span>
-              <span style={{ fontSize: '0.83rem', color: c.textMute }}>{t('lp_cta_student')}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: c.bgGlass, border: `1px solid ${c.border}`, borderRadius: '100px', padding: '10px 20px', backdropFilter: 'blur(4px)' }}>
+                <MapPin size={15} color={isDark ? '#4ade80' : '#166534'} />
+                <span style={{ fontSize: '0.88rem', color: c.textSec, fontWeight: 500 }}>{t('lp_cta_location')}</span>
+                <span style={{ color: c.textMute }}>·</span>
+                <span style={{ fontSize: '0.83rem', color: c.textMute }}>{t('lp_cta_student')}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.86rem', color: c.textMute }}>Contact:</span>
+                <a href="mailto:patil.abhay214@gmail.com" style={{ fontSize: '0.9rem', fontWeight: 600, color: c.text, textDecoration: 'none', transition: 'color 0.2s', borderBottom: `1px dashed ${c.border}` }} onMouseOver={e => e.currentTarget.style.color = '#16a34a'} onMouseOut={e => e.currentTarget.style.color = c.text}>
+                  patil.abhay214@gmail.com
+                </a>
+              </div>
             </div>
           </div>
         </motion.div>

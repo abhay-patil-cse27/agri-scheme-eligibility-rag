@@ -24,6 +24,7 @@ graph TD
     %% Interfaces
     WebUI[Vite PWA Frontend]
     WhatsApp[WhatsApp / Twilio Bridge]
+    Cloudflare[Cloudflare Quick Tunnel]
     
     %% Security Layer
     subgraph "Auth & Security"
@@ -65,7 +66,8 @@ graph TD
     Admin --> WebUI
     
     WebUI -- "HTTPS / JSON" --> API
-    WhatsApp -- "Webhook" --> WAS
+    WhatsApp -- "Webhook" --> Cloudflare
+    Cloudflare -- "Secure Bridge" --> WAS
     
     API -- "Verify" --> OTP
     API -- "Sign" --> JWT
@@ -129,8 +131,6 @@ specific keyword terms (like scheme codes or state names):
 - **Fusion Mixer:** We use **Reciprocal Rank Fusion (RRF)** to combine these
   results, ensuring that if a chunk is relevant in both paths, it is boosted
   to the top.
-
-
 
 ### 3. Diversity Filtering (MMR)
 

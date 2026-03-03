@@ -30,5 +30,8 @@ module.exports = {
   neo4jUser: process.env.NEO4J_USER,
   neo4jPassword: process.env.NEO4J_PASSWORD,
   neo4jDatabase: process.env.NEO4J_DATABASE || "neo4j",
+  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
+  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
+  twilioWhatsappNumber: process.env.TWILIO_WHATSAPP_NUMBER || "whatsapp:+14155238886",
   frontendUrl: process.env.FRONTEND_URL || "http://localhost:5173",
 };

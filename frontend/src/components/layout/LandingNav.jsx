@@ -33,7 +33,7 @@ export default function LandingNav() {
     { label: t('nav_features'),     href: '/#features' },
     { label: t('nav_audience'), href: '/#audience' },
     { label: t('nav_tech'),   href: '/#technology' },
-    { label: 'patil.abhay214@gmail.com', href: 'mailto:patil.abhay214@gmail.com' },
+    { label: t('nav_contact', 'Contact'), href: '/#contact' },
   ];
 
   return (

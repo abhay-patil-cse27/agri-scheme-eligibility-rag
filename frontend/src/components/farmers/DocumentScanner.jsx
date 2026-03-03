@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, X, FileImage, FileText, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { Upload, X, FileImage, FileText, CheckCircle2, Loader2, AlertCircle, Camera } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { scanDocument } from '../../services/api';
 
@@ -18,8 +18,13 @@ export default function DocumentScanner({ onDataExtracted }) {
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState('');
   const [landUnit, setLandUnit] = useState('Hectares'); // Default for Satbara
+  const [showLiveCamera, setShowLiveCamera] = useState(false);
+  const [stream, setStream] = useState(null);
   
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -89,6 +94,50 @@ export default function DocumentScanner({ onDataExtracted }) {
     }
   };
 
+  const startLiveCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment', width: 1280, height: 720 } 
+      });
+      setStream(mediaStream);
+      setShowLiveCamera(true);
+      // Wait for next tick to ensure ref is assigned if we just switched state
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
+      }, 100);
+    } catch (err) {
+      console.error("Camera access failed", err);
+      setError("Could not access camera. Please check permissions.");
+    }
+  };
+
+  const stopLiveCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setStream(null);
+    setShowLiveCamera(false);
+  };
+
+  const captureFrame = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      canvas.toBlob((blob) => {
+        const capturedFile = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+        setFile(capturedFile);
+        stopLiveCamera();
+      }, 'image/jpeg', 0.95);
+    }
+  };
+
   return (
     <div style={{ 
       margin: '24px 0', 
@@ -110,34 +159,114 @@ export default function DocumentScanner({ onDataExtracted }) {
       <AnimatePresence mode="wait">
         {!file ? (
           <motion.div
+            key="upload"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ marginBottom: error ? '12px' : '0' }}
             onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            style={{
-              padding: '40px 20px',
-              textAlign: 'center',
-              border: `2px dashed ${isDragging ? 'var(--accent-indigo)' : 'var(--border-glass)'}`,
-              borderRadius: '12px',
-              background: isDragging ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-secondary)',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              marginBottom: error ? '12px' : '0'
-            }}
           >
             <input 
               ref={fileInputRef} type="file" accept="image/jpeg, image/png" 
               onChange={handleChange} style={{ display: 'none' }} 
             />
-            <FileImage size={32} style={{ color: isDragging ? 'var(--accent-indigo)' : 'var(--text-muted)', marginBottom: '12px' }} />
-            <p style={{ fontSize: '0.95rem', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '4px' }}>
-              Drag and drop your image here
+            <input 
+              ref={cameraInputRef} type="file" accept="image/*" capture="environment"
+              onChange={handleChange} style={{ display: 'none' }} 
+            />
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <motion.div 
+                whileHover={{ y: -4 }}
+                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                style={{ 
+                  flex: 1, minWidth: '120px', padding: '16px', borderRadius: '12px', 
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                <FileImage size={24} style={{ color: 'var(--text-muted)' }} />
+                <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Gallery</span>
+              </motion.div>
+
+              <motion.div 
+                whileHover={{ y: -4 }}
+                onClick={(e) => { e.stopPropagation(); startLiveCamera(); }}
+                style={{ 
+                  flex: 1, minWidth: '120px', padding: '16px', borderRadius: '12px', 
+                  background: 'var(--gradient-primary)', 
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
+                  boxShadow: '0 8px 20px rgba(99, 102, 241, 0.2)',
+                  cursor: 'pointer'
+                }}
+              >
+                <Camera size={24} style={{ color: 'white' }} />
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'white' }}>Live Camera</span>
+              </motion.div>
+
+              <motion.div 
+                whileHover={{ y: -4 }}
+                onClick={(e) => { e.stopPropagation(); cameraInputRef.current?.click(); }}
+                style={{ 
+                  flex: 1, minWidth: '120px', padding: '16px', borderRadius: '12px', 
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-glass)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                <Upload size={24} style={{ color: 'var(--accent-indigo)' }} />
+                <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Native Cam</span>
+              </motion.div>
+            </div>
+
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '16px', textAlign: 'center' }}>
+              Tap on an option to provide your document.
             </p>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Supports JPG, PNG (Max 15MB)
-            </p>
+          </motion.div>
+        ) : showLiveCamera ? (
+          <motion.div
+            key="camera"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ 
+              position: 'relative', borderRadius: '14px', overflow: 'hidden', 
+              background: '#000', border: '1px solid var(--border-glass)',
+              aspectRatio: '16/9'
+            }}
+          >
+            <video 
+              ref={videoRef} autoPlay playsInline 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
+            
+            <div style={{ position: 'absolute', inset: 0, padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button 
+                  onClick={stopLiveCamera} 
+                  style={{ background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '16px' }}>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={captureFrame}
+                  style={{ 
+                    width: '64px', height: '64px', borderRadius: '50%', background: 'white', 
+                    border: '4px solid rgba(99, 102, 241, 0.5)', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                >
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '2px solid #333' }} />
+                </motion.button>
+              </div>
+            </div>
           </motion.div>
         ) : (
           <motion.div
+            key="preview"
             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
             style={{
               padding: '16px',
@@ -173,7 +302,7 @@ export default function DocumentScanner({ onDataExtracted }) {
                 onChange={(e) => setDocType(e.target.value)}
                 disabled={isScanning}
                 className="select-dark"
-                style={{ fontSize: '0.9rem', padding: '8px 12px' }}
+                style={{ fontSize: '0.9rem', padding: '8px 12px', width: '100%' }}
               >
                 <option value="7/12 Land Record">7/12 Land Record (Satbara)</option>
                 <option value="Aadhaar Card">Aadhaar Card</option>
