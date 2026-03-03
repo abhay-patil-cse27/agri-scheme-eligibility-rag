@@ -226,7 +226,7 @@ export default function UsersPage() {
                     <td style={tdStyle}>
                       <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Calendar size={14} />
-                        {new Date(u.createdAt).toLocaleDateString(i18n.language === 'en' ? 'en-IN' : (i18n.language === 'hi' ? 'hi-IN' : 'mr-IN'), {
+                        {new Date(u.createdAt).toLocaleDateString(i18n.language.startsWith('en') ? 'en-IN' : i18n.language, {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric'

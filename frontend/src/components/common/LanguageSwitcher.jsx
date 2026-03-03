@@ -45,10 +45,6 @@ export default function LanguageSwitcher({
       onSelect(code);
     } else {
       i18n.changeLanguage(code);
-      // Mandatory reload to ensure all UI elements translate
-      // We can omit this if the whole app uses useTranslation hook correctly everywhere, 
-      // but often deep components need a refresh for i18n changes to propagate perfectly.
-      window.location.reload(); 
     }
     setIsOpen(false);
   };

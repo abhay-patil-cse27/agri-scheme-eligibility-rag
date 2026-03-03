@@ -528,7 +528,10 @@ const KrishiMitra = () => {
                   <LanguageSwitcher 
                     placement="down" 
                     currentLanguage={chatLanguage}
-                    onSelect={(code) => setChatLanguage(code)}
+                    onSelect={(code) => {
+                      setChatLanguage(code);
+                      i18n.changeLanguage(code);
+                    }}
                   />
                 </div>
                 <button 
