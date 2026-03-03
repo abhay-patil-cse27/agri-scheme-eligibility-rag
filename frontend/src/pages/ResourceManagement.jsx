@@ -408,7 +408,7 @@ export default function ResourceManagement() {
               <AgriCard padding="24px" className="agri-card" style={{ height: '400px', background: 'rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: '100%' }}>
                   {chartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                       <AreaChart data={chartData} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                         <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={10} fontWeight={600} tickLine={false} axisLine={false} dy={10} />
