@@ -35,7 +35,7 @@ sequenceDiagram
 
 The system enforces a **Strict Identity Governance** model to ensure data integrity and prevent double-dipping in schemes:
 
-1.  **Unique Identity Linking**: 
+1.  **Unique Identity Linking**:
     - Every incoming WhatsApp message is hashed and compared against the `FarmerProfile` database using the sender's phone number as a **Primary Unique Key**.
     - This ensures that a single WhatsApp account maps to exactly one **Unique User** in the backend.
 
@@ -46,11 +46,14 @@ The system enforces a **Strict Identity Governance** model to ensure data integr
 3.  **Dynamic Response Architecting**:
     - The AI engine uses **Contextual Prompt Injection** to change its tone. If the user is a guest, it prefixes the response with a registration notice: *"We have noticed that you are not registered with Niti Setu yet!"* to drive user acquisition.
 
-### Robust Local Tunneling (Cloudflare Integration)
+### Robust Local Tunneling & Fallbacks
 
 To handle real-world network challenges, the gateway uses a **Cloudflare Quick Tunnel** (Argo based). Unlike standard tunnels, this provides:
 - **Zero-Block Webhooks**: Bypasses browser-based "reminder pages" that typical tunnels use, ensuring 100% 24/7 delivery of Twilio payloads.
 - **End-to-End Encryption**: Secure HTTPS transit between the Twilio Cloud and the Niti Setu local development server.
+
+#### 🆘 Troubleshooting: I/O Timeout?
+If your ISP (e.g., Jio, Airtel) blocks Cloudflare's Argo lookups, you may see a "DNS Lookup Timeout" error. In such cases, use the **LocalTunnel Fallback** provided in our automation suite.
 
 ### Setup & Deployment Guide ⚙️
 
@@ -58,6 +61,7 @@ Follow these steps to establish the agriculture-to-AI bridge:
 
 1. **Environmental Configuration**:
    Append the following to your `backend/.env`:
+
    ```env
    TWILIO_ACCOUNT_SID=AC...
    TWILIO_AUTH_TOKEN=your_token
@@ -67,15 +71,23 @@ Follow these steps to establish the agriculture-to-AI bridge:
 
 2. **Initialize Secure Tunnel**:
    You can now start both the backend server and the Cloudflare tunnel in a single industry-grade operation:
+
    ```bash
    cd backend
    npm run dev:full
    ```
-   *Alternative (Manual):*
+
+   *Alternative (Manual - Cloudflare):*
    ```bash
    npm run tunnel
    ```
-   *Note: Copy the `https://*.trycloudflare.com` URL generated in the terminal.*
+
+   *Alternative (Backup - LocalTunnel):* 🛠️
+   If Cloudflare fails (I/O Timeout), run this to use LocalTunnel:
+   ```bash
+   npm run tunnel:alt
+   ```
+   *Note: Copy the `https://*.loca.lt` URL generated.*
 
 3. **Twilio Webhook Configuration**:
    - Access the [Twilio Console](https://console.twilio.com/).
@@ -83,6 +95,7 @@ Follow these steps to establish the agriculture-to-AI bridge:
    - Click the **Sandbox settings** tab.
    - In the **"WHEN A MESSAGE COMES IN"** field, paste your URL with the API suffix:
      `https://your-unique-id.trycloudflare.com/api/whatsapp/webhook`
+     *(Or your `*.loca.lt` URL if using the backup)*
    - Set the method to **POST** and click **Save**.
 
 4. **Synchronize Device**:
