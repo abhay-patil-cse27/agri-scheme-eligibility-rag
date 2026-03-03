@@ -99,10 +99,18 @@ Follow these steps to establish the agriculture-to-AI bridge:
    - Click the **Sandbox settings** tab.
    - In the **"WHEN A MESSAGE COMES IN"** field, paste your URL with the API suffix:
      `https://your-unique-id.trycloudflare.com/api/whatsapp/webhook`
-     *(Or your `*.loca.lt` URL if using the backup)*
+     *(Or your `*.loca.lt/api/whatsapp/webhook` URL)*
    - Set the method to **POST** and click **Save**.
 
-4. **Synchronize Device**:
+4. **Bypass Tunnel Restriction (Localtunnel Only) 🔑**:
+   If using Localtunnel (`*.loca.lt`), the tunnel is protected by a "Friendly Reminder" landing page that blocks Twilio's automated hooks.
+   - Visit your tunnel URL in a browser.
+   - You will see a prompt for an **Endpoint Password**.
+   - Visit [ipv4.icanhazip.com](https://ipv4.icanhazip.com) to find your public IP.
+   - Paste the IP into the tunnel browser prompt and click **Submit**.
+   - Your tunnel is now "unlocked" for Twilio webhooks.
+
+5. **Synchronize Device**:
    Send the specific "join" code (e.g., `join stretch-unusual`) to the Twilio number from your WhatsApp device to link it to the sandbox environment.
 
 ---
