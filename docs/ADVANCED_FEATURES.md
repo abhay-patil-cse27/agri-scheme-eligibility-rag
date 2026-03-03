@@ -80,32 +80,30 @@ Follow these steps to establish the agriculture-to-AI bridge:
     cd backend
     ```
 
-    *Main Method (Cloudflare - Recommended):* 🛠️
+    *Primary & Confirmed Solution (SSH - Best for DNS blocks):* 🚀
 
-    ```bash
-    npm run dev:full
-    ```
-
-    *Note: This generates a random `*.trycloudflare.com` URL. If you see DNS `i/o timeout` errors, use the SSH fallbacks below.*
-
-    *High Reliability Fallback (Serveo - Best for DNS blocks):* 🚀
-
-    If your ISP blocks Cloudflare/Localtunnel, use this SSH-based tunnel:
+    If you encounter DNS `i/o timeout` errors with Cloudflare, this SSH-based tunnel is the **proven fix**:
 
     ```bash
     npm run tunnel:ssh
     ```
 
-    - When asked: `Are you sure you want to continue connecting (yes/no/[fingerprint])?` type **yes**.
-    - It will generate a persistent URL like `https://...serveousercontent.com`.
+    - **Action**: When asked `Are you sure you want to continue connecting (yes/no/[fingerprint])?`, type **yes**.
+    - **Success Indicator**: You will see a log like:
+      `Forwarding HTTP traffic from https://...serveousercontent.com`
 
-    *Fastest Fallback (Pinggy):* ⚡
+    *Alternative Method (Cloudflare):* 🛠️
 
     ```bash
-    npm run tunnel:ping
+    npm run dev:full
     ```
 
-    - Select **y** to continue if prompted.
+    *Fallbacks (If SSH/Cloudflare fail):* ⚡
+
+    ```bash
+    npm run tunnel:ping  # Fast SSH Alternative
+    npm run tunnel:lt    # Localtunnel Backup
+    ```
 
     *Backup (Localtunnel):*
 
