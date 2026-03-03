@@ -685,7 +685,7 @@ const KrishiMitra = () => {
                                 {session.title || `Conversation ${idx + 1}`}
                               </p>
                               <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: 0, opacity: 0.7 }}>
-                                {new Date(session.updatedAt).toLocaleDateString()}
+                                {new Date(session.updatedAt).toLocaleDateString(i18n.language.startsWith('en') ? 'en-US' : i18n.language)}
                               </p>
                             </div>
                             <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} />

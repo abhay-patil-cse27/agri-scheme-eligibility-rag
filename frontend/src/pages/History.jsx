@@ -62,7 +62,7 @@ function HistoryCard({ check, index, onDelete }) {
           <div style={{ textAlign: 'right' }}>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '2px' }}>
               <Calendar size={12} style={{ display: 'inline', marginRight: '4px' }} />
-              {date.toLocaleDateString(i18n.language.startsWith('en') ? 'en-IN' : i18n.language, { day: '2-digit', month: 'short', year: 'numeric' })}
+              {date.toLocaleDateString(i18n.language.startsWith('en') ? 'en-US' : i18n.language, { day: '2-digit', month: 'short', year: 'numeric' })}
             </p>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               <Clock size={12} style={{ display: 'inline', marginRight: '4px' }} />

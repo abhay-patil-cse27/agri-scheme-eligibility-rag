@@ -79,7 +79,7 @@ export default function NotificationCenter({ isOpen, onClose }) {
                   {history.map((log) => {
                     const date = new Date(log.timestamp);
                     const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    const dateString = date.toLocaleDateString();
+                    const dateString = date.toLocaleDateString(i18n.language.startsWith('en') ? 'en-US' : i18n.language);
 
                     return (
                       <div key={log.id} style={{

@@ -252,7 +252,7 @@ export default function ResourceManagement() {
     const llm = usageData.find(s => s.serviceName === 'Groq-LLM');
     if (!llm || !llm.history || llm.history.length === 0) return [];
     return llm.history.slice(-7).map(h => ({
-      date: new Date(h.date).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+      date: new Date(h.date).toLocaleDateString(i18n.language.startsWith('en') ? 'en-US' : i18n.language, { month: 'short', day: 'numeric' }),
       registered: h.registeredUsage || 0,
       public: h.publicUsage || 0
     }));
