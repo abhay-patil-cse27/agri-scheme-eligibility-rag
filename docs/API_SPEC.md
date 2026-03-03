@@ -114,12 +114,21 @@ The assistant supports persistent, multi-session conversation history.
 
 ## 📱 WhatsApp Bridge (Setu)
 
-Asynchronous integration primarily for voice-driven agricultural support.
+An industry-grade asynchronous integration for voice-driven agricultural support.
 
 ### WhatsApp Webhook
 
 `POST /api/whatsapp/webhook`
 
-- **Source:** Twilio Cloud (Secure Webhook).
-- **Function:** Transcription (Whisper) -> Intent Extraction -> RAG Reasoning -> Dialect-tuned WhatsApp Reply.
-- **Payload:** `Body` (Message), `MediaUrl0` (Voice note), `From` (Contact number).
+- **Source:** Twilio Cloud (Secure Webhook routed via Cloudflare Tunnel).
+- **Function:** Real-time processing of incoming Farmer queries.
+- **Workflow:** 
+  1. **Transcription:** Audio notes downloaded via secure stream and transcribed using Groq Whisper-v3.
+  2. **Identity Governance:** Automated lookup of the sender's phone number against the `FarmerProfile` database.
+  3. **Unique User Check:** Enforcement of a 1:1 mapping between WhatsApp accounts and Niti Setu records.
+  4. **Dialect-Tuned Reasoning:** Llama 3 assisted generation of eligibility results with regional formatting.
+- **Payload:** 
+  - `From`: The sender's unique WhatsApp ID (e.g., `whatsapp:+91...`).
+  - `Body`: Text query if provided.
+  - `MediaUrl0`: URL to the hosted voice note (ephemeral).
+- **Security:** Logic handles **Guest vs. Registered** states dynamically, ensuring limited access for unverified public queries.

@@ -104,6 +104,7 @@ function UsageCard({ service, index }) {
       case 'Groq-Whisper': return Mic;
       case 'Groq-Vision': return Eye;
       case 'ElevenLabs-TTS': return MessageSquare;
+      case 'Twilio-WhatsApp': return Monitor; // Or MessageSquare/Phone
       case 'SMTP-Email': return Mail;
       default: return Server;
     }
@@ -114,6 +115,7 @@ function UsageCard({ service, index }) {
     'Groq-Whisper': { text: '#38bdf8', bg: 'rgba(56,189,248,0.1)', border: 'rgba(56,189,248,0.2)' },
     'Groq-Vision': { text: '#f59e0b', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)' },
     'ElevenLabs-TTS': { text: '#6366f1', bg: 'rgba(99,102,241,0.1)', border: 'rgba(99,102,241,0.2)' },
+    'Twilio-WhatsApp': { text: '#25D366', bg: 'rgba(37,211,102,0.1)', border: 'rgba(37,211,102,0.2)' },
     'SMTP-Email': { text: '#f43f5e', bg: 'rgba(244,63,63,0.1)', border: 'rgba(244,63,63,0.2)' }
   };
 
@@ -197,6 +199,7 @@ function UsageCard({ service, index }) {
 
 export default function ResourceManagement() {
   const [usageData, setUsageData] = useState([]);
+  const [uniquePhones, setUniquePhones] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -210,7 +213,10 @@ export default function ResourceManagement() {
     if (isRefresh) setRefreshing(true);
     try {
       const res = await getResourceUsage();
-      if (res.success) setUsageData(res.data);
+      if (res.success) {
+        setUsageData(res.data);
+        setUniquePhones(res.uniquePhones || 0);
+      }
     } catch (e) {
       console.error("Resource error", e);
       // alert("TELEMETRY_SYNC_FAILURE: Unable to connect to orchestration cluster.");
@@ -376,8 +382,8 @@ export default function ResourceManagement() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '40px' }}>
           <StatBox label="Daily LLM Tokens" value={stats.tokens.toLocaleString()} subValue="Live" icon={Cpu} color="#10b981" index={0} progress={42} />
           <StatBox label="TTS Characters" value={stats.chars.toLocaleString()} subValue="Stable" icon={MessageSquare} color="#6366f1" index={1} progress={25} />
-          <StatBox label="System Latency" value="18ms" subValue="Optimal" icon={Zap} color="#38bdf8" index={2} progress={12} />
-          <StatBox label="Security Level" value="EAL5+" icon={ShieldCheck} color="#f59e0b" index={3} />
+          <StatBox label="Registered Phones" value={uniquePhones.toLocaleString()} subValue="Unique" icon={Users} color="#25D366" index={2} />
+          <StatBox label="System Health" value="EAL5+" icon={ShieldCheck} color="#f59e0b" index={3} />
         </div>
 
         {/* Main Content & Sidebar Grid */}

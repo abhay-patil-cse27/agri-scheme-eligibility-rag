@@ -175,6 +175,7 @@ router.get(
       { serviceName: 'Groq-LLM', provider: 'Groq', unit: 'tokens', todayRegisteredUsage: 0, todayPublicUsage: 0, dailyLimit: 100000, history: [] },
       { serviceName: 'ElevenLabs-TTS', provider: 'ElevenLabs', unit: 'characters', todayRegisteredUsage: 0, todayPublicUsage: 0, dailyLimit: 50000, history: [] },
       { serviceName: 'Groq-Whisper', provider: 'Groq', unit: 'seconds', todayRegisteredUsage: 0, todayPublicUsage: 0, dailyLimit: 3600, history: [] },
+      { serviceName: 'Twilio-WhatsApp', provider: 'Twilio', unit: 'messages', todayRegisteredUsage: 0, todayPublicUsage: 0, dailyLimit: 1000, history: [] },
       { serviceName: 'SMTP-Email', provider: 'SendGrid', unit: 'requests', todayRegisteredUsage: 0, todayPublicUsage: 0, dailyLimit: 100, history: [] }
     ];
 
@@ -185,9 +186,12 @@ router.get(
 
     console.log(`[Analytics] Returning ${mergedUsage.length} resource nodes.`);
 
+    const totalUniquePhones = await FarmerProfile.countDocuments({ contactNumber: { $exists: true, $ne: '' } });
+
     res.json({
       success: true,
       data: mergedUsage,
+      uniquePhones: totalUniquePhones
     });
 
   })
