@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Lock, KeyRound, Loader2, Save, Plus, X } from 'lucide-react';
+import { User, Mail, Lock, KeyRound, Loader2, Save, Plus, X, Zap } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { updateDetails, updatePassword, sendOTP, getSchemes } from '../services/api';

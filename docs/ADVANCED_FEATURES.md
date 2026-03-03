@@ -66,9 +66,14 @@ Follow these steps to establish the agriculture-to-AI bridge:
    ```
 
 2. **Initialize Secure Tunnel**:
-   Run the following command which leverages Cloudflare's edge network for a stable, zero-password bridge:
+   You can now start both the backend server and the Cloudflare tunnel in a single industry-grade operation:
    ```bash
-   npx -y cloudflared tunnel --url http://localhost:3000
+   cd backend
+   npm run dev:full
+   ```
+   *Alternative (Manual):*
+   ```bash
+   npm run tunnel
    ```
    *Note: Copy the `https://*.trycloudflare.com` URL generated in the terminal.*
 
