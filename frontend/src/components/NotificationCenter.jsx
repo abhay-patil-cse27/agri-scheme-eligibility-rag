@@ -4,6 +4,7 @@ import {
   Bell, X, Trash2, CheckCircle2, AlertCircle, Info, AlertTriangle, Clock
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 const ICONS = {
   success: <CheckCircle2 size={16} color="var(--accent-emerald)" />,
@@ -14,6 +15,7 @@ const ICONS = {
 
 export default function NotificationCenter({ isOpen, onClose }) {
   const { history, clearHistory } = useToast();
+  const { i18n } = useTranslation();
 
   return (
     <AnimatePresence>

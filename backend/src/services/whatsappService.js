@@ -6,6 +6,7 @@ const os = require('os');
 const config = require('../config/env');
 const { transcribeAudio, chatWithKrishiMitra } = require('./llmService');
 const logger = require('../config/logger');
+const User = require('../models/User');
 const FarmerProfile = require('../models/FarmerProfile');
 
 // Twilio credentials from Config
@@ -67,9 +68,20 @@ const handleIncomingMessage = async (payload) => {
     }
 
     // 2. Identify Unique User by Contact Number
-    // We search the FarmerProfile which is linked to a Unique User account
+    // 2. Map Sender to Farmer Profile (Identity Search)
     const contactNumber = from.replace('whatsapp:', '');
-    const profile = await FarmerProfile.findOne({ contactNumber }).lean();
+    
+    // First, find the user who has verified this phone number
+    const user = await User.findOne({ contactNumber, isPhoneVerified: true });
+    
+    let profile = null;
+    if (user) {
+      // Find the profile linked to this unique user account
+      profile = await FarmerProfile.findOne({ userId: user._id }).lean();
+    } else {
+      // Fallback: Check if there's a profile with this number directly (legacy/guest verification)
+      profile = await FarmerProfile.findOne({ contactNumber }).lean();
+    }
     
     // 3. Handle Guest Mode Logic (Uniqueness Enforcement)
     if (!profile) {

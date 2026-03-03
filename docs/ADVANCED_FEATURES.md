@@ -32,12 +32,11 @@ sequenceDiagram
 ```
 
 ### Security & ID Governance (Unique User Protocol)
- 
 The system enforces a **Strict Identity Governance** model to ensure data integrity and prevent double-dipping in schemes:
  
-1. **Unique Identity Linking**:
-   - Every incoming WhatsApp message is compared against the `User` database using the sender's phone number as a **Primary Unique Key**.
-   - This ensures that a single WhatsApp account maps to exactly one **Verified User** in the backend.
+1. **Cross-Model Identity Bridging**:
+   - The system implements a **Dual-Model Linking** strategy. Every incoming WhatsApp message is mapped to the primary `User` model via the verified phone number.
+   - Once the user is identified, the system automatically bridges to their associated `FarmerProfile` via a relational `userId` lookup. This ensures the bot provides hyper-personalized advice based on the high-fidelity data stored in their profile.
  
 2. **WhatsApp OTP Verification Protocol**:
    - To prevent identity spoofing, users must verify their WhatsApp number via a **Secure 6-Digit OTP** sent directly to their WhatsApp device.

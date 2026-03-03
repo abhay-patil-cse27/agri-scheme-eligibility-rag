@@ -373,7 +373,7 @@ router.post(
     }
 
     // Check if number is taken by someone else
-    const existing = await User.findOne({ contactNumber, _id: { $ne: req.user.id } });
+    const existing = await User.findOne({ contactNumber: cleanNumber, _id: { $ne: req.user.id } });
     if (existing) {
       return res.status(400).json({ success: false, error: 'This number is already registered to another account.' });
     }
@@ -383,7 +383,7 @@ router.post(
 
     // Save/Update OTP in DB
     await OTP.findOneAndUpdate(
-      { contactNumber, purpose: 'phone_verification' },
+      { contactNumber: cleanNumber, purpose: 'phone_verification' },
       { otp, createdAt: Date.now() },
       { upsert: true, new: true }
     );
@@ -422,7 +422,7 @@ router.post(
 
     // Update User
     const user = await User.findById(req.user.id);
-    user.contactNumber = contactNumber;
+    user.contactNumber = cleanNumber; // Save the cleaned number
     user.isPhoneVerified = true;
     await user.save();
 
