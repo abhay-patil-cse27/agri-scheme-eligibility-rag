@@ -468,6 +468,7 @@ export default function ResourceManagement() {
                    { name: 'Groq Cloud', status: 'Optimal', col: '#10b981' },
                    { name: 'ElevenLabs', status: 'Healthy', col: '#10b981' },
                    { name: 'Neo4j Aura', status: 'Connected', col: '#38bdf8' },
+                   { name: 'Twilio WhatsApp', status: 'Enabled', col: '#25D366' },
                    { name: 'MongoDB Alt', status: 'Healthy', col: '#10b981' }
                  ].map((s, i) => (
                    <div key={i} style={{ padding: '14px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
