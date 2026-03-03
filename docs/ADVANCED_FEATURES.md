@@ -41,6 +41,7 @@ The system enforces a **Strict Identity Governance** model to ensure data integr
  
 2. **WhatsApp OTP Verification Protocol**:
    - To prevent identity spoofing, users must verify their WhatsApp number via a **Secure 6-Digit OTP** sent directly to their WhatsApp device.
+   - **Strict Validation**: The system enforces a mandatory 10-digit mobile number check and defaults to the **+91 (India)** country code for all agricultural integrations.
    - Status is tracked via `isPhoneVerified`. If a user changes their number in settings, the verification status is automatically reset, requiring a re-verification of the new number.
  
 3. **Multimodal Registry Checks**:
@@ -137,8 +138,8 @@ Follow these steps to establish the agriculture-to-AI bridge:
 5. **WhatsApp Number Registration & Verification (Optional)**:
    - Users can now manage their WhatsApp identity directly from the **Profile Settings**.
    - **Step A**: Navigate to *Settings* > *Update Profile*.
-   - **Step B**: Enter a valid WhatsApp number (e.g., `+91XXXXXXXXXX`).
-   - **Step C**: Click **"Verify via WhatsApp"**. The backend generates a secure OTP and dispatches it via the WhatsApp bridge.
+   - **Step B**: Enter your **10-digit mobile number**.
+   - **Step C**: The UI automatically applies the **+91 prefix**. Click **"Verify via WhatsApp"**. The backend validates the 10-digit constraint, generates a secure OTP, and dispatches it via the WhatsApp bridge.
    - **Step D**: Enter the 6-digit code in the app. Once verified, the number is locked to the account, and the user gains full personalized AI access via WhatsApp.
 
 6. **Synchronize Device (Sandbox Only)**:
