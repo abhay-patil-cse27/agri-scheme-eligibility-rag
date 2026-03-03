@@ -52,6 +52,37 @@ To handle real-world network challenges, the gateway uses a **Cloudflare Quick T
 - **Zero-Block Webhooks**: Bypasses browser-based "reminder pages" that typical tunnels use, ensuring 100% 24/7 delivery of Twilio payloads.
 - **End-to-End Encryption**: Secure HTTPS transit between the Twilio Cloud and the Niti Setu local development server.
 
+### Setup & Deployment Guide ⚙️
+
+Follow these steps to establish the agriculture-to-AI bridge:
+
+1. **Environmental Configuration**:
+   Append the following to your `backend/.env`:
+   ```env
+   TWILIO_ACCOUNT_SID=AC...
+   TWILIO_AUTH_TOKEN=your_token
+   TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886 (Twilio Sandbox)
+   FRONTEND_URL=your_deployed_or_tunnel_url
+   ```
+
+2. **Initialize Secure Tunnel**:
+   Run the following command which leverages Cloudflare's edge network for a stable, zero-password bridge:
+   ```bash
+   npx -y cloudflared tunnel --url http://localhost:3000
+   ```
+   *Note: Copy the `https://*.trycloudflare.com` URL generated in the terminal.*
+
+3. **Twilio Webhook Configuration**:
+   - Access the [Twilio Console](https://console.twilio.com/).
+   - Navigate to: **Messaging** > **Try it out** > **Send a WhatsApp message**.
+   - Click the **Sandbox settings** tab.
+   - In the **"WHEN A MESSAGE COMES IN"** field, paste your URL with the API suffix:
+     `https://your-unique-id.trycloudflare.com/api/whatsapp/webhook`
+   - Set the method to **POST** and click **Save**.
+
+4. **Synchronize Device**:
+   Send the specific "join" code (e.g., `join stretch-unusual`) to the Twilio number from your WhatsApp device to link it to the sandbox environment.
+
 ---
 
 ## 2. Offline-First (PWA) 📶
