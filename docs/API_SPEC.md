@@ -49,7 +49,7 @@ The core of Niti Setu. Uses semantic search and LLM reasoning.
 
 ---
 
-## 📷 Vision & Voice AI
+## 5. Security Architecture
 
 Specialized endpoints for high-accessibility feature extraction.
 

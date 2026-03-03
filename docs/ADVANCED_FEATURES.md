@@ -35,31 +35,34 @@ sequenceDiagram
 
 The system enforces a **Strict Identity Governance** model to ensure data integrity and prevent double-dipping in schemes:
 
-1.  **Unique Identity Linking**:
-    - Every incoming WhatsApp message is hashed and compared against the `FarmerProfile` database using the sender's phone number as a **Primary Unique Key**.
-    - This ensures that a single WhatsApp account maps to exactly one **Unique User** in the backend.
+1. **Unique Identity Linking**:
+   - Every incoming WhatsApp message is hashed and compared against the `FarmerProfile` database using the sender's phone number as a **Primary Unique Key**.
+   - This ensures that a single WhatsApp account maps to exactly one **Unique User in the backend.
 
-2.  **Multimodal Registry Checks**:
-    - **Registered Users**: Receive a "Premium Personalized Experience" including greetings by name, hyper-local dialect tuning, and direct links to their private *Eligibility History*.
-    - **Unregistered Guests**: Are identified instantly. The system serves a "Guided Public Response" that includes a warm welcome, a high-level answer, and an automated registration nudge to convert them into verified users.
+2. **Multimodal Registry Checks**:
+   - **Registered Users**: Receive a "Premium Personalized Experience" including greetings by name, hyper-local dialect tuning, and direct links to their private *Eligibility History*.
+   - **Unregistered Guests**: Are identified instantly. The system serves a "Guided Public Response" that includes a warm welcome, a high-level answer, and an automated registration nudge to convert them into verified users.
 
-3.  **Dynamic Response Architecting**:
-    - The AI engine uses **Contextual Prompt Injection** to change its tone. If the user is a guest, it prefixes the response with a registration notice: *"We have noticed that you are not registered with Niti Setu yet!"* to drive user acquisition.
+3. **Dynamic Response Architecting**:
+   - The AI engine uses **Contextual Prompt Injection** to change its tone. If the user is a guest, it prefixes the response with a registration notice: *"We have noticed that you are not registered with Niti Setu yet!"* to drive user acquisition.
 
 ### Robust Local Tunneling & Fallbacks
 
-To handle real-world network challenges, the gateway uses a **Cloudflare Quick Tunnel** (Argo based). Unlike standard tunnels, this provides:
+To handle real-world network challenges, the gateway uses **Localtunnel** as the primary bridge. This provides:
+
 - **Zero-Block Webhooks**: Bypasses browser-based "reminder pages" that typical tunnels use, ensuring 100% 24/7 delivery of Twilio payloads.
 - **End-to-End Encryption**: Secure HTTPS transit between the Twilio Cloud and the Niti Setu local development server.
 
-#### 🆘 Troubleshooting: I/O Timeout?
-If your ISP (e.g., Jio, Airtel) blocks Cloudflare's Argo lookups, you may see a "DNS Lookup Timeout" error. In such cases, use the **LocalTunnel Fallback** provided in our automation suite.
+#### 🆘 Troubleshooting: Connection Refused?
+
+If Localtunnel is unstable, use the **Cloudflare Tunnel** (Argo-based) provided in our automation suite. Cloudflare is extremely robust but may occasionally face DNS resolution issues on some ISPs (e.g., Jio).
 
 ### Setup & Deployment Guide ⚙️
 
 Follow these steps to establish the agriculture-to-AI bridge:
 
 1. **Environmental Configuration**:
+
    Append the following to your `backend/.env`:
 
    ```env
@@ -70,24 +73,25 @@ Follow these steps to establish the agriculture-to-AI bridge:
    ```
 
 2. **Initialize Secure Tunnel**:
-   You can now start both the backend server and the Cloudflare tunnel in a single industry-grade operation:
+
+   You can now start both the backend server and the tunnel in a single industry-grade operation:
 
    ```bash
    cd backend
    npm run dev:full
    ```
 
-   *Alternative (Manual - Cloudflare):*
+   *Alternative (Manual - Localtunnel):*
    ```bash
    npm run tunnel
    ```
 
-   *Alternative (Backup - LocalTunnel):* 🛠️
-   If Cloudflare fails (I/O Timeout), run this to use LocalTunnel:
+   *Alternative (Backup - Cloudflare):* 🛠️
+   If Localtunnel fails, run this to use Cloudflare:
    ```bash
-   npm run tunnel:alt
+   npm run tunnel:cf
    ```
-   *Note: Copy the `https://*.loca.lt` URL generated.*
+   *Note: Copy the HTTPS URL generated.*
 
 3. **Twilio Webhook Configuration**:
    - Access the [Twilio Console](https://console.twilio.com/).
@@ -149,15 +153,15 @@ PWA features (Service Workers and Manifest) are only active in **Production Mode
    npm run preview
    ```
 
-   _This serves the optimized production files locally._
+   *This serves the optimized production files locally.*
 
-3. **Install Test:**
+3. **Install Test**:
    - Open the preview URL in Chrome or Edge.
    - Look for the **Install Icon** (computer with a down arrow) in the address bar.
    - Click to install Niti Setu as a standalone app.
 
-4. **Technical Audit (DevTools):**
-   - **Application Tab:** Check "Service Workers" (should be Running) and "Manifest" (should show icons and theme colors).
+4. **Technical Audit (DevTools)**:
+   - **Application Tab**: Check "Service Workers" (should be Running) and "Manifest" (should show icons and theme colors).
    - **Lighthouse Tab:** Run a "Progressive Web App" report to confirm 100% compliance.
 
 5. **Mobile Testing:**
@@ -185,6 +189,7 @@ graph LR
 - **Tier 1 (Literal):** Transcribing regional voice (Whisper).
 - **Tier 2 (Semantic):** LLM understands intent (Satbara, Loan, etc.).
 - **Tier 3 (Transcreation):** Converting robotic English into warm, local Marathi/Hindi "Agricultural Tone".
+- **Numerical Integrity:** Enforces `en-US` formatting for dates and numbers when English is selected, preventing regional numeral leaks (e.g., Devanagari numerals) even if the user's browser default is set to a regional locale.
 
 ---
 
