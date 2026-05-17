@@ -42,7 +42,14 @@ app.use(compression());
 app.use(cors({
   origin: config.nodeEnv === 'production'
     ? [config.frontendUrl]
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'http://192.168.29.117:5173'],
+    : [
+        'http://localhost:3000', 
+        'http://localhost:3001', 
+        'http://localhost:5173', 
+        'http://192.168.29.117:5173',
+        'http://localhost', // Standard Capacitor webview origin
+        'capacitor://localhost' // Alternative Capacitor webview origin
+      ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
