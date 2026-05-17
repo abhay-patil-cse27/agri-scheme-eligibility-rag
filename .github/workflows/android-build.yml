@@ -41,7 +41,7 @@ jobs:
 
       - name: Sync Capacitor Android Project
         working-directory: ./frontend
-        run: npx cap sync android
+        run: npx @capacitor/cli sync android
 
       - name: Grant Execute Permission to Gradle
         working-directory: ./frontend/android
