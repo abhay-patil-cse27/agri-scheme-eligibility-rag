@@ -7,7 +7,7 @@ Thumbs.db
 node_modules/
 **/node_modules/
 
-# Environment Variables (CRITICAL)
+# Environment Variables (CRITICAL — never commit real .env files)
 .env
 .env.local
 .env.*.local
@@ -41,6 +41,12 @@ docs/Phase2_Farmer_Profile_Enrichment.md
 *.zip
 *.pdf
 
+# Database Seed & Internal Data Files (contain MongoDB Object IDs)
+backend/schemes_list.json
+
+# Frontend Utility Scripts (contain key injection logic — not for public)
+frontend/scripts/
+
 # Editor Folders
 .vscode/
 .idea/
@@ -49,6 +55,8 @@ docs/Phase2_Farmer_Profile_Enrichment.md
 *.njsproj
 *.sln
 
-# Temporary Workspaces
+# Temporary Workspaces & Server Temp Files
 tmp/
-backend/scripts/
+**/tmp/
+backend/src/tmp/
+backend/scripts/
