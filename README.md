@@ -18,7 +18,7 @@ decisions in their native language.
 - **Multilingual Support:** Native localization and intelligence for 10 regional languages: **English, Hindi, Marathi, Bengali, Telugu, Tamil, Gujarati, Kannada, Malayalam, and Punjabi**.
 - **Secure OTP Verification:** Robust 2-step verification system for registration and password recovery via official Government-style emails.
 - **Krishi Mitra AI Assistant:** A floating, voice-enabled assistant with **Multi-session Chat History**, supporting **Whisper STT** and **Auto-Speech Synthesis** (TTS) powered by a heavily optimized LRU Audio Cache. Features a premium **Glassmorphic Home Tab** with real-time status indicators.
-- **Privacy-First (Trio-Input Scanner):** Integrated "Document Vault" with three specialized input methods: **Live Premium Scanner (WebRTC)**, **Native Device Camera Bridge**, and **Standard Gallery Upload**. Powered by Vision AI to scan 7/12 extracts and Aadhaar documents in-memory with strict zero-storage privacy.
+- **Privacy-First (Trio-Input Scanner):** Integrated "Document Vault" with three specialized input methods: **Live Premium Scanner (WebRTC)**, **Native Device Camera Bridge**, and **Standard Gallery Upload** (supports JPG, PNG, WebP, HEIC, PDF). Powered by Vision AI to scan 7/12 extracts and Aadhaar documents in-memory with strict zero-storage privacy. Features **DPDP per-click consent enforcement**, **dual-layer MIME+extension file validation**, **desktop webcam fallback**, and **auto-scan on file selection**.
 - **Security-First Governance:** Automated **Security Termination Emails** citing the **IT Act 2000 (India)** and associated cyber laws are issued instantly when an administrator removes a profile for security reasons.
 - **Advanced Native Retrieval:** Multi-path search (Vector + BM25) with built-from-scratch **MMR** for diversity and **Reciprocal Rank Fusion (RRF)** for precision, implemented without any third-party RAG libraries.
 - **Massive Knowledge Base:** 35+ official PDFs across 9 priority sectors, directly linked to `myscheme.gov.in` for high-availability universal access.
@@ -180,7 +180,7 @@ We have successfully restored the Krishi Mitra and Document Scan ecosystems to 1
 ## License & Contact
 
 Distributed under the MIT License. Created by **Abhay Patil** -
-[patil.abhay214@gmail.com](mailto:patil.abhay214@gmail.com).
+[abhay.patil214@gmail.com](mailto:abhay.patil214@gmail.com).
 
 Project Link: [https://github.com/abhay-patil-cse27/agri-scheme-eligibility-rag](https://github.com/abhay-patil-cse27/agri-scheme-eligibility-rag)
 

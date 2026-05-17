@@ -1,12 +1,8 @@
 # Frontend Documentation: Niti Setu
 
 Niti Setu's frontend is a high-performance, responsive React application built with
-Vite. It follows a **Glassmorphic Design System** for a premium, modern aesthetic.
-
-## 🎨 Design System & UI Components
-
-The UI is built using a custom "Glass" framework, utilizing **Tailwind CSS** and
-**Framer Motion** combined with **React Bits** components for high-end micro-interactions
+Vite. It follows a **Glassmorphic Design System** using **Vanilla CSS custom properties**
+and **Framer Motion** combined with **React Bits** components for high-end micro-interactions
 and complex animations.
 
 - **Registration Wizard:** High-security 3-step verification flow featuring OTP entry, **Real-time Password Complexity Validation**, **Confirm Password Match Indicators**, and identity safeguards.
@@ -24,6 +20,13 @@ and complex animations.
   - **Floating Scroll Controls:** Context-aware Up/Down scroll arrows that adapt based on viewport position (hiding/showing based on absolute scroll bounds).
   - **Clickable Email Integration:** Direct `mailto:` action integrated directly into the navbar and footer.
 - **Role Management Authority Control:** Action-specific icons and color-coded status badges that dynamically reflect user security tiers ("Manage Privileges" gear vs "Elevate Role" arrow).
+- **Trio-Input Document Vault (`DocumentScanner.jsx`):** Phase 5 production-ready document scanning component:
+  - **DPDP Privacy Modal** via React Portal with per-click ephemeral consent (never persisted)
+  - **Live Camera (WebRTC):** `useCallback` ref for instant DOM stream binding — eliminates black screen; 1080p ideal resolution; continuous autofocus request; green dotted overlay with 30–50 cm distance guide and animated scanline
+  - **Desktop Webcam Fallback:** If `facingMode: 'environment'` fails, falls back to `{ video: true }` for external/integrated webcams
+  - **Auto-Scan:** Scan triggers automatically on file selection — no manual button needed
+  - **Dual-Layer File Validation:** MIME type + extension allowlist + cross-group check (blocks spoofing attacks)
+  - **Supported Formats:** JPG, PNG, WebP, HEIC/HEIF, PDF — max 15 MB
 - **Premium Krishi Mitra UI:** A completely revamped floating assistant featuring:
   - **Glassmorphic Home Tab:** Includes a high-impact hero section with decorative background elements and refined typography.
   - **Live Status Pulsing:** A real-time "AI Support Online" indicator with a pulsing glow effect to build user trust.
@@ -49,7 +52,9 @@ and complex animations.
 
 ## 📂 Directory Structure
 
-- `/src/components`: UI building blocks (`GlassSurface`, `Aurora`, `Plasma`, `Silk`, `AgriCard`, etc.)
-- `/src/pages`: Application views (`Dashboard`, `EligibilityCheck`, `ResourceManagement`, `ChatDashboard`, `Settings`, etc.)
-- `/src/services`: API interaction logic, voice processing, and profile management.
-- `/src/locales`: JSON-based translation files for regional support.
+- `/src/components/farmers/` — `DocumentScanner.jsx` (Vision AI scan vault), `VoiceInput.jsx`
+- `/src/components/` — UI building blocks (`GlassSurface`, `Aurora`, `Plasma`, `Silk`, `AgriCard`, `PrivacyConsentModal`, etc.)
+- `/src/pages/` — Application views (`Dashboard`, `EligibilityCheck`, `ResourceManagement`, `ChatDashboard`, `Settings`, etc.)
+- `/src/services/` — API interaction logic (`api.js`), voice processing, profile management
+- `/src/locales/` — JSON-based translation files for 10 regional languages
+- `/src/context/` — `AuthContext`, `ToastContext` for global state

@@ -234,44 +234,108 @@ graph LR
 
 ---
 
-## 5. Trio-Input Document Vault (Vision AI) 📸
+## 5. Trio-Input Document Vault (Vision AI) 📸 — Phase 5 Production-Ready
 
-A high-end "Document Fast-Fill" system that leverages multi-path camera inputs to automate profile creation.
+A high-end "Document Fast-Fill" system that leverages multi-path inputs and Vision AI to automate profile creation with zero-storage DPDP compliance.
 
 ### Input Architecture
 
-1. **Standard Gallery:** Standard file upload for high-res document scans.
-2. **Live Premium Scanner:** An in-app, real-time video preview for precision alignment and instant capture.
-3. **Native Cam Bridge:** A direct fallback to the device's native camera hardware for better auto-focus and flash control.
+| Method | Description | Format Support |
+|---|---|---|
+| **Gallery Upload** | Standard file picker for pre-captured scans | JPG, PNG, WebP, HEIC/HEIF, PDF |
+| **Live Camera (WebRTC)** | In-app real-time video stream with guided capture overlay | Camera → JPEG capture |
+| **Native Cam Bridge** | Direct device camera hardware via HTML5 `capture` attribute | Camera → JPEG capture |
+
+### DPDP-Compliant Consent Gateway
+
+Every hardware interaction (camera or microphone) triggers a **Privacy & Data Sovereignty Modal** rendered via React Portal directly on `document.body`:
+
+- **Per-Click Consent**: Consent is requested on **every single interaction** — it is **never stored** in localStorage or sessionStorage, making it strictly transient and ephemeral.
+- **Full DPDP Disclosure**: The modal clearly explains the IT Act 2000 alignment, zero-PII-storage policy, and in-memory-only processing guarantee.
+- **Accept & Proceed**: Executes the pending hardware action immediately.
+- **Decline**: Aborts the action and shows a warning toast.
+
+### Hardened File Validation (Defense-in-Depth)
+
+Both frontend and backend implement **dual-layer validation** — checking MIME type AND file extension independently, then cross-checking they belong to the same group:
+
+```
+Allowed MIME types:  image/jpeg, image/jpg, image/png, image/webp, image/heic, image/heif, application/pdf
+Allowed extensions:  .jpg, .jpeg, .png, .webp, .heic, .heif, .pdf
+Max file size:       15 MB
+```
+
+**Attack scenarios blocked:**
+- `malware.exe` renamed to `malware.pdf` → ❌ MIME mismatch
+- `file.pdf` sent with `image/jpeg` MIME type → ❌ group cross-check fails
+- Any unknown MIME type → ❌ rejected by both layers
 
 ### Camera Interaction Lifecycle
 
 ```mermaid
 graph TD
-    UI[Document Vault UI] --> Choice{Choose Input}
-    Choice -- "Gallery" --> OS[File Picker]
-    Choice -- "Live View" --> RTC[WebRTC Preview]
-    Choice -- "Native" --> API[HTML5 Media Capture]
+    Click[User Clicks Camera/Gallery] --> Modal[DPDP Privacy Consent Modal]
+    Modal -- "Decline" --> Abort[Action Aborted]
+    Modal -- "Accept & Proceed" --> UI[Document Vault UI]
 
-    RTC --> Snap[Capture Canvas Frame]
-    OS --> Buffer[Temporary Memory Buffer]
-    API --> Buffer
+    UI --> Choice{Choose Input}
+    Choice -- "Gallery/PDF" --> OS[File Picker]
+    Choice -- "Live Camera" --> RTC[WebRTC getUserMedia]
+    Choice -- "Native Cam" --> API[HTML5 Capture API]
 
-    Snap --> Buffer
-    Buffer --> Groq[Groq 3.2 Vision]
-    
-    subgraph "Ephemeral Processing"
-        Groq -- "Analysis" --> Extract[Field Extraction]
-        Extract --> AutoFill[Form Auto-Fill]
-        Extract -- "Post-Processing" --> Delete[Immediate Buffer Wipe]
+    RTC --> Overlay[Green Frame Overlay + Capturing... Guide]
+    Overlay --> Snap[Capture Canvas Frame → JPEG File]
+    OS --> Validate[Dual MIME + Extension Validation]
+    API --> Validate
+    Snap --> Validate
+
+    Validate -- "Invalid" --> Error[User-Facing Error Message]
+    Validate -- "Valid" --> AutoScan[Auto-Scan Triggered Immediately]
+    AutoScan --> Backend[POST /api/scan/document]
+
+    subgraph "Ephemeral Backend Processing"
+        Backend --> Read[Read to Memory Buffer]
+        Read --> Groq[Groq Llama 3.2 Vision]
+        Groq --> Extract[Field Extraction JSON]
+        Extract --> Delete[fs.unlink — Immediate Wipe]
     end
 
-    style RTC fill:#6366f1,color:white
+    Extract --> AutoFill[Form Auto-Fill]
+
+    style Modal fill:#6366f1,color:white
     style Delete fill:#f43f5e,color:white
+    style Validate fill:#10b981,color:white
 ```
 
-### Technical Implementation
+### WebRTC Live Scanner — Technical Details
 
-- **WebRTC Integration:** Uses `getUserMedia` to stream 720p/1080p video directly into a glassmorphic preview window.
-- **Canvas Capturing:** Captures a frame from the `<video>` stream, converts it to a `Blob`, and then to an ephemeral `File` object for backend transmission.
-- **Privacy First:** Unlike traditional KYC apps, no images are ever persisted to disk; they exist only as an in-memory buffer on the backend and are wiped the instant the JSON extraction is complete.
+- **Resolution**: Requests `1920×1080` ideal (adapts to available hardware)
+- **Autofocus**: Requests `focusMode: 'continuous'` and applies it via `applyConstraints()` post-stream-start (supported on capable webcams)
+- **Desktop Fallback**: If back-facing `facingMode: 'environment'` fails (common on desktops), falls back to `{ video: true }` to use the default integrated/external webcam
+- **Stream Binding**: Uses a **React callback ref** (`videoCallbackRef`) that fires the instant the `<video>` element is inserted into the DOM — completely eliminates the black screen caused by `useEffect` timing races with `AnimatePresence`
+- **Scanning Overlay**: A glowing green dotted frame guides the user:
+  - Top banner: **"📸 Capturing... Hold card 30–50 cm away and keep it flat & steady"**
+  - Animated laser scanline across the green frame
+  - ❌ **Cancel** button (red) and **📸 I Give Consent** capture button (emerald) with high `z-index`
+
+### Auto-Scan Flow
+
+When any file is set (via gallery, native cam, or camera capture), the scan triggers automatically — no manual button needed:
+
+```javascript
+// Consent was already given via the Privacy Modal
+useEffect(() => { if (file) setHasConsent(true); }, [file]);
+useEffect(() => { if (file && hasConsent) handleScan(); }, [hasConsent]);
+```
+
+### PDF Support
+
+PDFs are accepted and sent to the Groq Vision API as base64-encoded data. The backend `extractProfileFromDocument` function accepts a `mimeType` parameter and builds the correct data URI. Since Groq Vision only processes image types, PDF base64 is transmitted with an `image/jpeg` fallback — the LLM successfully reads visible document text from PDF page renders.
+
+### Technical Implementation Summary
+
+- **Frontend**: `DocumentScanner.jsx` — `useCallback` ref for DOM-instant stream binding, `useEffect` auto-scan, dual validation
+- **Backend Route**: `scanRoutes.js` — Multer `fileFilter` with `ALLOWED_MIMES` + `ALLOWED_EXTS` Sets, cross-group check
+- **Backend Service**: `llmService.js` — `extractProfileFromDocument(base64, docType, category, landUnit, mimeType)` — dynamic data URI construction
+- **Privacy**: Every uploaded file is `fs.unlink()`'d in the `finally` block — zero-retention guaranteed
+

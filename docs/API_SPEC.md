@@ -57,9 +57,17 @@ Specialized endpoints for high-accessibility feature extraction.
 
 `POST /api/scan/document`
 
-- **Body:** `Multipart/form-data` with `document` (Image), `documentType` (e.g., '7-12'), and `landUnit` (optional: 'Acres' or 'Hectares').
-- **Privacy:** Binary stream only. Zero permanent storage.
-- **Unit Logic:** Auto-converts Hectares to Acres (2.47x) for standardizing land eligibility checks.
+- **Auth:** Required (JWT Bearer token)
+- **Body:** `Multipart/form-data`
+  - `document` — The file to scan
+  - `documentType` — `"7/12 Land Record"` | `"Aadhaar Card"` | `"Kisan Credit Card"` | `"Other Official ID"`
+  - `landUnit` — `"Hectares"` | `"Acres"` (default: `"Hectares"`)
+- **Accepted Formats:** `JPG`, `JPEG`, `PNG`, `WebP`, `HEIC/HEIF`, `PDF` — max **15 MB**
+- **Validation:** Dual-layer (MIME type + file extension) with group cross-check to prevent spoofing attacks
+- **Privacy:** Ephemeral binary stream only — file is `fs.unlink()`'d in `finally` block — **zero permanent storage**
+- **Unit Logic:** Auto-converts Hectares to Acres (×2.47) for standardized eligibility checks
+- **Result:** `{ success: true, data: { name, age, gender, state, landHolding, annualIncome } }`
+
 
 ### Voice Transcription & Extraction
 
