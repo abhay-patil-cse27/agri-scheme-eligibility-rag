@@ -6,9 +6,8 @@ import './index.css';
 
 import { registerSW } from 'virtual:pwa-register';
 
-if (import.meta.env.PROD) {
-  registerSW({ immediate: true });
-}
+// Register PWA Service Worker (now active in dev mode too for localhost testing)
+registerSW({ immediate: true });
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

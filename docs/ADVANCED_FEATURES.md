@@ -175,33 +175,28 @@ stateDiagram-v2
 - **Google Fonts:** Cached via Workbox `CacheFirst` strategy.
 - **Scheme Documents:** Cached via `NetworkFirst` to ensure farmers see valid PDFs even if disconnected temporarily.
 
-### Verification & Production Testing
+### Verification & Local Testing
 
-PWA features (Service Workers and Manifest) are only active in **Production Mode**. To verify the implementation, follow these steps:
+The PWA is configured to work in both **Production** and **Development (localhost)**.
 
+**Testing in Development (Localhost):**
+1. Run `npm run dev` in the frontend folder.
+2. Open Chrome/Edge and go to `https://localhost:5173`.
+3. The **Install Niti Setu** icon will appear in the URL bar (if it doesn't, clear the old Service Worker in DevTools -> Application -> Service Workers).
+4. *Note: You may see a harmless `workbox` glob pattern warning in your terminal during dev mode; this is normal since Vite serves files from memory.*
+
+**Testing in Production:**
 1. **Build the Application:**
-
    ```bash
    cd frontend
    npm run build
    ```
-
 2. **Preview the Build:**
-
    ```bash
    npm run preview
    ```
-
-   *This serves the optimized production files locally.*
-
-3. **Install Test**:
-   - Open the preview URL in Chrome or Edge.
-   - Look for the **Install Icon** (computer with a down arrow) in the address bar.
-   - Click to install Niti Setu as a standalone app.
-
-4. **Technical Audit (DevTools)**:
-   - **Application Tab**: Check "Service Workers" (should be Running) and "Manifest" (should show icons and theme colors).
-   - **Lighthouse Tab:** Run a "Progressive Web App" report to confirm 100% compliance.
+3. **Install Test**: Open the preview URL and click the Install Icon in the address bar.
+4. **Technical Audit**: Use Chrome DevTools (Application Tab -> Manifest & Service Workers) or run a Lighthouse PWA report for 100% compliance verification.
 
 5. **Mobile Testing:**
    - Run `npm run tunnel` to get a secure public URL.
