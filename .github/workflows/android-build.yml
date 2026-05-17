@@ -1,0 +1,59 @@
+name: Build Android APK (Capacitor)
+
+on:
+  workflow_dispatch: # Allows you to manually trigger the build from GitHub UI
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Build Web Assets (Vite)
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          # Note: If testing against a live server, uncomment and set this to your cloud backend URL
+          # VITE_API_URL: https://your-deployed-backend.com/api
+          NODE_ENV: production
+
+      - name: Sync Capacitor Android Project
+        working-directory: ./frontend
+        run: npx cap sync android
+
+      - name: Grant Execute Permission to Gradle
+        working-directory: ./frontend/android
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        working-directory: ./frontend/android
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NitiSetu-Android-Debug-APK
+          path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
