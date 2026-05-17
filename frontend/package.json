@@ -8,7 +8,8 @@
     "tunnel": "lt --port 5173",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cap": "cap"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",
