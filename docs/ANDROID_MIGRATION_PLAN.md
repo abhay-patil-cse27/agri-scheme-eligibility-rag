@@ -2,6 +2,12 @@
 
 This document outlines the high-efficiency strategy for wrapping the existing React/Vite web application into a native Android APK using **Ionic Capacitor**. Because the frontend already utilizes a responsive Tailwind/Glassmorphic UI and native HTML5 Media APIs, this approach allows for 100% code reuse with minimal time overhead.
 
+## 🌟 Core Philosophy: Single Codebase, Dual Output
+It is critical to understand that **Capacitor is an additive, non-destructive layer.** 
+- **The Web App remains 100% intact:** Your standard web deployment (e.g., Vercel) continues to host the `dist` folder exactly as it always has.
+- **The Android App:** Takes that *exact same* `dist` folder, wraps it in a native Android WebView container, and outputs a Play Store-ready `.apk`.
+- **The Benefit:** You write code once in React. The Web App gets the feature immediately, and a quick `npx cap sync android` passes that exact same feature to the mobile app.
+
 ## Phase 1: Installation & Initialization
 **Goal:** Setup Capacitor in the frontend repository and generate the native Android project structure.
 
