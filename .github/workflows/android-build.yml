@@ -33,14 +33,17 @@ jobs:
         working-directory: ./frontend
         run: npm install
 
+      - name: Generate Production Env
+        working-directory: ./frontend
+        run: |
+          echo "VITE_API_URL=http://192.168.29.77:3000/api" > .env
+          echo "VITE_GOOGLE_CLIENT_ID=515460372089-vgsm525bskgiikc6k4mv8616kh9u87f6.apps.googleusercontent.com" >> .env
+
       - name: Build Web Assets (Vite)
         working-directory: ./frontend
         run: |
           npm run build
           find dist -name "*.gz" -type f -delete
-        env:
-          VITE_API_URL: http://192.168.29.77:3000/api
-          NODE_ENV: production
 
       - name: Sync Capacitor Android Project
         working-directory: ./frontend
