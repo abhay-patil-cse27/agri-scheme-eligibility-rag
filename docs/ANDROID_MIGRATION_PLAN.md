@@ -54,15 +54,23 @@ It is critical to understand that **Capacitor is an additive, non-destructive la
 2. **Native Camera Fallback:** If autofocus is poor on low-end devices, install `@capacitor/camera` to invoke the native OS camera interface.
 3. **App Icons & Splash Screen:** Use `@capacitor/assets` to automatically generate all required Android `res` folder icon sizes from a single source image.
 
-## Phase 5: Build Pipeline & Execution
-**Goal:** Compile the app and launch it on a device/emulator.
+## Phase 5: Build Pipeline & Execution (Completed ✅)
+**Goal:** Compile the app into an `.apk` file.
 
-1. **Build Web Assets:** `npm run build`
-2. **Sync Native Code:** `npx cap sync android`
-3. **Launch IDE:** `npx cap open android`
-   *This opens Android Studio where the developer can press "Run" to deploy the APK to a physical device or emulator.*
+We have configured two distinct ways to build the Android application, catering to both local developers and non-technical stakeholders.
 
----
+### Option A: Cloud Build via GitHub Actions (Zero Setup)
+We have implemented a CI/CD pipeline (`.github/workflows/android-build.yml`) that automatically compiles the Android app in the cloud.
+1. Navigate to the **Actions** tab in the GitHub repository.
+2. Select **"Build Android APK (Capacitor)"**.
+3. (Optional) Click **Run workflow** to manually trigger a fresh build.
+4. Once the build finishes (✅), scroll to the **Artifacts** section and download `NitiSetu-Android-Debug-APK`.
+5. Extract the `.zip` and transfer the `.apk` to any Android device.
 
-**Estimated Time to Completion:** 1 - 2 Days
-**Code Rewrite Required:** 0% (UI is fully retained)
+### Option B: Local Compile via Gradle (Requires JDK & Android SDK)
+For developers with local toolchains:
+1. Navigate to the native directory: `cd frontend/android`
+2. Run the Gradle build: `./gradlew assembleDebug`
+3. The APK will be generated at: `frontend/android/app/build/outputs/apk/debug/app-debug.apk`
+
+*(Note: Developers can still run `npx cap open android` in the `frontend` folder to launch the project directly in Android Studio).*

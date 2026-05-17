@@ -92,6 +92,20 @@ graph TD
 
 ---
 
+## 📱 Android Application (Capacitor)
+
+Niti-Setu is built on a **Single Codebase, Dual Output** architecture. The responsive web application is automatically packaged into a native Android `.apk` via Ionic Capacitor, retaining 100% of the UI, WebRTC Scanner, and Voice functionality.
+
+**How to Download the App:**
+1. Navigate to the **[Actions tab](../../actions)** of this repository.
+2. Click on the latest successful run of the **"Build Android APK (Capacitor)"** workflow.
+3. Scroll to the bottom under **Artifacts** and download the `NitiSetu-Android-Debug-APK` zip file.
+4. Extract the `.zip`, transfer the `.apk` to your Android device, and install it.
+
+*(Note: No local Android SDK or Android Studio is required to build the app, it compiles entirely in the cloud via GitHub Actions!)*
+
+---
+
 ## Installation and Setup
 
 ### 1. Clone & Install
