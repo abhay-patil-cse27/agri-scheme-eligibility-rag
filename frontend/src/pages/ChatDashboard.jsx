@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { 
   Send, Sprout, User, Bot, Sparkles, HelpCircle, ArrowRight, 
   Volume2, VolumeX, Globe, Mic, MicOff, Trash2, Plus, 
@@ -231,12 +233,26 @@ const ChatDashboard = () => {
     }
   };
 
-  const handleNewChat = () => {
-    setCurrentSessionId(null);
-    localStorage.removeItem('current_session_id');
-    setMessages([]);
-    setMessageCache({ 'en': [] });
-    window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
+  const handleNewChat = async () => {
+    try {
+      setIsLoading(true);
+      const newSession = await createChatSession('New Conversation');
+      setCurrentSessionId(newSession._id);
+      localStorage.setItem('current_session_id', newSession._id);
+      setMessages([]);
+      setMessageCache({ 'en': [] });
+      await fetchSessions(false);
+      window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
+    } catch (e) {
+      console.error(e);
+      setCurrentSessionId(null);
+      localStorage.removeItem('current_session_id');
+      setMessages([]);
+      setMessageCache({ 'en': [] });
+      window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const toggleDictation = async () => {
@@ -289,7 +305,7 @@ const ChatDashboard = () => {
     setIsLoading(true);
 
     try {
-      const currentHistory = [...messages, userMessage].slice(-10).map(m => ({
+      const currentHistory = messages.slice(-20).map(m => ({
         role: m.sender === 'user' ? 'user' : 'assistant',
         content: m.text
       }));
@@ -471,7 +487,10 @@ const ChatDashboard = () => {
               fontSize: '1rem',
               fontWeight: 700,
               marginBottom: '24px',
-              boxShadow: '0 8px 25px rgba(22, 163, 74, 0.4)'
+              boxShadow: '0 8px 25px rgba(22, 163, 74, 0.4)',
+              background: 'var(--gradient-primary)',
+              color: 'white',
+              border: 'none'
             }}
           >
             <Plus size={20} />
@@ -721,7 +740,11 @@ const ChatDashboard = () => {
                     color: 'var(--text-primary)', fontSize: '0.95rem', lineHeight: 1.6,
                     position: 'relative'
                   }}>
-                    {msg.text}
+                    <div className="react-markdown-container">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.text}
+                      </ReactMarkdown>
+                    </div>
 
                     {msg.sender === 'ai' && (
                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--border-glass)' }}>

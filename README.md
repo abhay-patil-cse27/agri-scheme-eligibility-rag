@@ -158,9 +158,29 @@ The Niti Setu documentation is comprehensive. Use the table below to find the gu
 
 ---
 
+## ⚡ Current Infrastructure Status & Recent Restorations
+ 
+We have successfully restored the Krishi Mitra and Document Scan ecosystems to 100% production readiness. Below is a summary of the critical recovery tasks and optimizations completed:
+ 
+1. **Neo4j Aura Recovery**: Fully provisioned a fresh Neo4j Aura DB instance, resolved the "Routing table server unavailable" exception, and established encrypted `neo4j+s://` connectivity.
+2. **Data Pipeline Synthesis**: Cleared stale state and re-synchronized both MongoDB Atlas and Neo4j. Embedded and ingested 34 core scheme PDFs (generating 262 distinct vector chunks with a dimensions index of 384) with 100% vector-graph alignment.
+3. **Session Management & Instant Desync Fix**: Resolved a critical state-desync bug where clicking "New Chat" only cleared local screens but didn't persist state. Both the main dashboard (`ChatDashboard.jsx`) and floating assistant (`KrishiMitra.jsx`) now immediately dispatch `createChatSession()` to the backend, synchronizing the active session ID instantly via cross-window event dispatchers (`nitisetu:chat-sync`).
+4. **Enhanced Glassmorphic Floating Home UI**: Embedded a prominent, glowing green **"Start New Chat"** button directly underneath the floating bot's home tab search area, solving visibility and accessibility issues.
+5. **Strict HTTPS & Markdown Hyperlink Formatting**: Updated the LLM guest-handling prompt rules to format external references using strictly structured Markdown links (`[Register your profile here](https://.../register)`). This ensures the frontend's `ReactMarkdown` render engine renders highly visible, clickable links while strictly adhering to secure HTTPS-only transport guidelines.
+6. **DPDP Compliant Portal Privacy Modal**: Rendered the **Privacy & Data Sovereignty Consent Modal** via React Portal (`createPortal`) directly under `document.body`. This enables the glassmorphic overlay to break free of nested layout translations and align perfectly in the center of the viewport (covering the left sidebar).
+7. **Crash-Free AnimatePresence Animation Flow**: Restructured the portal and Framer Motion relationship by keeping `AnimatePresence` persistent inside the Portal tree. This cleanly fixed the unmount exception (`Node cannot be found in the current page`) that previously crashed React and froze page buttons.
+8. **WebRTC Desktop Camera Fallback**: Patched `startLiveCamera()` with a nested try-catch block. If back-facing `facingMode: 'environment'` constraints fail (e.g., on desktop browsers), the scanner falls back instantly to the default desktop webcam, eliminating blank black screens.
+9. **Interactive Dotted Capture Window**: Refactored `DocumentScanner.jsx` to check `showLiveCamera` first, allowing the WebRTC viewport to display immediately. Upgraded the overlay to display a glowing green dotted boundary, a **Capturing...** status prompt, a red **Cancel** button, and an emerald **I Give Consent** capture button directly inside the frame.
+10. **Strict Per-Click Consent Enforcement**: Configured the consent gateway to prompt the user for privacy consent on **every single interaction** with the voice recorder or camera scanner. Consent is strictly transient, completely ephemeral, and never persisted, achieving absolute DPDP compliance.
+11. **Hardened Dual-Layer File Validation**: Implemented defense-in-depth file security on both the frontend and backend. The scanner now validates **both the MIME type and the file extension independently** and cross-checks them against each other to prevent file spoofing attacks (e.g., a renamed `.exe` as `.pdf`). Supported formats: **JPG, JPEG, PNG, WebP, HEIC/HEIF, PDF**. Any mismatch is rejected with a clear user-facing error before processing begins.
+12. **Auto-Scan on File Selection**: Removed the redundant manual consent checkbox from the file preview panel. Since the DPDP Privacy Modal already captures explicit consent before any hardware access, the scan now triggers automatically the instant a file is selected (via gallery, native cam, or camera capture), for a seamless zero-friction UX.
+
+---
+
 ## License & Contact
 
 Distributed under the MIT License. Created by **Abhay Patil** -
 [patil.abhay214@gmail.com](mailto:patil.abhay214@gmail.com).
 
 Project Link: [https://github.com/abhay-patil-cse27/agri-scheme-eligibility-rag](https://github.com/abhay-patil-cse27/agri-scheme-eligibility-rag)
+

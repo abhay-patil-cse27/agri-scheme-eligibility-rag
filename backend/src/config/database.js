@@ -23,7 +23,7 @@ const connectDB = async (uri) => {
 
     return conn;
   } catch (error) {
-    logger.error('MongoDB connection failed:', error.message);
+    logger.error('MongoDB connection failed:', error);
     process.exit(1);
   }
 };

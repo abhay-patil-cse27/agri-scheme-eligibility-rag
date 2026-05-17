@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import {
@@ -98,12 +99,16 @@ const indianStates = {
 };
 
 /* ── Voice Input Section ────────────────── */
-function VoiceInput({ onProfileExtracted }) {
+function VoiceInput({ onProfileExtracted, checkConsent }) {
   const { t, i18n } = useTranslation();
   const [selectedLanguage, setSelectedLanguage] = useState(i18n.language || 'hi-IN');
   const { isListening, transcript, error: voiceError, startListening, stopListening } = useVoice(selectedLanguage);
   const [processing, setProcessing] = useState(false);
   const { addToast } = useToast();
+
+  const handleStartListening = () => {
+    checkConsent(startListening);
+  };
 
   // Sync state if user changes global app language
   useEffect(() => {
@@ -168,7 +173,7 @@ function VoiceInput({ onProfileExtracted }) {
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          onClick={isListening ? handleStop : startListening}
+          onClick={isListening ? handleStop : handleStartListening}
           disabled={processing}
           style={{
             display: 'flex', alignItems: 'center', gap: '8px',
@@ -1131,6 +1136,29 @@ export default function EligibilityCheck() {
   const [publicChecksUsed, setPublicChecksUsed] = useState(0);
   const { addToast } = useToast();
 
+  const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(() => sessionStorage.getItem('niti_setu_privacy_consent') === 'true');
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
+
+  const checkConsent = (action) => {
+    setPendingAction(() => action);
+    setShowPrivacyModal(true);
+  };
+
+  const handleAcceptPrivacy = () => {
+    setShowPrivacyModal(false);
+    if (pendingAction) {
+      pendingAction();
+      setPendingAction(null);
+    }
+  };
+
+  const handleDeclinePrivacy = () => {
+    setShowPrivacyModal(false);
+    setPendingAction(null);
+    addToast('Privacy Consent Declined', 'Access to voice and camera features requires consent.', 'warning');
+  };
+
   useEffect(() => {
     getSchemes().then((s) => setSchemes(s.data || [])).catch(console.error);
     
@@ -1243,8 +1271,184 @@ export default function EligibilityCheck() {
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', paddingTop: user ? '0' : '100px', paddingBottom: '60px' }}>
-      <AgriCard
+    <>
+      {createPortal(
+        <AnimatePresence>
+          {showPrivacyModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 99999,
+                background: 'rgba(15, 23, 42, 0.75)',
+                backdropFilter: 'blur(12px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '20px'
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.9, y: 30, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.9, y: 30, opacity: 0 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 180 }}
+                style={{
+                  width: '100%',
+                  maxWidth: '520px',
+                  background: 'rgba(30, 41, 59, 0.7)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '24px',
+                  padding: '32px',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                  color: 'white',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                {/* Background gradient orb */}
+                <div style={{
+                  position: 'absolute',
+                  top: '-50px',
+                  right: '-50px',
+                  width: '150px',
+                  height: '150px',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, rgba(99, 102, 241, 0) 70%)',
+                  zIndex: 0,
+                  pointerEvents: 'none'
+                }}></div>
+
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  {/* Header Icon & Title */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '16px',
+                      background: 'rgba(99, 102, 241, 0.15)',
+                      border: '1px solid rgba(99, 102, 241, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Shield size={24} style={{ color: 'var(--accent-indigo)' }} />
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
+                        Privacy & Data Sovereignty
+                      </h3>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--accent-indigo)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        DPDP & IT Act Compliant
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Consent Text */}
+                  <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, marginBottom: '24px' }}>
+                    Niti Setu handles agricultural data with extreme privacy. To auto-fill your farmer profile using the <strong style={{ color: 'var(--accent-indigo)' }}>Voice Assistant</strong> or the <strong style={{ color: 'var(--accent-indigo)' }}>Document Scanner</strong>, we require your explicit consent under the <strong style={{ color: 'var(--accent-indigo)' }}>Digital Personal Data Protection (DPDP) Act, 2023</strong> and the <strong style={{ color: 'var(--accent-indigo)' }}>IT Act, 2000</strong>.
+                  </p>
+
+                  {/* Safeguard points */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '32px' }}>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <div style={{ marginTop: '2px', color: 'var(--accent-emerald)' }}>
+                        <CheckCircle2 size={16} />
+                      </div>
+                      <div>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, margin: '0 0 2px 0', color: 'white' }}>
+                          In-Memory Ephemeral OCR
+                        </h4>
+                        <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.4 }}>
+                          Uploaded document images and audio binaries are parsed in RAM and strictly <strong style={{ color: 'white' }}>deleted permanently</strong> from servers in a hard-coded <code style={{ color: 'var(--accent-indigo)', background: 'rgba(255,255,255,0.05)', padding: '2px 4px', borderRadius: '4px' }}>finally</code> loop immediately after processing.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <div style={{ marginTop: '2px', color: 'var(--accent-emerald)' }}>
+                        <CheckCircle2 size={16} />
+                      </div>
+                      <div>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, margin: '0 0 2px 0', color: 'white' }}>
+                          Strict ID Redaction
+                        </h4>
+                        <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.4 }}>
+                          Our multi-modal OCR model strictly masks, ignores, and <strong style={{ color: 'white' }}>never extracts</strong> government identifier digits (such as 12-digit Aadhaar or PAN numbers) to enforce zero PII leakage.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <div style={{ marginTop: '2px', color: 'var(--accent-emerald)' }}>
+                        <CheckCircle2 size={16} />
+                      </div>
+                      <div>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, margin: '0 0 2px 0', color: 'white' }}>
+                          SSL Encrypted Transport
+                        </h4>
+                        <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.4 }}>
+                          All hardware-level interactions (Microphone & Camera inputs) are securely tunneled over encrypted HTTPS connections to prevent intercept risks.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                    <button
+                      onClick={handleDeclinePrivacy}
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(255,255,255,0.05)',
+                        color: 'rgba(255,255,255,0.8)',
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(244, 63, 94, 0.1)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    >
+                      Decline
+                    </button>
+
+                    <button
+                      onClick={handleAcceptPrivacy}
+                      className="btn-glow"
+                      style={{
+                        flex: 1.5,
+                        padding: '12px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: 'var(--gradient-primary)',
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      Accept & Proceed
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      <div style={{ maxWidth: '800px', margin: '0 auto', paddingTop: user ? '0' : '100px', paddingBottom: '60px' }}>
+        <AgriCard
         animate={true}
         className="agri-card"
         style={{ padding: '32px', marginBottom: '24px' }}
@@ -1317,13 +1521,13 @@ export default function EligibilityCheck() {
         </div>
 
         {/* Voice Input */}
-        <VoiceInput onProfileExtracted={setVoiceProfile} />
+        <VoiceInput onProfileExtracted={setVoiceProfile} checkConsent={checkConsent} />
 
         {/* Phase 4: Document Auto-Scan Vault */}
         <DocumentScanner onDataExtracted={(data) => {
           setVoiceProfile(data); // Re-use the same state to auto-fill the form below
           addToast('Scan Success', 'Form fields auto-filled from document.', 'success');
-        }} />
+        }} checkConsent={checkConsent} />
 
         {/* Profile Form */}
         <ProfileForm 
@@ -1379,5 +1583,6 @@ export default function EligibilityCheck() {
         </AnimatePresence>
       </AgriCard>
     </div>
+    </>
   );
 }

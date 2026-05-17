@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { 
   getChatSessions, 
   getSessionMessages, 
   clearChatHistory, 
   chatWithKrishiMitra, 
   generateSpeech,
-  translateChatHistory 
+  translateChatHistory,
+  createChatSession
 } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +20,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 import { 
   MessageSquare, X, Send, Sprout, Leaf, User, Bot, HelpCircle, 
   LayoutDashboard, Search, Volume2, VolumeX, Loader2, Home, 
-  Mic, MicOff, ChevronRight, CheckCircle2, Trash2 
+  Mic, MicOff, ChevronRight, CheckCircle2, Trash2, Plus
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
@@ -274,7 +277,7 @@ const KrishiMitra = () => {
     setActiveTab('chat');
 
     try {
-      const historyItems = messages.slice(-6).map(m => ({
+      const historyItems = messages.slice(-20).map(m => ({
         role: m.sender === 'user' ? 'user' : 'assistant',
         content: m.text
       }));
@@ -524,6 +527,39 @@ const KrishiMitra = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2 ml-auto">
+                {activeTab === 'chat' && (
+                  <button 
+                    onClick={async () => {
+                      try {
+                        const newSession = await createChatSession('New Conversation');
+                        setCurrentSessionId(newSession._id);
+                        localStorage.setItem('current_session_id', newSession._id);
+                        setMessages([]);
+                        showGreeting();
+                        window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
+                      } catch (e) {
+                        setCurrentSessionId(null); 
+                        localStorage.removeItem('current_session_id');
+                        setMessages([]); 
+                        showGreeting(); 
+                        window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
+                      }
+                    }}
+                    className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors text-white"
+                    title="New Chat"
+                  >
+                    <Plus size={16} />
+                  </button>
+                )}
+                {activeTab === 'chat' && (
+                  <button 
+                    onClick={() => setActiveTab('home')}
+                    className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors text-white"
+                    title="Back to Home"
+                  >
+                    <Home size={16} />
+                  </button>
+                )}
                 <div style={{ marginRight: '8px' }}>
                   <LanguageSwitcher 
                     placement="down" 
@@ -614,25 +650,55 @@ const KrishiMitra = () => {
                       <Search size={18} />
                     </button>
                   </div>
+                  
+                  {/* Big New Chat Button */}
+                  <button 
+                    onClick={async () => {
+                      try {
+                        const newSession = await createChatSession('New Conversation');
+                        setCurrentSessionId(newSession._id);
+                        localStorage.setItem('current_session_id', newSession._id);
+                        setMessages([]);
+                        showGreeting();
+                        setActiveTab('chat');
+                        window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
+                      } catch (e) {
+                        setCurrentSessionId(null);
+                        localStorage.removeItem('current_session_id');
+                        setMessages([]);
+                        showGreeting();
+                        setActiveTab('chat');
+                        window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
+                      }
+                    }}
+                    className="btn-glow"
+                    style={{ 
+                      width: '100%', 
+                      marginTop: '16px',
+                      padding: '14px', 
+                      borderRadius: '12px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '8px',
+                      fontSize: '0.95rem',
+                      fontWeight: 700,
+                      boxShadow: '0 4px 15px rgba(22, 163, 74, 0.3)',
+                      background: 'var(--gradient-primary)',
+                      color: 'white',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Plus size={18} />
+                    {t('chat_new_chat', 'Start New Chat')}
+                  </button>
                 </div>
 
                 {/* Recent Chats Section */}
                  <div style={{ padding: '20px 20px 0' }}>
                     <div className="flex items-center justify-between mb-3">
                        <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recent Conversations</h3>
-                       <button 
-                        onClick={() => { 
-                          setCurrentSessionId(null); 
-                          localStorage.removeItem('current_session_id');
-                          setMessages([]); 
-                          showGreeting(); 
-                          setActiveTab('chat'); 
-                          window.dispatchEvent(new CustomEvent('nitisetu:chat-sync'));
-                        }} 
-                        className="text-[11px] text-emerald-500 font-bold hover:underline px-3 py-1 rounded-lg bg-emerald-500/10 transition-colors"
-                       >
-                         {t('chat_new_chat', 'New Chat')}
-                       </button>
                     </div>
                     <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto pr-1 custom-scrollbar">
                        {isHistoryLoaded && sessions.length > 0 ? (
@@ -760,7 +826,11 @@ const KrishiMitra = () => {
                         border: msg.sender === 'ai' ? '1px solid var(--border-glass)' : 'none',
                         background: msg.sender === 'ai' ? 'var(--bg-card)' : 'var(--gradient-primary)'
                       }}>
-                        {msg.text}
+                        <div className="react-markdown-container">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {msg.text}
+                          </ReactMarkdown>
+                        </div>
                         
                         {msg.sender === 'ai' && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-glass)' }}>

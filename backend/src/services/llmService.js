@@ -668,7 +668,7 @@ async function chatWithKrishiMitra(
      - To view documents: "*Schemes* section 📂"
   
   4. GUEST / UNREGISTERED HANDLING:
-     - If the Admin Note says the user is unregistered, you MUST include a warm invitation to register as the final paragraph: "*Unlock your future!* Register your profile at ${config.frontendUrl}/register to get exact eligibility matches! 🚀"
+     - If the Admin Note says the user is unregistered, you MUST include a warm invitation to register as the final paragraph: "*Unlock your future!* [Register your profile here](${config.frontendUrl.replace('http://', 'https://')}/register) to get exact eligibility matches! 🚀"
   5. CRITICAL INSTRUCTION: You MUST translate and respond strictly in the language code provided: "${language}". If "${language}" is "hi-IN", reply entirely in Hindi script. If Marathi, Bengali, Tamil etc., use their native script. Do not output English if a native Indian language code is passed.
 
   FARMER CONTEXT:
@@ -676,7 +676,7 @@ async function chatWithKrishiMitra(
 
   const messages = [
     { role: "system", content: systemPrompt },
-    ...history.slice(-6), // Keep last 3 turns of context
+    ...history.slice(-20), // Increased context window
     { role: "user", content: userQuery }
   ];
 
@@ -713,7 +713,7 @@ async function chatWithKrishiMitra(
  * @param {string} documentType - Type of document (e.g. '7/12', 'Aadhaar', 'KCC')
  * @returns {Promise<Object>} - Parsed profile object
  */
-async function extractProfileFromDocument(base64Image, documentType, usageCategory = "registered", landUnit = "Hectares") {
+async function extractProfileFromDocument(base64Image, documentType, usageCategory = "registered", landUnit = "Hectares", mimeType = "image/jpeg") {
   const systemPrompt = `You are a strict, secure OCR and data extraction AI for a government agricultural platform.
 Your job is to read the provided document (type: ${documentType}) and extract ONLY the agricultural and core demographic data required for scheme eligibility.
 
@@ -739,6 +739,12 @@ Output ONLY valid JSON. Your output must strictly adhere to this schema:
 }
 Omit any keys where the data is not found in the image. DO NOT output markdown, backticks, or conversational text.`;
 
+  // Build the correct data URI — PDFs use application/pdf, images use their actual type
+  const effectiveMime = mimeType === 'application/pdf' ? 'image/jpeg' : (mimeType || 'image/jpeg');
+  // Note: Groq Vision only accepts image types. For PDFs, the frontend should ideally
+  // render the first page as a JPEG before uploading. We pass jpeg as fallback.
+  const dataUri = `data:${effectiveMime};base64,${base64Image}`;
+
   const messages = [
     {
       role: 'user',
@@ -746,7 +752,7 @@ Omit any keys where the data is not found in the image. DO NOT output markdown, 
         { type: 'text', text: systemPrompt },
         { 
           type: 'image_url', 
-          image_url: { url: `data:image/jpeg;base64,${base64Image}` } 
+          image_url: { url: dataUri } 
         }
       ]
     }
@@ -777,6 +783,7 @@ Omit any keys where the data is not found in the image. DO NOT output markdown, 
     throw new Error('Failed to analyze document: ' + error.message);
   }
 }
+
 
 /**
  * Phase 6: High-Fidelity Chat Translation (NIFTY-RAG Engine)
