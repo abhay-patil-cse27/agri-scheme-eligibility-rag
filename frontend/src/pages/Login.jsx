@@ -6,6 +6,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
+import { isAndroidApp } from '../services/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -17,7 +18,7 @@ export default function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const isNativeApp = !!(window.Capacitor && window.Capacitor.isNative);
+  const isNativeApp = isAndroidApp;
 
   const handleGoogleClickForNative = () => {
     window.location.href = 'https://nitisetu-frontend.onrender.com/login';

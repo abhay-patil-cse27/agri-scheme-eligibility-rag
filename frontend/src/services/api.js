@@ -1,7 +1,14 @@
 import axios from 'axios';
 
+// Platform detection: VITE_APP_PLATFORM=android is baked in at APK build time
+export const isAndroidApp = import.meta.env.VITE_APP_PLATFORM === 'android';
+
+// APK cannot use relative paths – must always hit the live backend
+const BASE_URL = import.meta.env.VITE_API_URL ||
+  (isAndroidApp ? 'https://nitisetu-backend-4p2o.onrender.com/api' : '/api');
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: BASE_URL,
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
 });
