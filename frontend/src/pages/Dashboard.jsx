@@ -368,22 +368,29 @@ export default function Dashboard() {
                   <div style={{ position: 'absolute', inset: 0 }}>
                     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                       <PieChart>
-                        <Pie
-                          data={[
-                            { name: 'Eligible', value: analytics.eligibilitySplit.eligible || 0 },
-                            { name: 'Not Eligible', value: analytics.eligibilitySplit.notEligible || 0 }
-                          ].filter(d => d.value > 0)}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={5}
-                          dataKey="value"
-                          stroke="none"
-                        >
-                          <Cell fill="var(--accent-emerald)" />
-                          <Cell fill="var(--accent-rose)" />
-                        </Pie>
+                        {(() => {
+                          const chartData = [
+                            { name: 'Eligible', value: analytics.eligibilitySplit.eligible || 0, color: 'var(--accent-emerald)' },
+                            { name: 'Not Eligible', value: analytics.eligibilitySplit.notEligible || 0, color: 'var(--accent-rose)' }
+                          ].filter(d => d.value > 0);
+                          
+                          return (
+                            <Pie
+                              data={chartData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              paddingAngle={chartData.length > 1 ? 5 : 0}
+                              dataKey="value"
+                              stroke="none"
+                            >
+                              {chartData.map((entry, idx) => (
+                                <Cell key={`cell-${idx}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                          );
+                        })()}
                         <Tooltip 
                           contentStyle={{ 
                             background: 'var(--bg-secondary)', 
