@@ -65,8 +65,9 @@ services:
         sync: false
 
   # ── React Frontend (Static Site) ──────────────────────────
-  - type: static
+  - type: web
     name: nitisetu-frontend
+    runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
