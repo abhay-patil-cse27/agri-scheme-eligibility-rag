@@ -30,6 +30,7 @@ Look into the **Hybrid Reasoning Layer**:
 Follow the **Quick Start**:
 - 📍 **Main Instructions:** [Readme: Installation](../README.md#installation-and-setup)
 - 📍 **Env Template:** [`backend/.env.example`](../backend/.env.example)
+- 📍 **Status & Optimizations:** [System Status & Verification Report](../docs/STATUS_REPORT.md)
 
 ---
 
