@@ -83,20 +83,6 @@ export default function DocumentScanner({ onDataExtracted, checkConsent }) {
     setFile(uploadedFile);
   };
 
-  // Auto-scan the moment a file is set — consent was already given via the Privacy Modal
-  React.useEffect(() => {
-    if (file) {
-      setHasConsent(true);
-    }
-  }, [file]);
-
-  React.useEffect(() => {
-    if (file && hasConsent) {
-      handleScan();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasConsent]);
-
   const clearFile = () => {
     setFile(null);
     setHasConsent(false);
@@ -105,7 +91,7 @@ export default function DocumentScanner({ onDataExtracted, checkConsent }) {
   };
 
   const handleScan = async () => {
-    if (!file || !hasConsent) return;
+    if (!file) return;
 
     setIsScanning(true);
     setError('');
@@ -487,35 +473,49 @@ export default function DocumentScanner({ onDataExtracted, checkConsent }) {
               </div>
             )}
 
-            {/* Auto-scanning feedback — no manual button needed */}
-            <div style={{
-              marginTop: '16px',
-              padding: '14px 16px',
-              borderRadius: '10px',
-              background: isScanning
-                ? 'rgba(99,102,241,0.1)'
-                : 'rgba(16,185,129,0.08)',
-              border: `1px solid ${isScanning ? 'rgba(99,102,241,0.3)' : 'rgba(16,185,129,0.25)'}`,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-            }}>
-              {isScanning ? (
-                <>
-                  <Loader2 size={18} className="spin" style={{ color: 'var(--accent-indigo)', flexShrink: 0 }} />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent-indigo)' }}>
-                    AI Scanning in progress — extracting data securely...
-                  </span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 size={18} style={{ color: 'var(--accent-emerald)', flexShrink: 0 }} />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent-emerald)' }}>
-                    Ready to scan — processing will begin automatically.
-                  </span>
-                </>
-              )}
-            </div>
+            {!isScanning ? (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => checkConsent(() => handleScan())}
+                className="btn-glow"
+                style={{
+                  marginTop: '16px',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '14px 16px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'var(--gradient-primary)',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
+                }}
+              >
+                <span>Fetch Info 🚀</span>
+              </motion.button>
+            ) : (
+              <div style={{
+                marginTop: '16px',
+                padding: '14px 16px',
+                borderRadius: '10px',
+                background: 'rgba(99,102,241,0.1)',
+                border: '1px solid rgba(99,102,241,0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+              }}>
+                <Loader2 size={18} className="spin" style={{ color: 'var(--accent-indigo)', flexShrink: 0 }} />
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent-indigo)' }}>
+                  AI Scanning in progress — extracting data securely...
+                </span>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
