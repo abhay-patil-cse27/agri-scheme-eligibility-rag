@@ -42,17 +42,34 @@ app.use(helmet({
 }));
 app.use(compression());
 app.use(cors({
-  origin: config.nodeEnv === 'production'
-    ? [config.frontendUrl]
-    : [
-        'http://localhost:3000', 
-        'http://localhost:3001', 
-        'http://localhost:5173', 
-        'http://192.168.29.117:5173',
-        'http://localhost', // Standard Capacitor webview origin
-        'capacitor://localhost' // Alternative Capacitor webview origin
-      ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: (origin, callback) => {
+    // Always allow requests with no origin (curl, mobile native HTTP, health checks)
+    if (!origin) return callback(null, true);
+
+    const allowedOrigins = [
+      config.frontendUrl,              // https://nitisetu-frontend.onrender.com
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:5173',
+      'http://192.168.29.117:5173',
+      'http://localhost',              // Capacitor default (androidScheme: http)
+      'capacitor://localhost',         // Capacitor older versions
+      'https://localhost',             // Capacitor (androidScheme: https) — production APK
+    ];
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // In dev, log unknown origins but still allow (easier debugging)
+      if (config.nodeEnv !== 'production') {
+        console.warn(`[CORS] Unknown origin allowed in dev: ${origin}`);
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS blocked: ${origin}`));
+      }
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
 }));
 app.use(express.json({ limit: '1mb' }));

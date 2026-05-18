@@ -9,7 +9,7 @@ const BASE_URL = import.meta.env.VITE_API_URL ||
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000,
+  timeout: isAndroidApp ? 60000 : 30000, // APK needs more time for Render cold starts
   headers: { 'Content-Type': 'application/json' },
 });
 
