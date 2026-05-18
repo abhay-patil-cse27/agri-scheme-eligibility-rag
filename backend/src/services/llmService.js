@@ -15,6 +15,55 @@ const MAX_CONCURRENT = 3;
 const translationCache = new Map();
 const MAX_CACHE_SIZE = 500; // LRU approach
 
+/**
+ * Sanitizes and normalizes extracted demographics to match exact frontend constraints.
+ */
+function sanitizeProfileData(data) {
+  if (!data) return {};
+  
+  const sanitized = { ...data };
+
+  // 1. Sanitize Gender
+  if (sanitized.gender) {
+    const g = String(sanitized.gender).trim().toLowerCase();
+    if (g.startsWith('m')) sanitized.gender = 'Male';
+    else if (g.startsWith('f')) sanitized.gender = 'Female';
+    else if (g.startsWith('o')) sanitized.gender = 'Other';
+    else delete sanitized.gender;
+  }
+
+  // 2. Sanitize Category
+  if (sanitized.category) {
+    const cat = String(sanitized.category).trim().toUpperCase();
+    if (cat === 'GENERAL') sanitized.category = 'General';
+    else if (cat === 'OBC') sanitized.category = 'OBC';
+    else if (cat === 'SC') sanitized.category = 'SC';
+    else if (cat === 'ST') sanitized.category = 'ST';
+    else if (cat === 'EWS') sanitized.category = 'EWS';
+    else if (cat === 'MINORITY') sanitized.category = 'Minority';
+    else delete sanitized.category;
+  }
+
+  // 3. Ensure landHolding and age are numbers
+  if (sanitized.landHolding !== undefined && sanitized.landHolding !== null) {
+    sanitized.landHolding = parseFloat(sanitized.landHolding);
+    if (isNaN(sanitized.landHolding)) delete sanitized.landHolding;
+  }
+  
+  if (sanitized.age !== undefined && sanitized.age !== null) {
+    sanitized.age = parseInt(sanitized.age, 10);
+    if (isNaN(sanitized.age)) delete sanitized.age;
+  }
+
+  // 4. Ensure state name is correctly capitalized
+  if (sanitized.state) {
+    const s = String(sanitized.state).trim();
+    sanitized.state = s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  }
+
+  return sanitized;
+}
+
 
 /**
  * Limit the number of concurrent LLM requests globally.
@@ -780,7 +829,8 @@ Omit any keys where the data is not found in the image. DO NOT output markdown, 
       ResourceUsage.recordUsage('Groq-Vision', completion.usage.total_tokens, usageCategory).catch(e => logger.error('Usage track error:', e));
     }
 
-    return JSON.parse(extractedText);
+    const parsedData = JSON.parse(extractedText);
+    return sanitizeProfileData(parsedData);
   } catch (error) {
     logger.error('Document extraction failed:', error);
     throw new Error('Failed to analyze document: ' + error.message);
@@ -843,7 +893,8 @@ Omit any keys where the data is not found in the text. DO NOT output markdown, b
       ResourceUsage.recordUsage('Groq-LLM', completion.usage.total_tokens, usageCategory).catch(e => logger.error('Usage track error:', e));
     }
 
-    return JSON.parse(extractedText);
+    const parsedData = JSON.parse(extractedText);
+    return sanitizeProfileData(parsedData);
   } catch (error) {
     logger.error('Document text extraction failed:', error);
     throw new Error('Failed to analyze document text: ' + error.message);
