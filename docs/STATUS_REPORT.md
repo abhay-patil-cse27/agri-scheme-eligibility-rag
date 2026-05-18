@@ -62,8 +62,16 @@ All local services and external connections are successfully running or verified
 *   **The Fix:** 
     1. Seeding of Scheme nodes and establishment of dynamic `EXCLUSIVE_OF` mutual-exclusion relationships between overlapping scheme entries were added to `seed-graph.js` and successfully executed.
     2. Relocated the Neo4j conflict checker to the very top of both `/check` and `/public-check` endpoints in `eligibilityRoutes.js` as an instant short-circuiting interceptor. If a conflict is found, it short-circuits instantly in **<10 milliseconds**, completely bypassing RAG vector retrieval and LLM completions.
-    3. Integrated custom React components in `EligibilityCheck.jsx` to render a premium rose-red **`Graph Conflict Blocked`** tag with an `AlertCircle` warning icon when a graph conflict is returned.
+    3. Integrated custom React components in `EligibilityCheck.jsx` to render a premium rose-red **`Benefit Overlap`** warning tag when a graph conflict is returned.
 *   **The Result:** Enabled fully functional mutual-exclusion checks in under 10ms (a 99.9% latency reduction) with zero LLM API cost, and a highly clear, state-of-the-art visual feedback system for duplicate/exclusive enrollments.
+
+### 6. Farmer-Friendly Formatting & Technical Jargon Elimination
+*   **The Issue:** The Neo4j short-circuit interceptor returned highly technical jargon (e.g., "Graph Conflict Engine", "Neo4j exclusion rule") and raw backend DB filenames directly to the frontend. Furthermore, complex developer `System Performance Metrics` (like Vector Database latency and LLM Embeddings) were visible to standard farmers.
+*   **The Fix:** 
+    1. Built a translation layer in the backend to convert raw scheme files into beautiful `SCHEME_DISPLAY_NAMES`.
+    2. Completely rewrote the Neo4j exclusion payload to return polite, clear, and professional agricultural guidelines instead of database errors.
+    3. Wrapped the entire performance metrics table in an administrative Role-Based Access Control block (`user?.role === 'admin'`), securely hiding technical telemetry from standard users.
+*   **The Result:** A perfectly clean, beautifully formatted frontend experience that speaks in localized, simple terminology without sacrificing the extreme analytical depth available to administrators.
 
 ---
 
