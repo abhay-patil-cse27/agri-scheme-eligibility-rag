@@ -1,5 +1,5 @@
 services:
-  # ── Express Backend ───────────────────────────────────────
+  # ── Express Backend (Web Service) ─────────────────────────
   - type: web
     name: nitisetu-backend
     runtime: node
@@ -53,7 +53,7 @@ services:
       - key: TWILIO_AUTH_TOKEN
         sync: false
       - key: TWILIO_WHATSAPP_NUMBER
-        value: whatsapp:+14155238886
+        value: "whatsapp:+14155238886"
       - key: RATE_LIMIT_WINDOW_MS
         value: 900000
       - key: RATE_LIMIT_MAX_REQUESTS
@@ -61,7 +61,7 @@ services:
       - key: LOG_LEVEL
         value: info
       - key: FRONTEND_URL
-        sync: false  # Set this AFTER frontend is deployed (e.g. https://nitisetu-frontend.onrender.com)
+        sync: false
 
   # ── React Frontend (Static Site) ──────────────────────────
   - type: web
@@ -69,11 +69,11 @@ services:
     runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    staticPublishPath: ./dist
     plan: free
     envVars:
       - key: VITE_API_URL
-        sync: false  # Set to: https://nitisetu-backend.onrender.com/api
+        sync: false
       - key: VITE_GOOGLE_CLIENT_ID
         sync: false
     routes:
