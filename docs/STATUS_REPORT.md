@@ -35,6 +35,14 @@ All local services and external connections are successfully running or verified
     ```
 *   The compilation completed with **zero errors (Exit Code 0)**, successfully generating all progressive web app components, optimized code-split chunks (e.g., custom 3D and charting vendors), and generating precached Service Worker files (`dist/sw.js` and `dist/workbox-*.js`).
 
+### 3. Recharts Sizing & DOM Warning Elimination
+*   **The Issue:** The main admin dashboard logged dimension-measuring warnings (`width(-1) and height(-1) of chart should be greater than 0`) because `<ResponsiveContainer>` initially calculated size before parent flexbox elements laid out. This also led to Chromium DevTools reporting `Node cannot be found in the current page` when inspecting unmounted chart references.
+*   **The Fix:** We updated all `<ResponsiveContainer>` instances in [Dashboard.jsx](file:///d:/Projects/nitiSetu/agri-scheme-eligibility-rag/frontend/src/pages/Dashboard.jsx) to include explicit safe fallback dimensions and minimum sizes:
+    ```javascript
+    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+    ```
+*   **The Result:** Completely eliminated all charting console warnings and associated DevTools DOM-node reference tracking errors.
+
 ---
 
 ## 🚀 How to Run & Verify the Ecosystem

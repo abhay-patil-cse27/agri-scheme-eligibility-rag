@@ -332,7 +332,7 @@ export default function Dashboard() {
               </h3>
               <div style={{ width: '100%', height: 300 }}>
                 {analytics.checksOverTime.length > 0 ? (
-                  <ResponsiveContainer>
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <BarChart data={analytics.checksOverTime} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border-glass)" vertical={false} />
                       <XAxis dataKey="_id" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
@@ -366,7 +366,7 @@ export default function Dashboard() {
               <div style={{ flex: 1, width: '100%', minHeight: '220px', position: 'relative' }}>
                 {(analytics.eligibilitySplit.eligible > 0 || analytics.eligibilitySplit.notEligible > 0) ? (
                   <div style={{ position: 'absolute', inset: 0 }}>
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                       <PieChart>
                         <Pie
                           data={[
@@ -417,7 +417,7 @@ export default function Dashboard() {
               </h3>
               <div style={{ width: '100%', height: 300 }}>
                 {analytics.topSchemes.length > 0 ? (
-                   <ResponsiveContainer>
+                   <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <BarChart layout="vertical" data={analytics.topSchemes} margin={{ top: 5, right: 20, bottom: 5, left: 100 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" horizontal={false} />
                       <XAxis type="number" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
@@ -454,7 +454,7 @@ export default function Dashboard() {
               </h3>
               <div style={{ width: '100%', height: 300 }}>
                 {analytics.profilesByState.length > 0 ? (
-                   <ResponsiveContainer>
+                   <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <BarChart data={analytics.profilesByState} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                       <XAxis dataKey="_id" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => v.length > 10 ? v.substring(0, 10) + '...' : v} />
@@ -608,7 +608,7 @@ export default function Dashboard() {
           }}
         >
           {schemes.slice(0, 6).map((scheme, i) => (
-            <SchemeCard key={scheme._id} scheme={scheme} index={i} />
+            <SchemeCard key={scheme._id || `dashboard-scheme-${scheme.name}-${i}`} scheme={scheme} index={i} />
           ))}
           {schemes.length === 0 && (
             <div

@@ -28,12 +28,18 @@ const categoryColors = {
   other: { bg: 'rgba(139,92,246,0.1)', text: '#8b5cf6', border: 'rgba(139,92,246,0.2)' },
 };
 
-function UploadModal({ onClose, onUpload }) {
+function UploadModal({ onClose, onUpload, prefilledScheme = null }) {
   const { t } = useTranslation();
   const [file, setFile] = useState(null);
-  const [name, setName] = useState('');
-  const [desc, setDesc] = useState('');
-  const [category, setCategory] = useState('other');
+  const [name, setName] = useState(prefilledScheme ? prefilledScheme.name : '');
+  const [desc, setDesc] = useState(prefilledScheme ? (prefilledScheme.description || '') : '');
+  const [category, setCategory] = useState(prefilledScheme ? (prefilledScheme.category || 'other') : 'other');
+  
+  // New Document Fields
+  const [docType, setDocType] = useState('guidelines');
+  const [state, setState] = useState('All');
+  const [language, setLanguage] = useState('en');
+  
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef(null);
   const { addToast } = useToast();
@@ -45,9 +51,9 @@ function UploadModal({ onClose, onUpload }) {
     addToast('Processing Document', 'Extracting text and building vector embeddings...', 'info');
     
     try {
-      const result = await uploadScheme(file, name, desc, category);
+      const result = await uploadScheme(file, name, desc, category, docType, state, language);
       if (result.success) {
-        addToast('Scheme Uploaded', `${name} successfully added to the knowledge base.`, 'success');
+        addToast('Document Uploaded', `Successfully added document to ${name}.`, 'success');
         onUpload();
         onClose();
       } else {
@@ -67,7 +73,8 @@ function UploadModal({ onClose, onUpload }) {
       exit={{ opacity: 0 }}
       style={{
         position: 'fixed', inset: 0, zIndex: 100,
-        background: 'rgba(0,0,0,0.4)',
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(4px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
       onClick={onClose}
@@ -75,14 +82,14 @@ function UploadModal({ onClose, onUpload }) {
       <AgriCard
         animate={true}
         className="agri-card"
-        style={{ width: '480px', maxWidth: '90vw', padding: '32px' }}
+        style={{ width: '500px', maxWidth: '95vw', padding: '32px', maxHeight: '90vh', overflowY: 'auto' }}
         padding="32px"
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <h2 style={{ fontSize: '1.2rem', fontWeight: 700 }}>
             <Upload size={20} style={{ display: 'inline', marginRight: '8px', color: 'var(--accent-indigo)' }} />
-            {t('sh_upload_pdf')}
+            {prefilledScheme ? `Add Document to ${prefilledScheme.name}` : t('sh_upload_pdf')}
           </h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
             <X size={20} />
@@ -92,15 +99,36 @@ function UploadModal({ onClose, onUpload }) {
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '16px' }}>
             <label style={labelStyle}>{t('sh_name')} *</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('sh_name_ph')} className="input-dark" required />
+            <input 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
+              placeholder={t('sh_name_ph')} 
+              className="input-dark" 
+              required 
+              disabled={!!prefilledScheme}
+              style={prefilledScheme ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+            />
           </div>
           <div style={{ marginBottom: '16px' }}>
             <label style={labelStyle}>{t('sh_desc')}</label>
-            <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder={t('sh_desc_ph')} className="input-dark" />
+            <input 
+              value={desc} 
+              onChange={(e) => setDesc(e.target.value)} 
+              placeholder={t('sh_desc_ph')} 
+              className="input-dark" 
+              disabled={!!prefilledScheme}
+              style={prefilledScheme ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+            />
           </div>
           <div style={{ marginBottom: '16px' }}>
             <label style={labelStyle}>{t('sh_tbl_category')}</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className="select-dark">
+            <select 
+              value={category} 
+              onChange={(e) => setCategory(e.target.value)} 
+              className="select-dark"
+              disabled={!!prefilledScheme}
+              style={prefilledScheme ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+            >
               <option value="income_support">Income Support</option>
               <option value="infrastructure">Infrastructure</option>
               <option value="energy">Energy</option>
@@ -112,13 +140,77 @@ function UploadModal({ onClose, onUpload }) {
               <option value="other">Other</option>
             </select>
           </div>
+
+          {/* Document configuration row (side-by-side) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '16px' }}>
+            <div>
+              <label style={labelStyle}>Document Type</label>
+              <select value={docType} onChange={(e) => setDocType(e.target.value)} className="select-dark">
+                <option value="guidelines">Official Guidelines</option>
+                <option value="amendment">Official Amendment</option>
+                <option value="state_addendum">State Addendum</option>
+                <option value="faq">FAQ / Q&A</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Document Language</label>
+              <select value={language} onChange={(e) => setLanguage(e.target.value)} className="select-dark">
+                <option value="en">English</option>
+                <option value="hi">Hindi (हिंदी)</option>
+                <option value="mr">Marathi (मराठी)</option>
+                <option value="te">Telugu (తెలుగు)</option>
+                <option value="bn">Bengali (বাংলা)</option>
+                <option value="ta">Tamil (தமிழ்)</option>
+                <option value="gu">Gujarati (ગુજરાતી)</option>
+                <option value="kn">Kannada (ಕನ್ನಡ)</option>
+                <option value="ml">Malayalam (മലയാളം)</option>
+                <option value="pa">Punjabi (ਪੰਜਾਬี)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={labelStyle}>Target State / Region</label>
+            <select value={state} onChange={(e) => setState(e.target.value)} className="select-dark">
+              <option value="All">All States (National)</option>
+              <option value="Andhra Pradesh">Andhra Pradesh</option>
+              <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+              <option value="Assam">Assam</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Chhattisgarh">Chhattisgarh</option>
+              <option value="Goa">Goa</option>
+              <option value="Gujarat">Gujarat</option>
+              <option value="Haryana">Haryana</option>
+              <option value="Himachal Pradesh">Himachal Pradesh</option>
+              <option value="Jharkhand">Jharkhand</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Kerala">Kerala</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Manipur">Manipur</option>
+              <option value="Meghalaya">Meghalaya</option>
+              <option value="Mizoram">Mizoram</option>
+              <option value="Nagaland">Nagaland</option>
+              <option value="Odisha">Odisha</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Sikkim">Sikkim</option>
+              <option value="Tamil Nadu">Tamil Nadu</option>
+              <option value="Telangana">Telangana</option>
+              <option value="Tripura">Tripura</option>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="Uttarakhand">Uttarakhand</option>
+              <option value="West Bengal">West Bengal</option>
+            </select>
+          </div>
+
           <div style={{ marginBottom: '24px' }}>
             <label style={labelStyle}>{t('sh_file')} *</label>
             <div
               style={{
                 padding: '24px', borderRadius: '12px', textAlign: 'center',
-                border: '1px solid var(--border-color)', cursor: 'pointer',
-                background: file ? 'rgba(22,163,74,0.05)' : 'var(--bg-secondary)',
+                border: '1px dashed var(--border-color)', cursor: 'pointer',
+                background: file ? 'rgba(16,185,129,0.05)' : 'var(--bg-secondary)',
               }}
               onClick={() => fileRef.current?.click()}
             >
@@ -156,12 +248,13 @@ export default function Schemes() {
   const [schemes, setSchemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
+  const [prefilledScheme, setPrefilledScheme] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [deleteName, setDeleteName] = useState('');
   const [deleting, setDeleting] = useState(null);
   const { addToast } = useToast();
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
   const loadSchemes = async () => {
     try {
@@ -226,7 +319,10 @@ export default function Schemes() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="btn-glow"
-            onClick={() => setShowUpload(true)}
+            onClick={() => {
+              setPrefilledScheme(null);
+              setShowUpload(true);
+            }}
             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             <Plus size={18} /> {t('sh_add_new')}
@@ -278,7 +374,7 @@ export default function Schemes() {
                   const cat = categoryColors[scheme.category] || categoryColors.other;
                   return (
                     <motion.div
-                      key={scheme._id}
+                      key={scheme._id || `scheme-${scheme.name}-${i}`}
                       custom={i}
                       initial="hidden"
                       animate="visible"
@@ -322,7 +418,23 @@ export default function Schemes() {
                         </div>
 
                         {isAdmin && (
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'relative', zIndex: 1, marginTop: 'auto' }}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'relative', zIndex: 1, marginTop: 'auto', gap: '8px' }}>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => {
+                                setPrefilledScheme(scheme);
+                                setShowUpload(true);
+                              }}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: '6px',
+                                padding: '8px 16px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                                background: 'rgba(99,102,241,0.1)', color: 'var(--accent-indigo)',
+                                fontSize: '0.8rem', fontWeight: 500, fontFamily: 'Inter, sans-serif',
+                              }}
+                            >
+                              <Plus size={14} /> Add Document
+                            </motion.button>
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
@@ -352,7 +464,16 @@ export default function Schemes() {
     </AgriCard>
 
       <AnimatePresence>
-        {showUpload && <UploadModal onClose={() => setShowUpload(false)} onUpload={loadSchemes} />}
+        {showUpload && (
+          <UploadModal 
+            onClose={() => {
+              setShowUpload(false);
+              setPrefilledScheme(null);
+            }} 
+            onUpload={loadSchemes} 
+            prefilledScheme={prefilledScheme}
+          />
+        )}
         
         <ConfirmDeleteModal
           isOpen={!!deleteId}

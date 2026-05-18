@@ -142,9 +142,9 @@ router.post(
       }
 
       const voiceMapping = {
-        'hi': '21m00Tcm4TlvDq8ikWAM', // Rachel (Multi-lingual v2 supports Hindi perfectly)
-        'mr': '21m00Tcm4TlvDq8ikWAM', // Rachel (Multi-lingual v2 supports Marathi perfectly)
-        'en': '21m00Tcm4TlvDq8ikWAM'  // Rachel
+        'hi': 'pNInz6obpgDQGcFmaJgB', // Adam (Multi-lingual v2 supports Hindi perfectly and is allowed on Free tier API keys)
+        'mr': 'pNInz6obpgDQGcFmaJgB', // Adam (Multi-lingual v2 supports Marathi perfectly)
+        'en': 'pNInz6obpgDQGcFmaJgB'  // Adam
       };
       
       const voiceId = voiceMapping[language] || voiceMapping['en'];

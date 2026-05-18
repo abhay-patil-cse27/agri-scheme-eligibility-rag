@@ -71,12 +71,15 @@ export const getSchemes = () => api.get(`/schemes?_v=${Date.now()}`).then((r) =>
 export const getScheme = (id) => api.get(`/schemes/${id}`).then((r) => r.data);
 export const deleteScheme = (id) => api.delete(`/schemes/${id}`).then((r) => r.data);
 
-export const uploadScheme = (file, schemeName, description, category) => {
+export const uploadScheme = (file, schemeName, description, category, docType = 'guidelines', state = 'All', language = 'en') => {
   const formData = new FormData();
   formData.append('pdf', file);
   formData.append('schemeName', schemeName);
   formData.append('description', description || '');
   formData.append('category', category || 'other');
+  formData.append('docType', docType);
+  formData.append('state', state);
+  formData.append('language', language);
   return api
     .post('/schemes/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

@@ -286,11 +286,11 @@ export default function Settings() {
               {t('st_active_enrollments')}
             </label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {allSchemes.map(scheme => {
+              {allSchemes.map((scheme, i) => {
                 const isEnrolled = details.activeSchemes?.includes(scheme.name);
                 return (
                   <button
-                    key={scheme._id}
+                    key={scheme._id || `settings-scheme-${i}`}
                     type="button"
                     onClick={() => {
                       const current = details.activeSchemes || [];

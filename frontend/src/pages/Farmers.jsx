@@ -370,11 +370,11 @@ export default function Farmers() {
                     {t('pf_enrolled_title')}
                   </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {allSchemes.map(scheme => {
+                    {allSchemes.map((scheme, i) => {
                       const isEnrolled = editingProfile.activeSchemes?.includes(scheme.name);
                       return (
                         <button
-                          key={scheme._id}
+                          key={scheme._id || `farmers-scheme-${i}`}
                           type="button"
                           onClick={() => {
                             const current = editingProfile.activeSchemes || [];

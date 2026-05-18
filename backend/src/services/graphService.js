@@ -178,8 +178,8 @@ class GraphService {
         
         WITH s, collect(DISTINCT comp) + collect(DISTINCT neighbor) as candidates
         UNWIND candidates as c
-        // Global exclusion list
-        WHERE NOT (s)-[:EXCLUSIVE_OF]-(c) 
+        WITH s, c
+        WHERE c IS NOT NULL AND NOT (s)-[:EXCLUSIVE_OF]-(c)
         RETURN DISTINCT c.name as name, c.description as description
         LIMIT $limit
       `;

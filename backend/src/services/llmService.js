@@ -132,6 +132,9 @@ STRICT RULES:
 10. ENHANCED ANALYSIS RULES (STRICT DEMOGRAPHICS):
     - CROSS-VERIFY: Check if the farmer's Annual Income exceeds the document's poverty line/limit.
     - LAND AUDIT: Check if the farmer's Land Holding exceeds the small/marginal farmer definition in the text (typically 2 hectares or 5 acres).
+      * CRITICAL COMPARISON RULE: You MUST compare Hectares with Hectares, or Acres with Acres. 1 Hectare = 2.471 acres. 
+      * A 2-hectare limit equals 4.94 acres. Therefore, if a farmer owns 3 acres (which is 1.21 hectares), they own LESS than 2 hectares, and are ELIGIBLE. 
+      * Never compare the digit "3" in "3 acres" directly with the digit "2" in "2 hectares" and conclude the farmer exceeds the limit.
     - CATEGORY MATCH: Ensure specific benefits for women, SC, ST, or Minority groups are highlighted.
     - DEMOGRAPHIC CHECK: If a scheme is Gender-locked (e.g. women-only) and the profile is Male, reject.
     - BPL CHECK: If BPL status is required and 'hasBPLCard' is false, REJECT.

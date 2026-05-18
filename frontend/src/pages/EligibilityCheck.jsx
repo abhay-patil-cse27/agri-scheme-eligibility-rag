@@ -246,14 +246,35 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
   // Sync with initial data (e.g., from voice or scanner)
   useEffect(() => {
     if (initialData) {
-      setForm((prev) => ({
-        ...prev,
-        ...initialData,
-        // Ensure numbers are handled
-        age: initialData.age || prev.age,
-        landHolding: initialData.landHolding || prev.landHolding,
-        annualIncome: initialData.annualIncome || prev.annualIncome,
-      }));
+      setForm((prev) => {
+        const cleanedData = {};
+        Object.keys(initialData).forEach((key) => {
+          if (initialData[key] !== null && initialData[key] !== undefined && initialData[key] !== '') {
+            cleanedData[key] = initialData[key];
+          }
+        });
+
+        // Ensure category matches the allowed backend values or falls back to General
+        if (cleanedData.category && !['General', 'SC', 'ST', 'OBC', 'EWS', 'Minority'].includes(cleanedData.category)) {
+          delete cleanedData.category;
+        }
+        // Ensure gender matches the allowed backend values or falls back to Male
+        if (cleanedData.gender && !['Male', 'Female', 'Other'].includes(cleanedData.gender)) {
+          delete cleanedData.gender;
+        }
+        // Ensure ownershipType matches the allowed backend values or falls back to Owner
+        if (cleanedData.ownershipType && !['Owner', 'Tenant/Sharecropper', 'Co-owner'].includes(cleanedData.ownershipType)) {
+          delete cleanedData.ownershipType;
+        }
+
+        return {
+          ...prev,
+          ...cleanedData,
+          age: cleanedData.age || prev.age,
+          landHolding: cleanedData.landHolding !== undefined ? cleanedData.landHolding : prev.landHolding,
+          annualIncome: cleanedData.annualIncome !== undefined ? cleanedData.annualIncome : prev.annualIncome,
+        };
+      });
       if (initialData.activeSchemes && initialData.activeSchemes.length > 0) {
         setIsEnrolled(true);
       }
@@ -723,8 +744,35 @@ function ProofCard({ result }) {
         await audio.play();
       } catch (err) {
         console.error("Speech generation error", err);
-        addToast('Audio Error', 'Failed to fetch natural voice', 'error');
-        setIsSpeaking(false);
+        addToast('Voice Warning', 'Falling back to browser audio synthesis...', 'info');
+        
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(textToSpeak);
+          utterance.lang = langCode;
+          
+          utterance.onend = () => {
+            setIsSpeaking(false);
+            setAudioObj(null);
+          };
+          utterance.onerror = (e) => {
+            console.error("Native TTS error", e);
+            setIsSpeaking(false);
+            setAudioObj(null);
+            addToast('Audio Error', 'Speech synthesis failed', 'error');
+          };
+          
+          const nativeAudioDummy = {
+            pause: () => window.speechSynthesis.cancel(),
+            currentTime: 0
+          };
+          setAudioObj(nativeAudioDummy);
+          
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(utterance);
+        } else {
+          addToast('Audio Error', 'Failed to fetch natural voice', 'error');
+          setIsSpeaking(false);
+        }
       }
     }
   };
@@ -1513,8 +1561,8 @@ export default function EligibilityCheck() {
               {schemes
                 .filter(s => !selectedCategory || s.category === selectedCategory)
                 .sort((a, b) => a.name.localeCompare(b.name))
-                .map((s) => (
-                <option key={s._id} value={s.name}>{s.name} ({s.totalChunks || 0} chunks)</option>
+                .map((s, i) => (
+                <option key={s._id || `scheme-option-${i}`} value={s.name}>{s.name} ({s.totalChunks || 0} chunks)</option>
               ))}
             </select>
           </div>

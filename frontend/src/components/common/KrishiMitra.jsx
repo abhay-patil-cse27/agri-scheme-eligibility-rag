@@ -406,9 +406,36 @@ const KrishiMitra = () => {
       audio.play();
     } catch (err) {
       console.error("Floating TTS Error:", err);
-      setIsSpeaking(false);
-      setSpeakingMsgId(null);
-      addToast('Audio Error', 'Failed to generate voice', 'error');
+      addToast('Voice Warning', 'Falling back to browser audio synthesis...', 'info');
+      
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = chatLanguage;
+        
+        utterance.onend = () => {
+          setIsSpeaking(false);
+          setSpeakingMsgId(null);
+        };
+        utterance.onerror = (e) => {
+          console.error("Native TTS error", e);
+          setIsSpeaking(false);
+          setSpeakingMsgId(null);
+          addToast('Audio Error', 'Speech synthesis failed', 'error');
+        };
+        
+        const nativeAudioDummy = {
+          pause: () => window.speechSynthesis.cancel(),
+          currentTime: 0
+        };
+        audioRef.current = nativeAudioDummy;
+        
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+      } else {
+        setIsSpeaking(false);
+        setSpeakingMsgId(null);
+        addToast('Audio Error', 'Failed to generate voice', 'error');
+      }
     }
   };
 
