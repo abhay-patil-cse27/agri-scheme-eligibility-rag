@@ -81,6 +81,15 @@ All local services and external connections are successfully running or verified
     3. The conclusive eligibility status, overlap guidelines, and citation text rendered in crisp, selectable `Helvetica` font.
 *   **The Result:** A perfectly formatted, tiny-footprint, printable government-grade eligibility receipt that empowers farmers with official documentation.
 
+### 8. Native Android APK & Web App (PWA) Optimizations
+*   **The Issue:** When deployed as an Android Web App or bundled via Capacitor into an APK, the web view felt like a generic website (e.g., zoom bouncing, pull-to-refresh overscrolls tearing the screen, blue tap-highlight artifacts, and notch obscuration).
+*   **The Fix:** We injected deeply integrated, native-level webview bindings into `index.html` and `index.css`:
+    1.  **Viewport Locking:** `user-scalable=no, viewport-fit=cover` ensures the layout anchors under Android display notches seamlessly without breaking.
+    2.  **Overscroll & Rubber-Banding Removal:** Applied `overscroll-behavior-y: none;` globally to lock down the UI structure like a compiled Kotlin app.
+    3.  **Tap Highlights Erased:** Globally applied `-webkit-tap-highlight-color: transparent;` to kill ugly blue boxes flashing on button taps.
+    4.  **Hardware Safe Areas:** Mapped `env(safe-area-inset-*)` around the `<div id="root">` to pad hardware cutouts dynamically across thousands of Android models.
+*   **The Result:** A perfectly wrapped, flawless Native App sensation suitable for Google Play Store packaging.
+
 ---
 
 ## 🚀 How to Run & Verify the Ecosystem
