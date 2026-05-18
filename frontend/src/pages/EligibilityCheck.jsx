@@ -1413,6 +1413,7 @@ export default function EligibilityCheck() {
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(() => sessionStorage.getItem('niti_setu_privacy_consent') === 'true');
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+  const [submittedProfile, setSubmittedProfile] = useState(null);
 
   const checkConsent = (action) => {
     setPendingAction(() => action);
@@ -1461,6 +1462,7 @@ export default function EligibilityCheck() {
 
     setLoading(true);
     setResult(null);
+    setSubmittedProfile(profileData);
     try {
       if (user) {
         addToast('Profile Update', 'Syncing farmer profile securely...', 'info');
@@ -1847,13 +1849,13 @@ export default function EligibilityCheck() {
                     <Shield size={14} style={{ color: r.eligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }} />
                     {t('pc_scheme_x_of_y')} {i + 1} {t('pc_of')} {result.length}
                   </div>
-                  <ProofCard result={r} profile={form} />
+                  <ProofCard result={r} profile={submittedProfile} />
                 </div>
               ))}
             </div>
           ) : (
             <div style={{ marginTop: '32px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '32px', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
-              <ProofCard result={result} profile={form} />
+              <ProofCard result={result} profile={submittedProfile} />
             </div>
           ))}
         </AnimatePresence>
