@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Search, Loader2, Shield, Calendar, Mail, User, Trash2, AlertTriangle, X, ShieldAlert, Plus, ShieldCheck, UserCog, ArrowUpCircle } from 'lucide-react';
 import { getAllUsers, deleteUser, provisionAdmin, updateUserRole } from '../services/api';
@@ -25,11 +25,7 @@ export default function UsersPage() {
   const { addToast } = useToast();
   const { t, i18n } = useTranslation();
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = React.useCallback(async () => {
     try {
       const res = await getAllUsers();
       if (res.success) {
@@ -40,7 +36,11 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast, t]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleProvisionAdmin = async () => {
     setIsProvisioning(true);

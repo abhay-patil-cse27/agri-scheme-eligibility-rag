@@ -90,6 +90,14 @@ All local services and external connections are successfully running or verified
     4.  **Hardware Safe Areas:** Mapped `env(safe-area-inset-*)` around the `<div id="root">` to pad hardware cutouts dynamically across thousands of Android models.
 *   **The Result:** A perfectly wrapped, flawless Native App sensation suitable for Google Play Store packaging.
 
+### 9. System-Wide Codebase Audit & Linting
+*   **The Issue:** The codebase contained potential memory leaks and stale closures inside React components (e.g., exhaustive dependencies missing on `useEffect` hooks in Admin dashboards), as well as variable scoping errors (ReferenceErrors).
+*   **The Fix:** 
+    1. Conducted a global audit.
+    2. Rewrote asynchronous data-fetching hooks (like `fetchUsers`) utilizing `React.useCallback` to enforce referential equality and prevent infinite re-renders.
+    3. Resolved `ReferenceError` crashes in the PDF export engine by tightly binding form state to React's component lifecycle.
+*   **The Result:** A perfectly stable, warning-free React tree compliant with Strict Mode.
+
 ---
 
 ## 🚀 How to Run & Verify the Ecosystem
