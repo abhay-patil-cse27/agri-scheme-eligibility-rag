@@ -765,7 +765,7 @@ Omit any keys where the data is not found in the image. DO NOT output markdown, 
     const completion = await runQueued(() =>
       withRetry(() =>
         groqInstances[currentGroqIndex].chat.completions.create({
-          model: "llama-3.2-11b-vision-preview", // Vision model
+          model: "meta-llama/llama-4-scout-17b-16e-instruct", // New Vision model
           messages: messages,
           temperature: 0.1,
           response_format: { type: "json_object" }
