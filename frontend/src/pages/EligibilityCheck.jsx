@@ -689,26 +689,142 @@ function ProofCard({ result }) {
     };
   }, [audioObj]);
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     setIsDownloading(true);
-    addToast('Generating PDF', 'Preparing your Eligibility Proof Card...', 'info');
+    addToast('Generating Report', 'Creating your native PDF report...', 'info');
     try {
-      const element = document.getElementById(`proof-card-${result.scheme.replace(/\s+/g, '-')}`);
-      if (!element) return;
-      
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#0f172a' });
-      const imgData = canvas.toDataURL('image/png');
-      
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const margin = 20;
+      const pageWidth = 210;
+      let y = 20;
+
+      const checkPage = (addedHeight) => {
+        if (y + addedHeight > 280) {
+          pdf.addPage();
+          y = 20;
+        }
+      };
+
+      // Header
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(20);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text("Government Scheme Eligibility Report", margin, y);
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${result.scheme.replace(/\s+/g, '_')}_Eligibility.pdf`);
-      addToast('Download Complete', 'Your PDF has been saved successfully', 'success');
+      y += 8;
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text(`Generated on: ${new Date().toLocaleDateString()} | Niti-Setu Platform`, margin, y);
+      
+      y += 6;
+      pdf.setDrawColor(203, 213, 225);
+      pdf.line(margin, y, pageWidth - margin, y);
+      
+      y += 12;
+      
+      // Scheme Name
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(14);
+      pdf.setTextColor(30, 41, 59);
+      const schemeName = SCHEME_DISPLAY_NAMES[result.scheme] || result.scheme;
+      
+      const schemeText = pdf.splitTextToSize(`Scheme: ${schemeName}`, pageWidth - 2 * margin);
+      pdf.text(schemeText, margin, y);
+      y += (schemeText.length * 6);
+      
+      y += 4;
+      
+      // Status
+      pdf.setFontSize(12);
+      const isEligible = displayResult.eligible;
+      if (isEligible) {
+        pdf.setTextColor(22, 163, 74);
+        pdf.text(`Status: ELIGIBLE (Confidence: ${displayResult.confidence?.toUpperCase() || 'HIGH'})`, margin, y);
+      } else {
+        pdf.setTextColor(225, 29, 72);
+        let statusText = `Status: NOT ELIGIBLE`;
+        if (displayResult.isGraphConflict) statusText += ` (BENEFIT OVERLAP)`;
+        else statusText += ` (Confidence: ${displayResult.confidence?.toUpperCase() || 'HIGH'})`;
+        pdf.text(statusText, margin, y);
+      }
+      
+      y += 14;
+      
+      // AI Analysis
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(12);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text(displayResult.isGraphConflict ? "Overlap Guidelines:" : "AI Analysis & Reasoning:", margin, y);
+      
+      y += 6;
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      pdf.setTextColor(51, 65, 85);
+      
+      const reasonText = pdf.splitTextToSize(displayResult.reason || "No reasoning provided.", pageWidth - 2 * margin);
+      checkPage(reasonText.length * 5);
+      pdf.text(reasonText, margin, y);
+      y += (reasonText.length * 5) + 6;
+      
+      // Citation
+      if (displayResult.citation) {
+        checkPage(15);
+        pdf.setFont("helvetica", "italic");
+        pdf.setFontSize(9);
+        pdf.setTextColor(71, 85, 105);
+        const citationText = pdf.splitTextToSize(`Citation: "${displayResult.citation}"`, pageWidth - 2 * margin);
+        pdf.text(citationText, margin, y);
+        y += (citationText.length * 4) + 8;
+      }
+      
+      pdf.setDrawColor(226, 232, 240);
+      pdf.line(margin, y, pageWidth - margin, y);
+      y += 10;
+      
+      // Benefits & Documents
+      if (displayResult.benefitAmount && displayResult.benefitAmount !== 'None due to conflict') {
+        checkPage(15);
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(11);
+        pdf.setTextColor(15, 23, 42);
+        pdf.text("Benefits & Incentives:", margin, y);
+        
+        y += 6;
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(10);
+        pdf.setTextColor(51, 65, 85);
+        const benefit = String(displayResult.benefitAmount).startsWith('₹') ? displayResult.benefitAmount : `₹${displayResult.benefitAmount}`;
+        pdf.text(benefit, margin, y);
+        y += 10;
+      }
+      
+      const reqDocs = Array.isArray(displayResult.requiredDocuments) ? displayResult.requiredDocuments : (typeof displayResult.requiredDocuments === 'string' ? [displayResult.requiredDocuments] : []);
+      
+      if (reqDocs.length > 0) {
+        checkPage(15);
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(11);
+        pdf.setTextColor(15, 23, 42);
+        pdf.text("Required Documents:", margin, y);
+        
+        y += 6;
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(10);
+        pdf.setTextColor(51, 65, 85);
+        
+        reqDocs.forEach(doc => {
+          checkPage(6);
+          pdf.text(`• ${doc}`, margin + 4, y);
+          y += 5;
+        });
+      }
+      
+      pdf.save(`${schemeName.replace(/\s+/g, '_')}_Eligibility_Report.pdf`);
+      addToast('Download Complete', 'Your PDF report has been generated successfully', 'success');
     } catch (error) {
       console.error('PDF Generation Failed:', error);
-      addToast('Export Failed', 'Could not generate PDF card', 'error');
+      addToast('Export Failed', 'Could not generate PDF report', 'error');
     } finally {
       setIsDownloading(false);
     }
