@@ -656,7 +656,7 @@ const labelStyle = {
 };
 
 /* ── Proof Card (Result) ────────────────── */
-function ProofCard({ result }) {
+function ProofCard({ result, profile }) {
   // ── Hooks (must be declared before any state that uses them) ──
   const { addToast } = useToast();
   const { t, i18n } = useTranslation();
@@ -715,13 +715,45 @@ function ProofCard({ result }) {
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(10);
       pdf.setTextColor(100, 116, 139);
-      pdf.text(`Generated on: ${new Date().toLocaleDateString()} | Niti-Setu Platform`, margin, y);
+      pdf.text(`Generated on: ${new Date().toLocaleString()} | Niti-Setu Platform`, margin, y);
       
       y += 6;
       pdf.setDrawColor(203, 213, 225);
       pdf.line(margin, y, pageWidth - margin, y);
       
       y += 12;
+
+      // Farmer Profile Summary
+      if (profile && profile.name) {
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(12);
+        pdf.setTextColor(30, 41, 59);
+        pdf.text("Farmer Profile Summary", margin, y);
+        y += 8;
+
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(10);
+        pdf.setTextColor(51, 65, 85);
+        pdf.text(`Name: ${profile.name}`, margin, y);
+        pdf.text(`State/District: ${profile.state || 'N/A'}, ${profile.district || 'N/A'}`, margin + 80, y);
+        
+        y += 6;
+        pdf.text(`Age: ${profile.age || 'N/A'}`, margin, y);
+        pdf.text(`Gender: ${profile.gender || 'N/A'}`, margin + 80, y);
+
+        y += 6;
+        pdf.text(`Land Holding: ${profile.landHolding || 'N/A'} acres`, margin, y);
+        pdf.text(`Annual Income: ₹${profile.annualIncome || 'N/A'}`, margin + 80, y);
+        
+        y += 6;
+        pdf.text(`Category: ${profile.category || 'N/A'}`, margin, y);
+        pdf.text(`Primary Income: ${profile.primaryIncomeSource || 'Agriculture'}`, margin + 80, y);
+
+        y += 10;
+        pdf.setDrawColor(226, 232, 240);
+        pdf.line(margin, y, pageWidth - margin, y);
+        y += 10;
+      }
       
       // Scheme Name
       pdf.setFont("helvetica", "bold");
@@ -1815,13 +1847,13 @@ export default function EligibilityCheck() {
                     <Shield size={14} style={{ color: r.eligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }} />
                     {t('pc_scheme_x_of_y')} {i + 1} {t('pc_of')} {result.length}
                   </div>
-                  <ProofCard result={r} />
+                  <ProofCard result={r} profile={form} />
                 </div>
               ))}
             </div>
           ) : (
             <div style={{ marginTop: '32px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '32px', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
-              <ProofCard result={result} />
+              <ProofCard result={result} profile={form} />
             </div>
           ))}
         </AnimatePresence>
