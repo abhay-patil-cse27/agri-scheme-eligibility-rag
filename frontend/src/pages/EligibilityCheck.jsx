@@ -243,6 +243,24 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
   const [customSchemeName, setCustomSchemeName] = useState('');
   const [isEnrolled, setIsEnrolled] = useState(false);
 
+  const uniqueCategories = [...new Set(allSchemes.map(s => s.category).filter(Boolean))];
+  const [localSelectedCategory, setLocalSelectedCategory] = useState(selectedCategory || uniqueCategories[0] || '');
+
+  useEffect(() => {
+    if (selectedCategory) {
+      setLocalSelectedCategory(selectedCategory);
+    }
+  }, [selectedCategory]);
+
+  const categoryLabelMap = {
+    financial_support: "Financial Support 💰",
+    crop_insurance: "Crop Insurance 🌾",
+    irrigation_infrastructure: "Irrigation & Water 💧",
+    subsidies_inputs: "Subsidies & Inputs 🚜",
+    organic_farming: "Organic Farming 🌱",
+    training_capacity: "Training & Capacity 🎓"
+  };
+
   // Sync with initial data (e.g., from voice or scanner)
   useEffect(() => {
     if (initialData) {
@@ -315,7 +333,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
     });
   };
 
-  const displaySchemes = allSchemes.filter(s => !selectedCategory || s.category === selectedCategory);
+  const displaySchemes = allSchemes.filter(s => !localSelectedCategory || s.category === localSelectedCategory);
 
   return (
     <form onSubmit={handleSubmit}>
@@ -457,7 +475,7 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isEnrolled ? '16px' : '0' }}>
             <label style={{ ...labelStyle, marginBottom: 0 }}>
               <Shield size={16} style={{ color: 'var(--accent-indigo)' }} /> 
-              Are you already enrolled in any related <b>{selectedCategory ? selectedCategory.replace(/_/g, ' ') : 'government'}</b> schemes?
+              Are you already enrolled in any related <b>{localSelectedCategory ? localSelectedCategory.replace(/_/g, ' ') : 'government'}</b> schemes?
             </label>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
@@ -499,6 +517,33 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
           <AnimatePresence>
             {isEnrolled && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}>
+                
+                {/* Category Filtering Row */}
+                <div style={{ paddingTop: '16px', borderTop: '1px dashed var(--border-glass)', marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '10px' }}>
+                    Select Scheme Category to Filter:
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {uniqueCategories.map(cat => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setLocalSelectedCategory(cat)}
+                        style={{
+                          padding: '6px 14px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                          background: localSelectedCategory === cat ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.05)',
+                          color: localSelectedCategory === cat ? 'white' : 'var(--text-secondary)',
+                          border: `1px solid ${localSelectedCategory === cat ? 'var(--accent-indigo)' : 'var(--border-glass)'}`,
+                          transition: 'all 0.2s',
+                          boxShadow: localSelectedCategory === cat ? '0 4px 12px rgba(99, 102, 241, 0.2)' : 'none'
+                        }}
+                      >
+                        {categoryLabelMap[cat] || cat.replace(/_/g, ' ').toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: '1px dashed var(--border-glass)' }}>
                   {displaySchemes.length === 0 ? (
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{t('pf_no_schemes_found')}</p>
