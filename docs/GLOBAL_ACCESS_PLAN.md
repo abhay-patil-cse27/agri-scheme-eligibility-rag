@@ -125,6 +125,60 @@ If you eventually want to turn off your local PC and have the entire system live
 | Service | Best Cloud Option | Action Required |
 | :--- | :--- | :--- |
 | **Frontend** | Vercel / Netlify | Free hosting, autodeploys on every git push. |
-| **Backend API** | Railway.app / Render.com | Deploy the `backend/` folder. Add GROQ, Mongo, and Neo4j environment keys. |
+| **Backend API** | Railway.app / Render.com / DigitalOcean | Deploy the `backend/` folder. Add GROQ, Mongo, and Neo4j environment keys. |
 | **Database** | MongoDB Atlas / Neo4j Aura | Already fully cloud-hosted! No changes needed. |
-| **Embeddings** | Cloud Container | Transformers.js can run serverless inside the Railway container, keeping embeddings free. |
+| **Embeddings** | Cloud Container | Transformers.js can run serverless inside the container, keeping embeddings free. |
+
+---
+
+## 🎓 Phase 5: Leveraging GitHub Student Developer Pack (Active till Oct 2027)
+
+Since your **GitHub Student Developer Pack** is fully active, you can host the entire system completely free of cost using premium services.
+
+### 1. Cloud Hosting & Database Infrastructure
+*   **DigitalOcean ($200 Credits)**:
+    *   Deploy the Niti-Setu Express Backend (`backend/`) on a **DigitalOcean App Platform** or a **Basic Droplet** (Ubuntu VPS).
+    *   Use the credits to host it for free for up to 1 year.
+*   **Namecheap / Name.com (Free Domain)**:
+    *   Claim a free `.me` or `.tech` domain (e.g., `nitisetu.tech`).
+    *   Point the DNS records to Vercel (for frontend) and DigitalOcean (for backend API) to have a professional production URL.
+
+### 2. Local Dual-Git Configuration Strategy
+To keep your original repository (`abhay-patil-cse27`) clean while developing under your Student/Pro account (`AbhayPatil-Work`), manage your local machine as follows:
+
+```mermaid
+graph LR
+    subgraph PC[Local Development Machine]
+        Folder1[agri-scheme-eligibility-rag - Primary]
+        Folder2[nitisetu-edu-copy - Student Pack]
+    end
+    
+    Folder1 -->|Push/Pull| Repo1[(abhay-patil-cse27/agri-scheme-eligibility-rag)]
+    Folder2 -->|Push/Pull| Repo2[(AbhayPatil-Work/nitisetu-edu)]
+    
+    style Folder1 fill:#e1f5fe,stroke:#0288d1
+    style Folder2 fill:#e8f5e9,stroke:#388e3c
+```
+
+#### A. Keep Your Primary Folder As-Is
+Your primary folder will continue pushing directly to your main repository under `abhay-patil-cse27`. No changes are needed here.
+
+#### B. Create a Clean Copy for Your Student Account
+If you clone/copy the codebase to a separate folder to build specifically for the Educational Pack:
+1.  **Strip existing Git metadata:** Delete the hidden `.git` folder in your new location.
+2.  **Initialize new repository:**
+    ```powershell
+    git init
+    ```
+3.  **Override identity locally:** Avoid global email collision by setting local identity inside that directory:
+    ```powershell
+    git config user.name "AbhayPatil-Work"
+    git config user.email "your-college-email@edu.com"
+    ```
+4.  **Add and push to your new educational repository:**
+    ```powershell
+    git remote add origin git@github.com-edu:AbhayPatil-Work/nitisetu-edu.git
+    git add .
+    git commit -m "Initial commit under Student Developer Pack"
+    git push -u origin main
+    ```
