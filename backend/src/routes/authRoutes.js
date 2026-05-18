@@ -457,32 +457,53 @@ router.post(
   asyncHandler(async (req, res) => {
     const { token } = req.body;
     
-    // Verify the Google ID Token
-    const ticket = await client.verifyIdToken({
-        idToken: token,
-        audience: config.googleClientId,  
-    });
-    
-    const payload = ticket.getPayload();
-    const { email, name, sub: googleId } = payload;
-    
-    // Check if user already exists
-    let user = await User.findOne({ email });
-    
-    if (!user) {
-      // If user doesn't exist, create a new Farmer account seamlessly
-      // We generate a secure random password since they use Google
-      const randomPassword = crypto.randomBytes(16).toString('hex') + 'A1!'; // ensure it passes the regex
-      user = await User.create({
-        name: name,
-        email: email,
-        password: randomPassword,
-        role: 'farmer'
+    if (!token) {
+      return res.status(400).json({ success: false, error: 'No Google ID Token provided.' });
+    }
+
+    try {
+      if (!config.googleClientId) {
+        throw new Error('GOOGLE_CLIENT_ID environment variable is missing or empty on the backend.');
+      }
+
+      // Verify the Google ID Token
+      const ticket = await client.verifyIdToken({
+          idToken: token,
+          audience: config.googleClientId,  
+      });
+      
+      const payload = ticket.getPayload();
+      const { email, name, sub: googleId } = payload;
+      
+      // Check if user already exists
+      let user = await User.findOne({ email });
+      
+      if (!user) {
+        // If user doesn't exist, create a new Farmer account seamlessly
+        // We generate a secure random password since they use Google
+        const randomPassword = crypto.randomBytes(16).toString('hex') + 'A1!'; // ensure it passes the regex
+        user = await User.create({
+          name: name,
+          email: email,
+          password: randomPassword,
+          role: 'farmer'
+        });
+      }
+      
+      // Send standard JWT
+      sendTokenResponse(user, 200, res);
+    } catch (err) {
+      logger.error('Google Auth Route Error:', err);
+      return res.status(400).json({
+        success: false,
+        error: 'Google Authentication Failed',
+        details: err.message,
+        debugConfig: {
+          hasGoogleClientId: !!config.googleClientId,
+          googleClientIdLength: config.googleClientId ? config.googleClientId.length : 0
+        }
       });
     }
-    
-    // Send standard JWT
-    sendTokenResponse(user, 200, res);
   })
 );
 
