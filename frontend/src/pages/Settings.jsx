@@ -7,6 +7,7 @@ import { updateDetails, updatePassword, sendOTP, getSchemes, sendWhatsAppOTP, ve
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import AgriCard from '../components/common/AgriCard';
+import { SCHEME_DISPLAY_NAMES, CATEGORY_NAMES } from '../services/categoryService';
 
 export default function Settings() {
   const { user, setUser } = useAuth();
@@ -21,6 +22,7 @@ export default function Settings() {
     activeSchemes: user?.activeSchemes || [] 
   });
   const [allSchemes, setAllSchemes] = useState([]);
+  const [localSelectedCategory, setLocalSelectedCategory] = useState('');
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -45,8 +47,18 @@ export default function Settings() {
   }, [user]);
 
   useEffect(() => {
-    getSchemes().then(r => setAllSchemes(r.data || []));
+    getSchemes().then(r => {
+      const schemes = r.data || [];
+      setAllSchemes(schemes);
+      const uniqueCats = [...new Set(schemes.map(s => s.category).filter(Boolean))];
+      if (uniqueCats.length > 0) {
+        setLocalSelectedCategory(uniqueCats[0]);
+      }
+    });
   }, []);
+  
+  const uniqueCategories = [...new Set(allSchemes.map(s => s.category).filter(Boolean))];
+  const displaySchemes = allSchemes.filter(s => s.category === localSelectedCategory);
 
   const handleDetailsSubmit = async (e) => {
     e.preventDefault();
@@ -285,8 +297,35 @@ export default function Settings() {
               <KeyRound size={16} style={{ color: 'var(--accent-indigo)' }} /> 
               {t('st_active_enrollments')}
             </label>
+
+            {/* Category Filtering Row */}
+            <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px dashed var(--border-glass)' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '10px' }}>
+                Select Scheme Category to Filter:
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {uniqueCategories.map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setLocalSelectedCategory(cat)}
+                    style={{
+                      padding: '6px 14px', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                      background: localSelectedCategory === cat ? 'var(--accent-indigo)' : 'rgba(255,255,255,0.05)',
+                      color: localSelectedCategory === cat ? 'white' : 'var(--text-secondary)',
+                      border: `1px solid ${localSelectedCategory === cat ? 'var(--accent-indigo)' : 'var(--border-glass)'}`,
+                      transition: 'all 0.2s',
+                      boxShadow: localSelectedCategory === cat ? '0 4px 12px rgba(99, 102, 241, 0.2)' : 'none'
+                    }}
+                  >
+                    {CATEGORY_NAMES[cat] || cat.replace(/_/g, ' ').toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {allSchemes.map((scheme, i) => {
+              {displaySchemes.map((scheme, i) => {
                 const isEnrolled = details.activeSchemes?.includes(scheme.name);
                 return (
                   <button
@@ -311,7 +350,7 @@ export default function Settings() {
                       border: `1px solid ${isEnrolled ? 'var(--accent-indigo)' : 'var(--border-glass)'}`
                     }}
                   >
-                    {scheme.name}
+                    {SCHEME_DISPLAY_NAMES[scheme.name] || scheme.name}
                   </button>
                 );
               })}

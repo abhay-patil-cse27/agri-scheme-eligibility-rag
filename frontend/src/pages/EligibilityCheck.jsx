@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 import {
   Mic, MicOff, Search, User, MapPin, Ruler, Sprout, Shield, Wallet,
   Droplets, CheckCircle2, XCircle, AlertCircle, FileText, ChevronDown,
-  Loader2, Sparkles, Quote, ClipboardList, Clock, Globe, Download, Volume2, VolumeX, Brain, Plus, ExternalLink
+  Loader2, Sparkles, Quote, ClipboardList, Clock, Globe, Download, Volume2, VolumeX, Brain, Plus, ExternalLink, X
 } from 'lucide-react';
 import { useVoice } from '../hooks/useVoice';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +16,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import AgriCard from '../components/common/AgriCard';
 import DocumentScanner from '../components/farmers/DocumentScanner';
-import { CATEGORY_LINKS } from '../services/categoryService';
+import { CATEGORY_LINKS, SCHEME_DISPLAY_NAMES } from '../services/categoryService';
 
 const STATE_DIALECT_MAPPING = {
   "Maharashtra": [
@@ -482,9 +482,6 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
                 type="button"
                 onClick={() => {
                   setIsEnrolled(true);
-                  if (!form.activeSchemes || form.activeSchemes.length === 0) {
-                    setForm(prev => ({ ...prev, activeSchemes: displaySchemes.map(s => s.name) }));
-                  }
                 }}
                 className={`tab-btn ${isEnrolled ? 'active' : ''}`}
                 style={{
@@ -544,6 +541,32 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
                   </div>
                 </div>
 
+                {/* Active Enrollments Summary Tag Block */}
+                {form.activeSchemes && form.activeSchemes.length > 0 && (
+                  <div style={{ marginBottom: '16px', padding: '12px 16px', background: 'rgba(99, 102, 241, 0.03)', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                        Your Enrolled Schemes ({form.activeSchemes.length}):
+                      </span>
+                      <button 
+                        type="button" 
+                        onClick={() => setForm(prev => ({ ...prev, activeSchemes: [] }))}
+                        style={{ background: 'none', border: 'none', color: 'var(--accent-rose)', fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {form.activeSchemes.map(name => (
+                        <span key={name} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: 600, background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-indigo)', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                          {SCHEME_DISPLAY_NAMES[name] || name}
+                          <X size={12} style={{ cursor: 'pointer', opacity: 0.8 }} onClick={() => toggleScheme(name)} />
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '16px', borderTop: '1px dashed var(--border-glass)' }}>
                   {displaySchemes.length === 0 ? (
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{t('pf_no_schemes_found')}</p>
@@ -560,12 +583,12 @@ function ProfileForm({ initialData, onSubmit, loading, allSchemes = [], selected
                           border: `1px solid ${form.activeSchemes?.includes(s.name) ? 'var(--accent-indigo)' : 'var(--border-glass)'}`
                         }}
                       >
-                        {s.name}
+                        {SCHEME_DISPLAY_NAMES[s.name] || s.name}
                       </button>
                     ))
                   )}
                   
-                  {form.activeSchemes?.filter(s => !displaySchemes.some(as => as.name === s)).map(customName => (
+                  {form.activeSchemes?.filter(s => !allSchemes.some(as => as.name === s)).map(customName => (
                     <button
                       key={customName}
                       type="button"
@@ -872,10 +895,17 @@ function ProofCard({ result }) {
               <h2 style={{ fontSize: '2rem', fontWeight: 900, margin: 0, letterSpacing: '-0.03em', color: isEligible ? 'var(--accent-emerald)' : 'var(--accent-rose)' }}>
                 {isEligible ? t('pc_eligible') : t('pc_not_eligible')}
               </h2>
-              <div style={{ padding: '4px 10px', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '20px', border: '1px solid var(--border-agri)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <Shield size={12} style={{ color: 'var(--accent-emerald)' }} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-emerald)', letterSpacing: '0.05em' }}>Verified by RAG</span>
-              </div>
+              {displayResult.isGraphConflict ? (
+                <div style={{ padding: '4px 10px', background: 'rgba(244, 63, 94, 0.1)', borderRadius: '20px', border: '1px solid rgba(244, 63, 94, 0.3)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <AlertCircle size={12} style={{ color: 'var(--accent-rose)' }} />
+                  <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-rose)', letterSpacing: '0.05em' }}>Graph Conflict Blocked</span>
+                </div>
+              ) : (
+                <div style={{ padding: '4px 10px', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '20px', border: '1px solid var(--border-agri)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Shield size={12} style={{ color: 'var(--accent-emerald)' }} />
+                  <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-emerald)', letterSpacing: '0.05em' }}>Verified by RAG</span>
+                </div>
+              )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 700 }}>{displayResult.scheme}</span>
@@ -1607,7 +1637,9 @@ export default function EligibilityCheck() {
                 .filter(s => !selectedCategory || s.category === selectedCategory)
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((s, i) => (
-                <option key={s._id || `scheme-option-${i}`} value={s.name}>{s.name} ({s.totalChunks || 0} chunks)</option>
+                <option key={s._id || `scheme-option-${i}`} value={s.name}>
+                  {SCHEME_DISPLAY_NAMES[s.name] || s.name} ({s.totalChunks || 0} chunks)
+                </option>
               ))}
             </select>
           </div>

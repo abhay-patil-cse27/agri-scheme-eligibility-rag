@@ -180,6 +180,62 @@ router.post(
             };
           }
 
+          // Check for Neo4j Graph Conflicts (Exclusive schemes) FIRST!
+          const graphStart2 = Date.now();
+          const graphConflicts = await graphService.checkConflicts(profile.activeSchemes || [], scheme.name);
+          perf.graph += (Date.now() - graphStart2);
+
+          if (graphConflicts.length > 0) {
+            logger.info(`Graph CONFLICT detected for ${profile.name} on ${scheme.name}: ${graphConflicts.map(c => c.scheme).join(', ')}`);
+            
+            // Short-circuit instantly!
+            const conflictNames = graphConflicts.map(c => c.scheme).join(', ');
+            const reason = `Eligibility check blocked by Graph Conflict Engine. You are already enrolled in conflicting/exclusive scheme(s): ${conflictNames}. Neo4j exclusion rule: ${graphConflicts[0].reason}`;
+            
+            perf.total = Date.now() - startTime;
+            const totalResponseTimeFloat = parseFloat((perf.total / 1000).toFixed(3));
+            
+            const eligibilityRecord = await EligibilityCheck.create({
+              farmerId: profile._id,
+              schemeId: scheme._id,
+              schemeName: scheme.name,
+              profileHash: profileHash,
+              eligible: false,
+              confidence: 'high',
+              reason: reason,
+              citation: `Neo4j Knowledge Graph Exclusion Rule: Schemes ${scheme.name} and ${conflictNames} are mutually exclusive.`,
+              citationSource: 'Neo4j Scheme Exclusion Policy Graph',
+              officialWebsite: scheme.officialWebsite,
+              documentUrl: null,
+              benefitAmount: 'None due to conflict',
+              requiredDocuments: [],
+              suggestions: [],
+              responseTime: totalResponseTimeFloat,
+              latencies: perf,
+            });
+
+            return {
+              checkId: eligibilityRecord._id,
+              scheme: scheme.name,
+              eligible: false,
+              confidence: 'high',
+              reason: reason,
+              citation: `Neo4j Knowledge Graph Exclusion Rule: Schemes ${scheme.name} and ${conflictNames} are mutually exclusive.`,
+              citationSource: 'Neo4j Scheme Exclusion Policy Graph',
+              officialWebsite: scheme.officialWebsite,
+              documentUrl: null,
+              benefitAmount: 'None due to conflict',
+              requiredDocuments: [],
+              suggestions: [],
+              responseTime: totalResponseTimeFloat,
+              chunksAnalyzed: 0,
+              category: scheme.category,
+              isGraphConflict: true, // Flag for frontend
+              graphConflicts: graphConflicts,
+              latencies: perf
+            };
+          }
+
           // Use a generic search query aimed at retrieving the RULES
           const searchQuery = `eligibility criteria, beneficiary conditions, who is eligible, age limit, land holding limit, income limit, exclusions for ${scheme.name}`;
           
@@ -202,17 +258,8 @@ router.post(
             return { scheme: scheme.name, error: 'No relevant document sections found.', latencies: perf };
           }
 
-          // New: Check for Graph Conflicts (Exclusive schemes)
-          const graphStart2 = Date.now();
-          const graphConflicts = await graphService.checkConflicts(profile.activeSchemes || [], scheme.name);
-          perf.graph += (Date.now() - graphStart2);
-
-          if (graphConflicts.length > 0) {
-            logger.info(`Graph CONFLICT detected for ${profile.name} on ${scheme.name}: ${graphConflicts.map(c => c.scheme).join(', ')}`);
-          }
-
           const llmStart = Date.now();
-          const llmResult = await llmService.checkEligibility(profile, relevantChunks, scheme.name, language, graphConflicts, 'registered');
+          const llmResult = await llmService.checkEligibility(profile, relevantChunks, scheme.name, language, [], 'registered');
           perf.llm = Date.now() - llmStart;
 
           let suggestions = [];
@@ -371,6 +418,50 @@ router.post(
               isCached: true,
               latencies: { ...perf, total: Date.now() - startTime }
             };
+          }
+
+          // Check for Neo4j Graph Conflicts (Exclusive schemes) FIRST!
+          const graphConflicts = await graphService.checkConflicts(profileData.activeSchemes || [], scheme.name);
+
+          if (graphConflicts.length > 0) {
+            logger.info(`Graph CONFLICT detected for public user on ${scheme.name}: ${graphConflicts.map(c => c.scheme).join(', ')}`);
+            
+            // Short-circuit instantly!
+            const conflictNames = graphConflicts.map(c => c.scheme).join(', ');
+            const reason = `Eligibility check blocked by Graph Conflict Engine. You are already enrolled in conflicting/exclusive scheme(s): ${conflictNames}. Neo4j exclusion rule: ${graphConflicts[0].reason}`;
+            
+            perf.total = Date.now() - startTime;
+            const totalResponseTimeFloat = parseFloat((perf.total / 1000).toFixed(3));
+            
+            const result = {
+              checkId: 'public-conflict-' + Date.now(),
+              scheme: scheme.name,
+              eligible: false,
+              confidence: 'high',
+              reason: reason,
+              citation: `Neo4j Knowledge Graph Exclusion Rule: Schemes ${scheme.name} and ${conflictNames} are mutually exclusive.`,
+              citationSource: 'Neo4j Scheme Exclusion Policy Graph',
+              officialWebsite: scheme.officialWebsite,
+              documentUrl: null,
+              benefitAmount: 'None due to conflict',
+              requiredDocuments: [],
+              suggestions: [],
+              responseTime: totalResponseTimeFloat,
+              chunksAnalyzed: 0,
+              category: scheme.category,
+              isGraphConflict: true, // Flag for frontend
+              graphConflicts: graphConflicts,
+              latencies: perf
+            };
+
+            // Public cache update
+            await PublicCheckCache.create({
+              profileHash,
+              schemeName: scheme.name,
+              result
+            });
+
+            return result;
           }
 
           const searchQuery = `eligibility criteria, beneficiary conditions, who is eligible, age limit, land holding limit, income limit, exclusions for ${scheme.name}`;

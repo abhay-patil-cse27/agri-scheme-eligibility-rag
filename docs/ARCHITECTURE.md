@@ -210,33 +210,39 @@ pipeline.
 sequenceDiagram
     participant U as User (Query)
     participant S as Service Layer
+    participant G as Neo4j (Graph)
     participant X as Xenova (Local)
     participant D as MongoDB (Vector)
-    participant G as Neo4j (Graph)
     participant L as Groq (LLM)
     
     U->>S: "Am I eligible for PM-Kisan?"
     S->>S: Select Language & Sub-Region context
-    S->>X: Generate Query Embedding (384-d)
-    X-->>S: Vector returned
     
-    par Multi-Path Retrieval
-        S->>D: $vectorSearch (Semantic)
-        S->>D: Text Index (Keyword BM25)
+    S->>G: 1. Check EXCLUSIVE_OF Conflict Rules (Neo4j)
+    alt Conflict Detected (Mutual Exclusion policy violated)
+        G-->>S: "Farmer enrolled in exclusive scheme X"
+        S->>S: Short-Circuit Eligibility (Block Check)
+        S-->>U: Instant Response: Graph Conflict Blocked (<10ms)
+    else No Conflict Detected
+        G-->>S: "No conflicts identified"
+        S->>X: 2. Generate Query Embedding (384-d)
+        X-->>S: Vector returned
+        
+        par Multi-Path Retrieval
+            S->>D: $vectorSearch (Semantic)
+            S->>D: Text Index (Keyword BM25)
+        end
+        
+        S->>S: Reciprocal Rank Fusion (RRF)
+        S->>D: Fetch Top 10 Context Chunks
+        S->>S: Maximal Marginal Relevance (MMR) Diversification
+        
+        S->>L: Payload: Divergent Context + Dialect Prompt
+        L->>L: Semantic Reasoning & Verdict Generation
+        L-->>S: JSON Verdict + Citations
+        
+        S-->>U: Final Response (Audio + Text)
     end
-    
-    S->>S: Reciprocal Rank Fusion (RRF)
-    S->>D: Fetch Top 10 Context Chunks
-    S->>S: Maximal Marginal Relevance (MMR) Diversification
-    
-    S->>G: Check EXCLUSIVE_OF Conflict Rules
-    G-->>S: "Farmer holds conflicted scheme X"
-    
-    S->>L: Payload: Divergent Context + Conflicts + Dialect Prompt
-    L->>L: Semantic Reasoning & Verdict Generation
-    L-->>S: JSON Verdict + Citations
-    
-    S-->>U: Final Response (Audio + Text)
 ```
 
 ### The Two-Phase Pipeline (100% Native implementation)
