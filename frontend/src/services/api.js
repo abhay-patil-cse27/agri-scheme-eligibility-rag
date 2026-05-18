@@ -50,10 +50,10 @@ api.interceptors.response.use(
 );
 
 // ── Auth ──────────────────────────────────
-export const login = (email, password) => api.post('/auth/login', { email, password }).then(r => r.data);
-export const sendOTP = (email, purpose) => api.post('/auth/send-otp', { email, purpose }).then(r => r.data);
-export const register = (name, email, password, otp, contactNumber) => api.post('/auth/register', { name, email, password, otp, contactNumber }).then(r => r.data);
-export const googleLogin = (token) => api.post('/auth/google', { token }).then(r => r.data);
+export const login = (email, password) => api.post('/auth/login', { email, password }, { timeout: 60000 }).then(r => r.data);
+export const sendOTP = (email, purpose) => api.post('/auth/send-otp', { email, purpose }, { timeout: 60000 }).then(r => r.data);
+export const register = (name, email, password, otp, contactNumber) => api.post('/auth/register', { name, email, password, otp, contactNumber }, { timeout: 60000 }).then(r => r.data);
+export const googleLogin = (token) => api.post('/auth/google', { token }, { timeout: 90000 }).then(r => r.data);
 export const getMe = () => api.get('/auth/me').then(r => r.data);
 export const updateDetails = (data) => api.put('/auth/updatedetails', data).then(r => r.data);
 export const updatePassword = (data) => api.put('/auth/updatepassword', data).then(r => r.data);
