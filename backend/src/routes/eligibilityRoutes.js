@@ -17,6 +17,57 @@ const logger = require('../config/logger');
 const crypto = require('crypto');
 const PublicCheckCache = require('../models/PublicCheckCache');
 
+const SCHEME_DISPLAY_NAMES = {
+  "Master Circular Kisan Credit Card (KCC) Scheme": "Kisan Credit Card (KCC) - Master Guidelines",
+  "Revised Kisan Credit Card (KCC) Scheme": "Kisan Credit Card (KCC) - Revised Guidelines",
+  "Scheme to cover term loans for agriculture & allied activities under KCC": "KCC - Allied Term Loans",
+  "Guidelines for Implementation of New Scheme PMKUSUSM": "PM-KUSUM - New Guidelines",
+  "PM KUSUM Guidelines": "PM-KUSUM - General Guidelines",
+  "PM’s VISION for Farmers Harvesting Solar Enegy": "PM-KUSUM - Solar Harvesting",
+  "CPD Guidelines New": "MIDH - CPD Guidelines",
+  "midhGuidelines midh(English)": "MIDH - General Guidelines",
+  "Operational Manual MIDH SURAKSHA": "MIDH - Suraksha Manual",
+  "PM KMY FAQs": "PM Kisan Maandhan Yojana (PM-KMY) FAQs",
+  "PM KMY Operational Guidelines": "PM-KMY - Operational Guidelines",
+  "PM KMY Salient Features": "PM-KMY - Salient Features",
+  "Pradhan Mantri Fasal Bima Yojana (PMFBY)": "Pradhan Mantri Fasal Bima Yojana (PMFBY)",
+  "Agriculture Infrastructure Fund (AIF)": "Agriculture Infrastructure Fund (AIF)",
+  "aws gui cre": "Unified Package Insurance Scheme (UPIS) Guidelines",
+  "FINAL UPISOGs 23.03.2016": "UPIS - Operational Guidelines",
+  "FINAL WBCIS OGs 23.03.2016": "Weather Based Crop Insurance (WBCIS) OGs",
+  "NAIS SCHEME": "National Agricultural Insurance Scheme (NAIS)",
+  "New Schemes english": "New Crop Insurance Schemes",
+  "operational guidelines pmfby": "PMFBY - Operational Guidelines",
+  "PMFBY Features": "PMFBY - Key Features",
+  "Revamped Operational Guidelines 17th August 2020": "PMFBY - Revamped Guidelines",
+  "RWBCIS Revised Guidelines 1": "Weather-Based Crop Insurance (RWBCIS) Revised",
+  "NLMOperationalGuidelines": "National Livestock Mission (NLM) Guidelines",
+  "RevisedSOProcedureforReleaseofCapitalSubsidyvidenotificationdated": "NLM - Capital Subsidy SOP",
+  "SoP NLM EDP": "NLM - Entrepreneurship Development SOP",
+  "mksp agriculture guidelines": "Mahila Kisan Sashaktikaran Pariyojana (MKSP) Guidelines",
+  "MKSP NTFP Guidelines approved version": "MKSP - Forest Produce Guidelines",
+  "Circular Of Implementation Of Soil Health Card": "Soil Health Card - Implementation Circular",
+  "Citizen Charter for Soil Testing and Issue of Soil Health Card": "Soil Health Card - Citizen Charter",
+  "Implementation of Soil Health Card (SHC) Scheme": "Soil Health Card (SHC) Scheme",
+  "List of mini soil labs": "Soil Health - Mini Soil Labs Directory",
+  "National Mission for Sustainable Agriculture (NMSA) Operational Guidelines": "Sustainable Agriculture (NMSA) Guidelines",
+  "Soil Health & Fertility Scheme under Rashtriya Krishi Vikas Yojana(RKVY)": "RKVY - Soil Health & Fertility"
+};
+
+function getPrettySchemeName(name) {
+  return SCHEME_DISPLAY_NAMES[name] || name;
+}
+
+function cleanConflictReason(reason) {
+  if (!reason) return '';
+  return reason
+    .replace(/^Active Enrollment Conflict:\s*/i, '')
+    .replace(/^Duplicate pension registration:\s*/i, '')
+    .replace(/^Overlapping Credit Limit:\s*/i, '')
+    .replace(/^Exclusive Insurance Cover:\s*/i, '')
+    .replace(/^Duplicate Crop Cover:\s*/i, '');
+}
+
 /**
  * Generate a deterministic hash for a profile object.
  */
@@ -192,9 +243,10 @@ router.post(
           if (graphConflicts.length > 0) {
             logger.info(`Graph CONFLICT detected for ${profile.name} on ${scheme.name}: ${graphConflicts.map(c => c.scheme).join(', ')}`);
             
-            // Short-circuit instantly!
-            const conflictNames = graphConflicts.map(c => c.scheme).join(', ');
-            const reason = `Eligibility check blocked by Graph Conflict Engine. You are already enrolled in conflicting/exclusive scheme(s): ${conflictNames}. Neo4j exclusion rule: ${graphConflicts[0].reason}`;
+            const prettyTargetScheme = getPrettySchemeName(scheme.name);
+            const prettyConflictsList = graphConflicts.map(c => getPrettySchemeName(c.scheme)).join(', ');
+            const cleanedReason = cleanConflictReason(graphConflicts[0].reason);
+            const reason = `You are not eligible for ${prettyTargetScheme} because you are already enrolled in a conflicting scheme: ${prettyConflictsList}. Under guidelines: ${cleanedReason}`;
             
             perf.total = Date.now() - startTime;
             const totalResponseTimeFloat = parseFloat((perf.total / 1000).toFixed(3));
@@ -207,8 +259,8 @@ router.post(
               eligible: false,
               confidence: 'high',
               reason: reason,
-              citation: `Neo4j Knowledge Graph Exclusion Rule: Schemes ${scheme.name} and ${conflictNames} are mutually exclusive.`,
-              citationSource: 'Neo4j Scheme Exclusion Policy Graph',
+              citation: `Official Scheme Guideline: ${prettyTargetScheme} is mutually exclusive with ${prettyConflictsList}.`,
+              citationSource: 'Central Scheme Mutual Exclusion Directives',
               officialWebsite: scheme.officialWebsite,
               documentUrl: null,
               benefitAmount: 'None due to conflict',
@@ -224,8 +276,8 @@ router.post(
               eligible: false,
               confidence: 'high',
               reason: reason,
-              citation: `Neo4j Knowledge Graph Exclusion Rule: Schemes ${scheme.name} and ${conflictNames} are mutually exclusive.`,
-              citationSource: 'Neo4j Scheme Exclusion Policy Graph',
+              citation: `Official Scheme Guideline: ${prettyTargetScheme} is mutually exclusive with ${prettyConflictsList}.`,
+              citationSource: 'Central Scheme Mutual Exclusion Directives',
               officialWebsite: scheme.officialWebsite,
               documentUrl: null,
               benefitAmount: 'None due to conflict',
@@ -430,9 +482,10 @@ router.post(
           if (graphConflicts.length > 0) {
             logger.info(`Graph CONFLICT detected for public user on ${scheme.name}: ${graphConflicts.map(c => c.scheme).join(', ')}`);
             
-            // Short-circuit instantly!
-            const conflictNames = graphConflicts.map(c => c.scheme).join(', ');
-            const reason = `Eligibility check blocked by Graph Conflict Engine. You are already enrolled in conflicting/exclusive scheme(s): ${conflictNames}. Neo4j exclusion rule: ${graphConflicts[0].reason}`;
+            const prettyTargetScheme = getPrettySchemeName(scheme.name);
+            const prettyConflictsList = graphConflicts.map(c => getPrettySchemeName(c.scheme)).join(', ');
+            const cleanedReason = cleanConflictReason(graphConflicts[0].reason);
+            const reason = `You are not eligible for ${prettyTargetScheme} because you are already enrolled in a conflicting scheme: ${prettyConflictsList}. Under guidelines: ${cleanedReason}`;
             
             perf.total = Date.now() - startTime;
             const totalResponseTimeFloat = parseFloat((perf.total / 1000).toFixed(3));
@@ -443,8 +496,8 @@ router.post(
               eligible: false,
               confidence: 'high',
               reason: reason,
-              citation: `Neo4j Knowledge Graph Exclusion Rule: Schemes ${scheme.name} and ${conflictNames} are mutually exclusive.`,
-              citationSource: 'Neo4j Scheme Exclusion Policy Graph',
+              citation: `Official Scheme Guideline: ${prettyTargetScheme} is mutually exclusive with ${prettyConflictsList}.`,
+              citationSource: 'Central Scheme Mutual Exclusion Directives',
               officialWebsite: scheme.officialWebsite,
               documentUrl: null,
               benefitAmount: 'None due to conflict',

@@ -660,6 +660,7 @@ function ProofCard({ result }) {
   // ── Hooks (must be declared before any state that uses them) ──
   const { addToast } = useToast();
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -898,7 +899,7 @@ function ProofCard({ result }) {
               {displayResult.isGraphConflict ? (
                 <div style={{ padding: '4px 10px', background: 'rgba(244, 63, 94, 0.1)', borderRadius: '20px', border: '1px solid rgba(244, 63, 94, 0.3)', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <AlertCircle size={12} style={{ color: 'var(--accent-rose)' }} />
-                  <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-rose)', letterSpacing: '0.05em' }}>Graph Conflict Blocked</span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-rose)', letterSpacing: '0.05em' }}>Benefit Overlap</span>
                 </div>
               ) : (
                 <div style={{ padding: '4px 10px', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '20px', border: '1px solid var(--border-agri)', display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -1121,59 +1122,61 @@ function ProofCard({ result }) {
         </div>
       )}
 
-      {/* 5. System Latency & Performance (Requested) */}
-      <div style={{ 
-        marginTop: '20px', padding: '16px 20px', borderRadius: '16px', 
-        background: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
-        display: 'flex', flexDirection: 'column', gap: '12px'
-      }} data-html2canvas-ignore="true">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Clock size={14} style={{ color: 'var(--text-muted)' }} />
-            <h5 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-              System Performance Metrics
-            </h5>
+      {/* 5. System Latency & Performance (Only shown to Admin users) */}
+      {user?.role === 'admin' && (
+        <div style={{ 
+          marginTop: '20px', padding: '16px 20px', borderRadius: '16px', 
+          background: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
+          display: 'flex', flexDirection: 'column', gap: '12px'
+        }} data-html2canvas-ignore="true">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Clock size={14} style={{ color: 'var(--text-muted)' }} />
+              <h5 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                System Performance Metrics
+              </h5>
+            </div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>
+              ⚡ Optimized RAG Pipeline
+            </span>
           </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>
-            ⚡ Optimized RAG Pipeline
-          </span>
-        </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
-          <LatencyItem 
-            label="Total RAG Latency" 
-            value={`${(displayResult.latencies?.total || 0) / 1000}s`} 
-            icon={<Brain size={12} />} 
-            color="var(--accent-indigo)"
-          />
-          <LatencyItem 
-            label="LLM (Groq API)" 
-            value={`${(displayResult.latencies?.llm || 0) / 1000}s`} 
-            icon={<Sparkles size={12} />} 
-            color="var(--accent-violet)"
-          />
-          <LatencyItem 
-            label="Vector Search" 
-            value={`${(displayResult.latencies?.vectorSearch || 0) / 1000}s`} 
-            icon={<Search size={12} />} 
-            color="var(--accent-cyan)"
-          />
-          <LatencyItem 
-            label="Embeddings" 
-            value={`${(displayResult.latencies?.embedding || 0) / 1000}s`} 
-            icon={<Ruler size={12} />} 
-            color="var(--accent-emerald)"
-          />
-          {displayResult.latencies?.graph > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
             <LatencyItem 
-              label="Graph Logic" 
-              value={`${(displayResult.latencies?.graph || 0) / 1000}s`} 
-              icon={<Shield size={12} />} 
-              color="var(--accent-amber)"
+              label="Total RAG Latency" 
+              value={`${(displayResult.latencies?.total || 0) / 1000}s`} 
+              icon={<Brain size={12} />} 
+              color="var(--accent-indigo)"
             />
-          )}
+            <LatencyItem 
+              label="LLM (Groq API)" 
+              value={`${(displayResult.latencies?.llm || 0) / 1000}s`} 
+              icon={<Sparkles size={12} />} 
+              color="var(--accent-violet)"
+            />
+            <LatencyItem 
+              label="Vector Search" 
+              value={`${(displayResult.latencies?.vectorSearch || 0) / 1000}s`} 
+              icon={<Search size={12} />} 
+              color="var(--accent-cyan)"
+            />
+            <LatencyItem 
+              label="Embeddings" 
+              value={`${(displayResult.latencies?.embedding || 0) / 1000}s`} 
+              icon={<Ruler size={12} />} 
+              color="var(--accent-emerald)"
+            />
+            {displayResult.latencies?.graph > 0 && (
+              <LatencyItem 
+                label="Graph Logic" 
+                value={`${(displayResult.latencies?.graph || 0) / 1000}s`} 
+                icon={<Shield size={12} />} 
+                color="var(--accent-amber)"
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 4. High-Priority Action Section */}
       <div style={{ 
