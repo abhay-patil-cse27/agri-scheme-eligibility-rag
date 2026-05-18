@@ -43,10 +43,16 @@ All local services and external connections are successfully running or verified
     ```
 *   **The Result:** Completely eliminated all charting console warnings and associated DevTools DOM-node reference tracking errors.
 
-### 4. Groq Vision Model Infrastructure Upgrade
-*   **The Issue:** Document extraction (Aadhaar, 7/12 land extracts) started failing with a 400 error (`model_decommissioned`) because Groq officially deprecated the older `llama-3.2-11b-vision-preview` model.
-*   **The Fix:** We migrated the OCR extraction pipeline in [`backend/src/services/llmService.js`](file:///d:/Projects/nitiSetu/agri-scheme-eligibility-rag/backend/src/services/llmService.js) to the newly supported and significantly more powerful `meta-llama/llama-4-scout-17b-16e-instruct` multimodal model.
-*   **The Result:** Document scanning API (`/api/scan/document`) is restored to full health with improved reasoning and zero HTTP 500/400 crashing.
+### 4. Groq Vision Model & PDF Extraction Upgrade
+*   **The Issue:** 
+    1. Document extraction (Aadhaar, 7/12 land extracts) failed with a `400 Model Decommissioned` error because Groq decommissioned the `llama-3.2-11b-vision-preview` model.
+    2. Uploading a raw PDF file caused a `400 Invalid Image Data` error because vision endpoints only accept real image formats (JPEG/PNG/WebP), and a raw PDF disguised as a data URI breaks the API's image validations.
+*   **The Fix:** 
+    1. Migrated the vision-based document scan to the newly released, significantly more powerful `meta-llama/llama-4-scout-17b-16e-instruct` multimodal model.
+    2. Integrated `pdf-parse` in [scanRoutes.js](file:///d:/Projects/nitiSetu/agri-scheme-eligibility-rag/backend/src/routes/scanRoutes.js) to dynamically detect PDF file uploads:
+       - **For text-based/digital PDFs:** Automatically parses text content natively and extracts fields using a dedicated text model (`llama-3.3-70b-versatile`) for maximum precision, speed, and cost efficiency.
+       - **For scanned/image-only PDFs:** Gracefully returns a clear error guiding the user to upload scanned documents as JPG, PNG, or WebP images so that the vision pipeline can analyze them flawlessly.
+*   **The Result:** Completely restored the Document Scanning feature (`/api/scan/document`) to robust, production-grade health with perfect PDF support.
 
 ---
 

@@ -789,6 +789,70 @@ Omit any keys where the data is not found in the image. DO NOT output markdown, 
 
 
 /**
+ * Extracts farmer profile structured data from raw text (e.g., from digital PDFs).
+ *
+ * @param {string} text - The raw text of the document
+ * @param {string} documentType - Type of document (e.g. '7/12', 'Aadhaar', 'KCC')
+ * @returns {Promise<Object>} - Parsed profile object
+ */
+async function extractProfileFromPDFText(text, documentType, usageCategory = "registered", landUnit = "Hectares") {
+  const systemPrompt = `You are a strict, secure data extraction AI for a government agricultural platform.
+Your job is to read the provided raw text from a document (type: ${documentType}) and extract ONLY the agricultural and core demographic data required for scheme eligibility.
+
+STRICT PRIVACY RULES:
+1. NEVER extract or output any Government ID numbers (e.g., the 12-digit Aadhaar number, PAN number). Ignore them completely.
+2. If the document is an Aadhaar card, extract the Name, State, Date of Birth/Age, and Gender from the text.
+3. If the document is a 7/12 Land Extract (Satbara), extract the Owner Name, State/District, and Land Holding from the text.
+   IMPORTANT CONTEXT: The land size in this document is likely in **${landUnit}**. 
+   - Sum the total land size accurately.
+   - If the unit is Hectares, convert to Acres (1 Hectare = 2.47 Acres).
+   - Your final output for "landHolding" MUST ALWAYS BE IN ACRES.
+
+OUTPUT FORMAT:
+Output ONLY valid JSON. Your output must strictly adhere to this schema:
+{
+  "name": "Extracted full name",
+  "age": Number (calculated from DOB if present),
+  "gender": "male" | "female" | "other",
+  "state": "Full State Name in English (e.g. Maharashtra)",
+  "category": "general" | "obc" | "sc" | "st" | "other" (infer if possible, else leave empty),
+  "landHolding": Number (ALWAYS IN ACRES),
+  "annualIncome": Number (if present)
+}
+Omit any keys where the data is not found in the text. DO NOT output markdown, backticks, or conversational text.`;
+
+  try {
+    const completion = await runQueued(() =>
+      withRetry(() =>
+        groqInstances[currentGroqIndex].chat.completions.create({
+          model: "llama-3.3-70b-versatile", // High quality text model for structured extraction
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Raw document text:\n"""\n${text}\n"""` }
+          ],
+          temperature: 0.1,
+          response_format: { type: "json_object" }
+        })
+      )
+    );
+
+    const extractedText = completion.choices[0]?.message?.content || '{}';
+    
+    // Track usage
+    if (completion.usage) {
+      ResourceUsage.recordUsage('Groq-LLM', completion.usage.total_tokens, usageCategory).catch(e => logger.error('Usage track error:', e));
+    }
+
+    return JSON.parse(extractedText);
+  } catch (error) {
+    logger.error('Document text extraction failed:', error);
+    throw new Error('Failed to analyze document text: ' + error.message);
+  }
+}
+
+
+
+/**
  * Phase 6: High-Fidelity Chat Translation (NIFTY-RAG Engine)
  * Uses Llama 3.3 70B for nuanced, non-literal regional translation of agricultural context.
  */
@@ -846,5 +910,6 @@ module.exports = {
   translateEligibilityResult,
   chatWithKrishiMitra,
   extractProfileFromDocument,
+  extractProfileFromPDFText,
   translateChatMessages
 };

@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const pdfParse = require('pdf-parse');
 const { protect } = require('../middleware/auth');
 const llmService = require('../services/llmService');
 const logger = require('../config/logger');
@@ -64,15 +65,43 @@ router.post('/document', protect, upload.single('document'), async (req, res) =>
   try {
     logger.info(`Starting ephemeral scan for user ${req.user.id}, file: ${req.file.filename}, type: ${mimeType}`);
 
-    // Read the file as base64
-    const fileBuffer = fs.readFileSync(filePath);
-    const base64Data = fileBuffer.toString('base64');
     const docType = req.body.documentType || 'Official ID / Land Record';
     const landUnit = req.body.landUnit || 'Hectares';
+    let extractedData;
 
-    // Extract data using our specialized multi-modal LLM
-    // Pass the actual mime type so the LLM service can build the correct data URI
-    const extractedData = await llmService.extractProfileFromDocument(base64Data, docType, 'self-scan', landUnit, mimeType);
+    if (mimeType === 'application/pdf') {
+      // PDF Processing Flow
+      const fileBuffer = fs.readFileSync(filePath);
+      let pdfData;
+      try {
+        pdfData = await pdfParse(fileBuffer);
+      } catch (pdfErr) {
+        logger.error(`PDF parse error: ${pdfErr.message}`);
+        return res.status(400).json({
+          success: false,
+          error: 'Failed to read the PDF file. It might be corrupt.'
+        });
+      }
+
+      const extractedText = pdfData.text ? pdfData.text.trim() : '';
+      logger.info(`PDF Text Extraction result length: ${extractedText.length}`);
+
+      if (extractedText.length > 50) {
+        logger.info(`Extracting profile using text RAG from PDF`);
+        extractedData = await llmService.extractProfileFromPDFText(extractedText, docType, 'self-scan', landUnit);
+      } else {
+        logger.warn(`PDF has no indexable text. Presumed scanned image PDF.`);
+        return res.status(400).json({
+          success: false,
+          error: 'This PDF appears to be a scanned image with no indexable text. Since Groq Vision requires raw image files, please upload your scanned document as a JPG, PNG, or WebP image instead of a PDF!'
+        });
+      }
+    } else {
+      // Normal Image Processing Flow
+      const fileBuffer = fs.readFileSync(filePath);
+      const base64Data = fileBuffer.toString('base64');
+      extractedData = await llmService.extractProfileFromDocument(base64Data, docType, 'self-scan', landUnit, mimeType);
+    }
 
     logger.info(`Extraction complete for user ${req.user.id}`);
 
@@ -84,7 +113,7 @@ router.post('/document', protect, upload.single('document'), async (req, res) =>
 
   } catch (error) {
     logger.error(`Document scan error for user ${req.user.id}: ${error.message}`);
-    res.status(500).json({ success: false, error: 'Failed to scan and extract data from the document.' });
+    res.status(500).json({ success: false, error: error.message || 'Failed to scan and extract data from the document.' });
   } finally {
     // CRITICAL PRIVACY STEP: Always delete the file from the temp directory!
     fs.unlink(filePath, (err) => {
