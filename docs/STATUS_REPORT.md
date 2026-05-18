@@ -73,6 +73,14 @@ All local services and external connections are successfully running or verified
     3. Wrapped the entire performance metrics table in an administrative Role-Based Access Control block (`user?.role === 'admin'`), securely hiding technical telemetry from standard users.
 *   **The Result:** A perfectly clean, beautifully formatted frontend experience that speaks in localized, simple terminology without sacrificing the extreme analytical depth available to administrators.
 
+### 7. Native PDF Reporting Engine Upgrade
+*   **The Issue:** The previous implementation used `html2canvas` to take a raw screenshot of the DOM for PDF export. This resulted in dark-mode heavy, unselectable, and visually cluttered PDFs that included UI buttons (Translate, Listen) and wasted printer ink.
+*   **The Fix:** We completely rebuilt the export logic in `ProofCard` using native `jsPDF` text generation. The new engine programmatically constructs a professional, light-mode A4 report that includes:
+    1. A highly precise generation timestamp (e.g., `5/18/2026, 4:32:15 PM`).
+    2. A structured `Farmer Profile Summary` grid injecting the farmer's demographic data (Name, Age, Land Holding, Income).
+    3. The conclusive eligibility status, overlap guidelines, and citation text rendered in crisp, selectable `Helvetica` font.
+*   **The Result:** A perfectly formatted, tiny-footprint, printable government-grade eligibility receipt that empowers farmers with official documentation.
+
 ---
 
 ## 🚀 How to Run & Verify the Ecosystem
