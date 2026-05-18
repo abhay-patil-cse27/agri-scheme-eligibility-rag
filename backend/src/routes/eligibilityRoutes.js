@@ -72,11 +72,15 @@ router.post(
       return res.status(403).json({ success: false, error: 'Not authorized to check this profile' });
     }
 
-    // New: Get matching categories from Graph
-    const graphStart = Date.now();
-    const matchingCategories = await graphService.getRecommendedCategories(profile);
-    const graphLatency = Date.now() - graphStart;
-    logger.info(`Matching categories for ${profile.name}: ${matchingCategories.join(', ')}`);
+    // New: Get matching categories from Graph (only if doing a full scan)
+    let matchingCategories = [];
+    let graphLatency = 0;
+    if (schemeName === 'all' || !schemeName) {
+      const graphStart = Date.now();
+      matchingCategories = await graphService.getRecommendedCategories(profile);
+      graphLatency = Date.now() - graphStart;
+      logger.info(`Matching categories for ${profile.name}: ${matchingCategories.join(', ')}`);
+    }
 
     // Step 2: Determine which schemes to check
     let schemesToCheck = [];
