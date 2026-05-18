@@ -43,6 +43,11 @@ All local services and external connections are successfully running or verified
     ```
 *   **The Result:** Completely eliminated all charting console warnings and associated DevTools DOM-node reference tracking errors.
 
+### 4. Groq Vision Model Infrastructure Upgrade
+*   **The Issue:** Document extraction (Aadhaar, 7/12 land extracts) started failing with a 400 error (`model_decommissioned`) because Groq officially deprecated the older `llama-3.2-11b-vision-preview` model.
+*   **The Fix:** We migrated the OCR extraction pipeline in [`backend/src/services/llmService.js`](file:///d:/Projects/nitiSetu/agri-scheme-eligibility-rag/backend/src/services/llmService.js) to the newly supported and significantly more powerful `meta-llama/llama-4-scout-17b-16e-instruct` multimodal model.
+*   **The Result:** Document scanning API (`/api/scan/document`) is restored to full health with improved reasoning and zero HTTP 500/400 crashing.
+
 ---
 
 ## 🚀 How to Run & Verify the Ecosystem
