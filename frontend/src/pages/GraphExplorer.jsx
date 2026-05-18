@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
 const GraphExplorer = () => {
-  const { t } = useTranslation();
+  useTranslation();
   const location = useLocation();
   const cyRef = useRef(null);
   const containerRef = useRef(null);

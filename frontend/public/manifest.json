@@ -1,0 +1,40 @@
+{
+  "name": "Niti Setu — Farmer Schemes AI",
+  "short_name": "Niti Setu",
+  "description": "India's AI-powered, multilingual eligibility engine for agricultural government schemes like PM-KISAN, KUSUM, and KCC.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#060d06",
+  "theme_color": "#16a34a",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-IN",
+  "categories": ["government", "finance", "agriculture"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Check Eligibility",
+      "short_name": "Check",
+      "description": "Instantly check your scheme eligibility",
+      "url": "/check",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "My Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your personalized farm dashboard",
+      "url": "/dashboard",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false,
+  "related_applications": []
+}

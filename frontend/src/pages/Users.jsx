@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Search, Loader2, Shield, Calendar, Mail, User, Trash2, AlertTriangle, X, ShieldAlert, Plus, ShieldCheck, UserCog, ArrowUpCircle } from 'lucide-react';
 import { getAllUsers, deleteUser, provisionAdmin, updateUserRole } from '../services/api';
@@ -31,7 +31,8 @@ export default function UsersPage() {
       if (res.success) {
         setUsers(res.data);
       }
-    } catch (err) {
+    } catch (_err) {
+      console.error(_err);
       addToast(t('us_error_title', 'Error'), t('us_error_fetch', 'Failed to fetch users'), 'error');
     } finally {
       setLoading(false);
@@ -55,7 +56,8 @@ export default function UsersPage() {
       } else {
         addToast(t('us_error_title', 'Error'), res.error || 'Failed to provision admin', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
+      console.error(_err);
       addToast(t('us_error_title', 'Error'), 'Provisioning failed due to a system error', 'error');
     } finally {
       setIsProvisioning(false);
@@ -76,7 +78,8 @@ export default function UsersPage() {
       } else {
         addToast(t('us_error_title', 'Error'), res.error || 'Failed to update role', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
+      console.error(_err);
       addToast(t('us_error_title', 'Error'), 'Role update failed', 'error');
     } finally {
       setIsUpdatingRole(false);
@@ -94,7 +97,8 @@ export default function UsersPage() {
       } else {
         addToast(t('us_error_title', 'Error'), res.error || 'Failed to delete user', 'error');
       }
-    } catch (err) {
+    } catch (_err) {
+      console.error(_err);
       addToast(t('us_error_title', 'Error'), 'A system error occurred during deletion', 'error');
     } finally {
       setIsDeleting(false);

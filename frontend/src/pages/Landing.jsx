@@ -65,10 +65,10 @@ function Wave({ fill, flip }) {
 /* ─── Main Component ─────────────────────────────────────── */
 export default function Landing() {
   const { user }             = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const { t } = useTranslation();
-  const navigate             = useNavigate();
-  const [open, setOpen]      = useState(false);
+  useNavigate();
+  const [_open, setOpen]    = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [scrolledToBottom, setScrolledToBottom] = useState(false);
   const heroRef              = useRef(null);

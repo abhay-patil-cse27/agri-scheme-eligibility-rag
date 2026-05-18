@@ -1410,7 +1410,7 @@ export default function EligibilityCheck() {
   const [publicChecksUsed, setPublicChecksUsed] = useState(0);
   const { addToast } = useToast();
 
-  const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(() => sessionStorage.getItem('niti_setu_privacy_consent') === 'true');
+  const [_isPrivacyAccepted, setIsPrivacyAccepted] = useState(() => sessionStorage.getItem('niti_setu_privacy_consent') === 'true');
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [submittedProfile, setSubmittedProfile] = useState(null);

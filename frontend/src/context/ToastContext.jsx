@@ -39,6 +39,10 @@ export const ToastProvider = ({ children }) => {
     }
   }, [history, storageKey]);
 
+  const removeToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   /**
    * Add a new toast notification
    * @param {string} title - Short title for the toast
@@ -64,11 +68,7 @@ export const ToastProvider = ({ children }) => {
     setTimeout(() => {
       removeToast(id);
     }, 5000);
-  }, []);
-
-  const removeToast = useCallback((id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+  }, [removeToast]);
 
   const clearHistory = useCallback(() => {
     setHistory([]);

@@ -10,10 +10,6 @@ import { useTranslation } from 'react-i18next';
 import AgriCard from '../components/common/AgriCard';
 import ConfirmDeleteModal from '../components/common/ConfirmDeleteModal';
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.4 } }),
-};
 
 function HistoryCard({ check, index, onDelete }) {
   const { t, i18n } = useTranslation();
@@ -128,7 +124,7 @@ function HistoryCard({ check, index, onDelete }) {
 }
 
 export default function HistoryPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState([]);
   const [selectedProfile, setSelectedProfile] = useState('');
