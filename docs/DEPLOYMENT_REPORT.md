@@ -13,7 +13,7 @@ Ensure your production `.env` is fully populated. Sensitive keys should **never*
 | `MONGODB_URI` | Atlas Cluster URI | Ensure your whitelist excludes dev IPs and includes your server IP. |
 | `GROQ_API_KEY` | Groq Console Key | Use a dedicated production key to track tokens separately. |
 | `SMTP_PASSWORD` | Gmail App Password | Must use a **Google App Password**, not your account password. |
-| `FRONTEND_URL` | Production Domain | e.g., `https://nitisetu.vercel.app`. |
+| `FRONTEND_URL` | Production Domain | `https://nitisetu-frontend.onrender.com`. |
 
 ## 2. Infrastructure Build Protocol
 
@@ -66,6 +66,6 @@ npm start
 
 ## 5. Deployment Verification
 
-1. **Health Check**: Access `https://your-api.com/api/health`.
+1. **Health Check**: Access `https://nitisetu-backend-4p2o.onrender.com/api/health`.
 2. **Voice Integrity**: Test the "Krishi Mitra" microphone on a mobile device over the production HTTPS link.
 3. **OTP Delivery**: Perform a registration flow to verify Gmail SMTP reliability.

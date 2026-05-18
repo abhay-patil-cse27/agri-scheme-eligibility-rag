@@ -10,8 +10,8 @@ All local services and external connections are successfully running or verified
 
 | Component | Status | Port / URL | Details |
 | :--- | :--- | :--- | :--- |
-| **Express Backend** | 🔴 Offline | `http://localhost:3000` | Fully verified, ready to spin up via `npm run dev` |
-| **Vite Frontend** | 🔴 Offline | `https://localhost:5173` | Fully verified, ready to spin up via `npm run dev` |
+| **Express Backend** | 🟢 Deployed Live | `https://nitisetu-backend-4p2o.onrender.com` | Production API fully operational on Render |
+| **Vite Frontend** | 🟢 Deployed Live | `https://nitisetu-frontend.onrender.com` | Production Web Interface distributed globally |
 | **MongoDB Atlas** | 🟢 Connected | Remote Cluster | Unified data lake active for vector similarity queries |
 | **Neo4j Aura Graph** | 🟢 Connected | Remote Aura DB | Encrypted knowledge graph active for exclusions checking |
 | **Local Embeddings** | 🟢 Ready | Server-side Memory | `Xenova/all-MiniLM-L6-v2` loaded and ready in 0.52 seconds |
@@ -117,6 +117,6 @@ Both servers are already running in your workspace's terminal. If you need to sp
     ```
 
 ### 📱 Testing the System Natively
-1.  **Launch the Web Interface:** Open your web browser and head to `https://localhost:5173/`. Since it uses a self-signed certificate via `mkcert`, accept the connection to proceed to the landing page.
+1.  **Launch the Web Interface:** Open your web browser and head to the production URL: `https://nitisetu-frontend.onrender.com/`.
 2.  **Verify Chat Interface:** Log in (or register) and open **Krishi Mitra**. Execute a voice query to test the real-time speech synchronization and cached audio response.
 3.  **Run Document Scanner:** Upload or capture an Aadhaar/7-12 extract document to test the memory-only, dual-layer file validation and automated Vision parsing.
