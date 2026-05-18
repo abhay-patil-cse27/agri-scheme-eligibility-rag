@@ -37,7 +37,9 @@ app.set("trust proxy", 1); // Trust reverse proxy (Vercel/Render) for rate-limit
 app.use('/api/schemes/docs', express.static(path.join(__dirname, '..', 'data', 'schemes')));
 
 // ── Security & Parsing Middleware ─────────────────────────
-app.use(helmet());
+app.use(helmet({
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
+}));
 app.use(compression());
 app.use(cors({
   origin: config.nodeEnv === 'production'
