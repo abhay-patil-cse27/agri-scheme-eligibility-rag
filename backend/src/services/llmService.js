@@ -546,12 +546,20 @@ async function transcribeAudio(filePath, language = "en", usageCategory = "regis
       ? language.substring(0, 2).toLowerCase()
       : "en";
       
-    // Enhanced prompt for regional Indian agriculture
-    const whisperPrompt = `Agricultural assistant for Indian farmers. 
-    Main dialects: Hindi (हिंदी), Marathi (मराठी). 
-    IMPORTANT: Do NOT translate. Transcribe exactly as spoken in regional language or Hinglish/Marathighlish. 
-    Preserve local farming terms: सात-बारा (7/12), पिक विमा (Crop Insurance), कर्ज (Loan), खत (Fertilizer), एकर (Acre), हेक्टर (Hectare), बिघा (Bigha), पाऊस (Rain), पेरणी (Sowing). 
-    If the user stops speaking, do NOT hallucinate endings like "Subscribe" or "DM me". Focus on accuracy for the speaker's voice only.`;
+    // Prompt should just be vocabulary in the target language, NOT instructions. 
+    // English instructions cause Whisper to auto-translate regional languages to English.
+    let whisperPrompt = "शेतकरी, कृषी, योजना, सात-बारा, 7/12, पिक विमा, कर्ज, खत, एकर, हेक्टर, पाऊस, पेरणी, अनुदान, किसान, कृषि, योजना, सब्सिडी, एकड़, हेक्टेयर, ऋण, बीमा, सिंचाई, फसल, बारिश";
+    if (whisperLanguage === 'en') {
+      whisperPrompt = "Agriculture, farmer, scheme, subsidy, acre, hectare, loan, insurance, yield, irrigation.";
+    } else if (whisperLanguage === 'hi') {
+      whisperPrompt = "किसान, कृषि, योजना, सब्सिडी, एकड़, हेक्टेयर, ऋण, बीमा, सिंचाई, फसल, खत, बारिश, सात-बारा";
+    } else if (whisperLanguage === 'mr') {
+      whisperPrompt = "शेतकरी, कृषी, योजना, सात-बारा, 7/12, पिक विमा, कर्ज, खत, एकर, हेक्टर, पाऊस, पेरणी, अनुदान";
+    } else if (whisperLanguage === 'bn') {
+      whisperPrompt = "কৃষক, কৃষি, প্রকল্প, ভর্তুকি, একর, হেক্টর, ঋণ, বীমা, সেচ, ফসল";
+    } else if (whisperLanguage === 'te') {
+      whisperPrompt = "రైతు, వ్యవసాయం, పథకం, సబ్సిడీ, ఎకరం, హెక్టారు, రుణం, బీమా, సాగునీరు, పంట";
+    }
 
     const transcription = await runQueued(() =>
       withRetry(() =>
